@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "510945752221",
+    "project_id": "boticart-93a0a",
+    "storage_bucket": "boticart-93a0a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:510945752221:android:ac9c82658f4db7c59d1074",
+        "android_client_info": {
+          "package_name": "com.ecommerce.app.boticart"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "510945752221-eodmk8p8icca2pqalq4unh89p30b1d06.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDuK0Wlr85Vg6ZKHnH0cfibR6DPssB57Yg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "510945752221-eodmk8p8icca2pqalq4unh89p30b1d06.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
