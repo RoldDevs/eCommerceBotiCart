@@ -8,6 +8,8 @@ import 'package:boticart/features/splash/presentation/screens/splash_screen.dart
 import 'package:boticart/firebase_options.dart';
 import 'package:boticart/features/helpchat/data/repositories/help_chat_repository_impl.dart';
 import 'package:boticart/features/auth/data/services/persistent_auth_service.dart';
+import 'package:boticart/features/pharmacy/presentation/screens/orders_screen.dart';
+import 'package:boticart/features/pharmacy/presentation/providers/order_status_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,8 +31,6 @@ void main() async {
   // Check if user is already logged in
   final isLoggedIn = await PersistentAuthService.getLoginState();
   if (isLoggedIn && FirebaseAuth.instance.currentUser == null) {
-    // If the user is marked as logged in but Firebase doesn't have a current user,
-    // clear the login state to avoid inconsistencies
     await PersistentAuthService.clearLoginState();
   }
 
@@ -55,11 +55,14 @@ class AppLifecycleObserver extends WidgetsBindingObserver {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Initialize the order status listener
+    ref.watch(orderStatusInitializerProvider);
+    
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.white,
@@ -89,6 +92,17 @@ class MyApp extends StatelessWidget {
           ),
         ),
         home: const SplashScreen(),
+        routes: {
+          '/orders': (context) => const OrdersScreen(),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name == '/orders') {
+            return MaterialPageRoute(
+              builder: (context) => const OrdersScreen(),
+            );
+          }
+          return null;
+        },
       ),
     );
   }

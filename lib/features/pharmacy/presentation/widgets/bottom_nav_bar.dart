@@ -8,6 +8,7 @@ import '../screens/orders_screen.dart';
 import '../screens/pharmacy_detail_screen.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../providers/pharmacy_providers.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BottomNavBar extends ConsumerWidget {
   const BottomNavBar({super.key});
@@ -35,35 +36,35 @@ class BottomNavBar extends ConsumerWidget {
           _buildNavItem(
             index: 1,
             currentIndex: currentIndex,
-            icon: Icons.shopping_cart,
+            iconPath: 'assets/navbar/navbar-cart.svg',
             ref: ref,
             context: context,
           ),
           _buildNavItem(
             index: 3,
             currentIndex: currentIndex,
-            icon: Icons.message,
+            iconPath: 'assets/navbar/navbar-messages.svg',
             ref: ref,
             context: context,
           ),
           _buildNavItem(
             index: 0,
             currentIndex: currentIndex,
-            icon: Icons.home,
+            iconPath: 'assets/navbar/navbar-home.svg',
             ref: ref,
             context: context,
           ),
           _buildNavItem(
             index: 2,
             currentIndex: currentIndex,
-            icon: Icons.receipt_long,
+            iconPath: 'assets/navbar/navbar-orders.svg',
             ref: ref,
             context: context,
           ),
           _buildNavItem(
             index: 4,
             currentIndex: currentIndex,
-            icon: Icons.person,
+            iconPath: 'assets/navbar/navbar-profile.svg',
             ref: ref,
             context: context,
           ),
@@ -75,7 +76,7 @@ class BottomNavBar extends ConsumerWidget {
   Widget _buildNavItem({
     required int index,
     required int currentIndex,
-    required IconData icon,
+    required String iconPath,
     required WidgetRef ref,
     required BuildContext context,
   }) {
@@ -119,7 +120,16 @@ class BottomNavBar extends ConsumerWidget {
                 reviewCount: 100,
                 imageUrl: '',
                 backgroundImgUrl: '',
-                storeID: 1,
+                description: '',
+                storeID: 1, 
+                contact: '',
+                amount: null,
+                status: null,
+                invoiceId: null,
+                remittanceId: null,
+                receiptImageURL: null,
+                billingStart: null,
+                billingEnd: null, 
               ),
             );
             
@@ -158,10 +168,14 @@ class BottomNavBar extends ConsumerWidget {
           builder: (context, value, child) {
             return Transform.scale(
               scale: value,
-              child: Icon(
-                icon,
-                size: 36,
-                color: isSelected ? const Color(0xFF8ECAE6) : Colors.grey.shade400,
+              child: SvgPicture.asset(
+                iconPath,
+                width: 36,
+                height: 36,
+                colorFilter: ColorFilter.mode(
+                  isSelected ? const Color(0xFF8ECAE6) : Colors.grey.shade400,
+                  BlendMode.srcIn,
+                ),
               ),
             );
           },

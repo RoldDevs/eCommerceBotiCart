@@ -1,3 +1,4 @@
+import 'package:boticart/core/widgets/custom_modal.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -69,6 +70,53 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
         });
       }
     }
+  }
+
+  Future<void> _deleteAddress(String address) async {
+    final userAsyncValue = ref.read(currentUserProvider);
+    userAsyncValue.whenData((user) async {
+      if (user != null) {
+        final userRef = FirebaseFirestore.instance.collection('users').doc(user.id);
+        final userDoc = await userRef.get();
+        
+        // If deleting the default address, reset the default
+        if (address == defaultAddress) {
+          await userRef.update({
+            'defaultAddress': null,
+            'defaultAddressData': FieldValue.delete()
+          });
+          if (mounted) {
+            setState(() {
+              defaultAddress = null;
+            });
+          }
+        }
+        
+        // Find the index of the address to delete
+        int addressIndex = user.addresses.indexOf(address);
+        
+        // Remove the address from the list
+        List<String> updatedAddresses = List.from(user.addresses);
+        updatedAddresses.remove(address);
+        
+        // Update addressesData by removing the corresponding entry
+        List<dynamic> addressesData = userDoc.data()?['addressesData'] ?? [];
+        if (addressIndex >= 0 && addressIndex < addressesData.length) {
+          addressesData.removeAt(addressIndex);
+        }
+        
+        // Update both addresses and addressesData in Firestore
+        await userRef.update({
+          'addresses': updatedAddresses,
+          'addressesData': addressesData
+        });
+        
+        // Refresh user data
+        if (mounted) {
+          ref.invalidate(currentUserProvider);
+        }
+      }
+    });
   }
 
   @override
@@ -148,24 +196,48 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                       color: Colors.grey,
                                     ),
                                   ),
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.edit_outlined, color: Color(0xFF8ECAE6)),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => EditAddressScreen(
-                                            address: address,
-                                            index: index,
-                                          ),
-                                        ),
-                                      ).then((_) {
-                                        if (mounted) {
-                                          ref.invalidate(currentUserProvider);
-                                          _loadDefaultAddress();
-                                        }
-                                      });
-                                    },
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, color: Color(0xFF8ECAE6)),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => EditAddressScreen(
+                                                address: address,
+                                                index: index,
+                                              ),
+                                            ),
+                                          ).then((_) {
+                                            if (mounted) {
+                                              ref.invalidate(currentUserProvider);
+                                              _loadDefaultAddress();
+                                            }
+                                          });
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, color: Color(0xFF8ECAE6)),
+                                        onPressed: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (context) => CustomModal(
+                                              title: 'Delete Address',
+                                              content: 'Are you sure you want to delete this address?',
+                                              confirmText: 'Delete',
+                                              confirmButtonColor: Colors.redAccent,
+                                              onCancel: () => Navigator.pop(context),
+                                              onConfirm: () {
+                                                _deleteAddress(address);
+                                                Navigator.pop(context);
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                                 if (isDefault)
@@ -173,7 +245,7 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                                     margin: const EdgeInsets.only(left: 16.0, bottom: 8.0),
                                     padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                                      color: const Color(0xFF8ECAE6).withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -197,31 +269,36 @@ class _AddressesScreenState extends ConsumerState<AddressesScreen> {
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EditAddressScreen(),
-                          ),
-                        ).then((_) {
-                          // ignore: unused_result
-                          ref.refresh(currentUserProvider);
-                          _loadDefaultAddress();
-                        });
-                      },
+                      onPressed: user.addresses.length >= 3 
+                          ? null // Disable button if 3 addresses already exist
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const EditAddressScreen(),
+                                ),
+                              ).then((_) {
+                                // ignore: unused_result
+                                ref.refresh(currentUserProvider);
+                                _loadDefaultAddress();
+                              });
+                            },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF8ECAE6),
+                        disabledBackgroundColor: Colors.grey.shade300,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: Text(
-                        'Add new address',
+                        user.addresses.length >= 3 
+                            ? 'Add new address' 
+                            : 'Add new address',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                          color: user.addresses.length >= 3 ? Colors.grey.shade600 : Colors.white,
                         ),
                       ),
                     ),

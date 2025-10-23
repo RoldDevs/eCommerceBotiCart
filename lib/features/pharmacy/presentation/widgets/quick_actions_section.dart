@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'quick_action_card.dart';
+import '../../domain/entities/pharmacy.dart';
+import '../screens/pharmacy_reviews_screen.dart';
 
-class QuickActionsSection extends StatelessWidget {
-  const QuickActionsSection({super.key});
+class QuickActionsSection extends ConsumerWidget {
+  final Pharmacy? pharmacy;
+
+  const QuickActionsSection({
+    super.key,
+    this.pharmacy,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -60,6 +68,19 @@ class QuickActionsSection extends StatelessWidget {
                 title: 'Reorder',
                 icon: Icons.refresh,
                 onTap: () {},
+              ),
+              QuickActionCard(
+                title: 'Review',
+                icon: Icons.star_border,
+                onTap: () {
+                  if (pharmacy != null) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PharmacyReviewsScreen(pharmacy: pharmacy!),
+                      ),
+                    );
+                  }
+                },
               ),
             ],
           ),

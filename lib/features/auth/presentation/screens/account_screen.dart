@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:boticart/core/theme/app_theme.dart';
+import 'package:boticart/core/widgets/custom_modal.dart';
 import 'package:boticart/features/auth/presentation/providers/auth_logout_provider.dart';
 import 'package:boticart/features/auth/presentation/providers/prescription_upload_provider.dart';
 import 'package:boticart/features/auth/presentation/screens/account_settings_screen.dart';
@@ -18,6 +19,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import '../models/file_item.dart';
 import '../providers/user_provider.dart';
 import '../widgets/account_menu_item.dart';
 import '../widgets/profile_picture_widget.dart';
@@ -316,18 +318,28 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: InkWell(
                       onTap: () {
-                        ref.read(authLogoutProvider.notifier).logout();
-                        // Navigate to login screen
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (context) => const LoginScreen()),
-                          (route) => false,
+                        showDialog(
+                          context: context,
+                          builder: (context) => CustomModal(
+                            title: 'Logout',
+                            content: 'Are you sure you want to logout of the account?',
+                            onCancel: () => Navigator.pop(context),
+                            onConfirm: () {
+                              ref.read(authLogoutProvider.notifier).logout();
+                              // Navigate to login screen
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                (route) => false,
+                              );
+                            },
+                          ),
                         );
                       },
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.transparent),
+                          border: Border.all(color: Color(0xFF8ECAE6)),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -543,48 +555,21 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   void _showDiscountIdPickerDialog(String userId, String fileType) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Upload Senior Citizen ID', 
-          style: GoogleFonts.poppins(
-            fontSize: 17,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Text('Do you want to upload this senior citizen ID for discount?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Cancel',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              if (fileType == 'image') {
-                _pickDiscountIdImage(userId);
-              } else {
-                _pickDiscountIdPdf(userId);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF8ECAE6),
-            ),
-            child: Text('Upload',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
+      builder: (context) => CustomModal(
+        title: 'Upload Senior Citizen ID',
+        content: 'Do you want to upload this senior citizen ID for discount?',
+        cancelText: 'Cancel',
+        confirmText: 'Upload',
+        confirmButtonColor: const Color(0xFF8ECAE6),
+        onCancel: () => Navigator.pop(context),
+        onConfirm: () {
+          Navigator.pop(context);
+          if (fileType == 'image') {
+            _pickDiscountIdImage(userId);
+          } else {
+            _pickDiscountIdPdf(userId);
+          }
+        },
       ),
     );
   }
@@ -623,10 +608,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: prescriptions.length,
               itemBuilder: (context, index) {
+                final prescription = prescriptions[index];
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
-                    _isPdfUrl(prescriptions[index]) 
+                    prescription.fileType == 'pdf' 
                         ? Icons.picture_as_pdf 
                         : Icons.image,
                     color: const Color(0xFF8ECAE6),
@@ -638,7 +624,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (!_isPdfUrl(prescriptions[index]))
+                      if (prescription.fileType != 'pdf')
                         GestureDetector(
                           onTap: () {
                             showDialog(
@@ -680,7 +666,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(8),
                                               child: Image.network(
-                                                prescriptions[index],
+                                                prescription.url,
                                                 loadingBuilder: (context, child, loadingProgress) {
                                                   if (loadingProgress == null) return child;
                                                   return Container(
@@ -730,79 +716,53 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           },
                           child: const Icon(Icons.visibility, size: 20, color: Color(0xFF8ECAE6)),
                         ),
-                      if (!_isPdfUrl(prescriptions[index]))
+                      if (prescription.fileType != 'pdf')
                         const SizedBox(width: 16),
                       GestureDetector(
                         onTap: () {
                           showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                'Confirm Deletion',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              content: Text(
-                                'Are you sure you want to delete this prescription?',
-                                style: GoogleFonts.poppins(),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text(
-                                    'Cancel',
-                                    style: GoogleFonts.poppins(
-                                      color: const Color(0xFF8ECAE6),
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(userId)
-                                        .collection('prescriptions')
-                                        .where('url', isEqualTo: prescriptions[index])
-                                        .get()
-                                        .then((snapshot) {
-                                      for (var doc in snapshot.docs) {
-                                        doc.reference.delete();
-                                      }
-                                      // ignore: unused_result
-                                      ref.refresh(userPrescriptionsProvider(userId));
-                                      // ignore: use_build_context_synchronously
-                                      Navigator.pop(context);
-                                      // ignore: use_build_context_synchronously
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Prescription deleted successfully',
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          backgroundColor: AppTheme.primaryColor,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
+                            builder: (context) => CustomModal(
+                              title: 'Confirm Deletion',
+                              content: 'Are you sure you want to delete this prescription?',
+                              cancelText: 'Cancel',
+                              confirmText: 'Delete',
+                              confirmButtonColor: Colors.redAccent,
+                              onCancel: () => Navigator.pop(context),
+                              onConfirm: () {
+                                FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(userId)
+                                    .collection('prescriptions')
+                                    .where('url', isEqualTo: prescription.url)
+                                    .get()
+                                    .then((snapshot) {
+                                  for (var doc in snapshot.docs) {
+                                    doc.reference.delete();
+                                  }
+                                  // ignore: unused_result
+                                  ref.refresh(userPrescriptionsProvider(userId));
+                                  // ignore: use_build_context_synchronously
+                                  Navigator.pop(context);
+                                  // ignore: use_build_context_synchronously
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Prescription deleted successfully',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                      );
-                                    });
-                                  },
-                                  child: Text(
-                                    'Delete',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.red,
+                                      ),
+                                      backgroundColor: AppTheme.primaryColor,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                                  );
+                                });
+                              },
                             ),
                           );
                         },
@@ -869,10 +829,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: discountCards.length,
               itemBuilder: (context, index) {
+                final discountCard = discountCards[index];
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
-                    _isPdfUrl(discountCards[index]) 
+                    discountCard.fileType == 'pdf'
                         ? Icons.picture_as_pdf 
                         : Icons.image,
                     color: const Color(0xFF8ECAE6),
@@ -884,7 +845,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      if (!_isPdfUrl(discountCards[index]))
+                      if (discountCard.fileType != 'pdf')
                         GestureDetector(
                           onTap: () {
                             showDialog(
@@ -926,7 +887,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                                             child: ClipRRect(
                                               borderRadius: BorderRadius.circular(8),
                                               child: Image.network(
-                                                discountCards[index],
+                                                discountCard.url,
                                                 loadingBuilder: (context, child, loadingProgress) {
                                                   if (loadingProgress == null) return child;
                                                   return Container(
@@ -977,81 +938,54 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                           child: const Icon(Icons.visibility, size: 20, color: Color(0xFF8ECAE6)),
                         ),
                       // Add spacing only if preview button is shown
-                      if (!_isPdfUrl(discountCards[index]))
+                      if (discountCard.fileType != 'pdf')
                         const SizedBox(width: 16),
                       GestureDetector(
                         onTap: () {
-                          // Show confirmation dialog before deleting
                           showDialog(
                             context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(
-                                'Confirm Deletion',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              content: Text(
-                                'Are you sure you want to delete this discount card?',
-                                style: GoogleFonts.poppins(),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: Text(
-                                    'Cancel',
-                                    style: GoogleFonts.poppins(
-                                      color: const Color(0xFF8ECAE6),
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    // Delete the discount card
-                                    FirebaseFirestore.instance
-                                        .collection('users')
-                                        .doc(userId)
-                                        .collection('discountCards')
-                                        .where('url', isEqualTo: discountCards[index])
-                                        .get()
-                                        .then((snapshot) {
-                                      for (var doc in snapshot.docs) {
-                                        doc.reference.delete();
-                                      }
-                                      // ignore: unused_result
-                                      ref.refresh(userDiscountCardsProvider(userId));
-                                      // ignore: use_build_context_synchronously
-                                      Navigator.pop(context);
-                                      // ignore: use_build_context_synchronously
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Discount card deleted successfully',
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                          backgroundColor: AppTheme.primaryColor,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
+                            builder: (context) => CustomModal(
+                              title: 'Confirm Deletion',
+                              content: 'Are you sure you want to delete this discount card?',
+                              cancelText: 'Cancel',
+                              confirmText: 'Delete',
+                              confirmButtonColor: Colors.redAccent,
+                              onCancel: () => Navigator.pop(context),
+                              onConfirm: () {
+                                // Delete the discount card
+                                FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(userId)
+                                    .collection('discountCards')
+                                    .where('url', isEqualTo: discountCard.url)
+                                    .get()
+                                    .then((snapshot) {
+                                  for (var doc in snapshot.docs) {
+                                    doc.reference.delete();
+                                  }
+                                  // ignore: unused_result
+                                  ref.refresh(userDiscountCardsProvider(userId));
+                                  // ignore: use_build_context_synchronously
+                                  Navigator.pop(context);
+                                  // ignore: use_build_context_synchronously
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Discount card deleted successfully',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                      );
-                                    });
-                                  },
-                                  child: Text(
-                                    'Delete',
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.red,
+                                      ),
+                                      backgroundColor: AppTheme.primaryColor,
+                                      behavior: SnackBarBehavior.floating,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ],
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                                  );
+                                });
+                              },
                             ),
                           );
                         },
@@ -1126,7 +1060,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.transparent),
+          border: Border.all(color: Color(0xFF8ECAE6)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1150,48 +1084,21 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   void _showFilePickerDialog(String userId, String fileType) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Upload Prescription', 
-        style: GoogleFonts.poppins(
-          fontSize: 17,
-          fontWeight: FontWeight.w600,
-        ),
-        ),
-        content: Text('Do you want to upload this prescription with the note?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: Text('Cancel',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              if (fileType == 'image') {
-                _pickPrescriptionImage(userId);
-              } else {
-                _pickPrescriptionPdf(userId);
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8ECAE6),
-            ),
-            child: Text('Upload',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-            ),
-          ),
-        ],
+      builder: (context) => CustomModal(
+        title: 'Upload Prescription',
+        content: 'Do you want to upload this prescription with the note?',
+        cancelText: 'Cancel',
+        confirmText: 'Upload',
+        confirmButtonColor: const Color(0xFF8ECAE6),
+        onCancel: () => Navigator.pop(context),
+        onConfirm: () {
+          Navigator.pop(context);
+          if (fileType == 'image') {
+            _pickPrescriptionImage(userId);
+          } else {
+            _pickPrescriptionPdf(userId);
+          }
+        },
       ),
     );
   }
@@ -1546,9 +1453,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
     }
   }
   
-  bool _isPdfUrl(String url) {
-    return url.toLowerCase().contains('.pdf');
-  }
+
 
 }
 
@@ -1556,27 +1461,47 @@ final prescriptionUploadProvider = StateNotifierProvider<PrescriptionUploadNotif
   return PrescriptionUploadNotifier();
 });
 
-final userPrescriptionsProvider = StreamProvider.family<List<String>, String>((ref, userId) {
+final userPrescriptionsProvider = StreamProvider.family<List<FileItem>, String>((ref, userId) {
   return FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
       .collection('prescriptions')
       .snapshots()
-      .map((snapshot) => snapshot.docs.map((doc) => doc['url'] as String).toList());
+      .map((snapshot) => snapshot.docs.map((doc) {
+        final data = doc.data();
+        return FileItem(
+          url: data['url'] as String,
+          fileName: data['fileName'] as String? ?? 'prescription',
+          fileType: data['fileType'] as String? ?? _determineFileTypeFromUrl(data['url'] as String),
+          createdAt: data['uploadedAt'] != null ? (data['uploadedAt'] as Timestamp).toDate() : null,
+        );
+      }).toList());
 });
 
 final discountCardUploadProvider = StateNotifierProvider<DiscountCardUploadNotifier, AsyncValue<String?>>((ref) {
   return DiscountCardUploadNotifier();
 });
 
-final userDiscountCardsProvider = StreamProvider.family<List<String>, String>((ref, userId) {
+final userDiscountCardsProvider = StreamProvider.family<List<FileItem>, String>((ref, userId) {
   return FirebaseFirestore.instance
       .collection('users')
       .doc(userId)
       .collection('discountCards')
       .snapshots()
-      .map((snapshot) => snapshot.docs.map((doc) => doc['url'] as String).toList());
+      .map((snapshot) => snapshot.docs.map((doc) {
+        final data = doc.data();
+        return FileItem(
+          url: data['url'] as String,
+          fileName: data['fileName'] as String,
+          fileType: data['fileType'] as String? ?? _determineFileTypeFromUrl(data['url'] as String),
+          createdAt: data['uploadedAt'] != null ? (data['uploadedAt'] as Timestamp).toDate() : null,
+        );
+      }).toList());
 });
+
+String _determineFileTypeFromUrl(String url) {
+  return url.toLowerCase().contains('.pdf') ? 'pdf' : 'image';
+}
 
 class DiscountCardUploadNotifier extends StateNotifier<AsyncValue<String?>> {
   DiscountCardUploadNotifier() : super(const AsyncValue.data(null));
@@ -1590,6 +1515,35 @@ class DiscountCardUploadNotifier extends StateNotifier<AsyncValue<String?>> {
     
     try {
       final storage = FirebaseStorage.instance;
+      final firestore = FirebaseFirestore.instance;
+      
+      // Determine file type
+      final fileType = _getFileType(fileName);
+      
+      // Check if a file of this type already exists
+      final existingFiles = await firestore
+          .collection('users')
+          .doc(userId)
+          .collection('discountCards')
+          .where('fileType', isEqualTo: fileType)
+          .get();
+      
+      // If a file of this type already exists, delete it from storage and Firestore
+      if (existingFiles.docs.isNotEmpty) {
+        for (var doc in existingFiles.docs) {
+          final existingFileName = doc['fileName'] as String;
+          
+          // Delete from Storage
+          try {
+            await storage.ref('discountCards/$userId/$existingFileName').delete();
+          } catch (e) {
+            // File might not exist in storage, continue anyway
+          }
+          
+          // Delete from Firestore
+          await doc.reference.delete();
+        }
+      }
       
       final discountCardRef = storage.ref('discountCards/$userId');
       
@@ -1607,12 +1561,21 @@ class DiscountCardUploadNotifier extends StateNotifier<AsyncValue<String?>> {
           .add({
             'url': downloadUrl,
             'fileName': fileName,
+            'fileType': fileType,
             'uploadedAt': FieldValue.serverTimestamp(),
           });
       
       state = AsyncValue.data(downloadUrl);
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
+    }
+  }
+  
+  String _getFileType(String fileName) {
+    if (fileName.toLowerCase().endsWith('.pdf')) {
+      return 'pdf';
+    } else {
+      return 'image';
     }
   }
   

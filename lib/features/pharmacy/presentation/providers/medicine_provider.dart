@@ -18,6 +18,9 @@ final medicineSearchProvider = FutureProvider.family<List<Medicine>, String>((re
   return repository.searchMedicines(query, storeId: selectedStoreId);
 });
 
+// Add search query provider for medicine detail screen
+final medicineSearchQueryProvider = StateProvider<String>((ref) => '');
+
 final allMedicinesProvider = FutureProvider<List<Medicine>>((ref) {
   final repository = ref.watch(medicineRepositoryProvider);
   final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);

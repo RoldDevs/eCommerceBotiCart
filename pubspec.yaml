@@ -42,6 +42,7 @@ dependencies:
   google_fonts: ^6.3.1
   flutter_svg: ^2.2.1
   material_symbols_icons: ^4.2873.0
+  cached_network_image: ^3.4.1
 
   #Navigations
   google_nav_bar: ^5.0.7
@@ -62,15 +63,20 @@ dependencies:
   google_maps_flutter: ^2.13.1
   location: ^8.0.1
   geocoding: ^4.0.0
+  geolocator: ^14.0.2
 
   #Preview
-  flutter_pdfview: ^1.4.3
   path_provider: ^2.1.5
   http: ^1.5.0
   uuid: ^4.5.1
+  url_launcher: ^6.3.2
 
   #tools
   intl: ^0.20.2
+
+  # API and Crypto for Lalamove
+  crypto: ^3.0.6
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:

@@ -199,7 +199,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
     // Check for word matches
     List<String> queryWords = normalizedQuery.split(' ');
     for (String word in queryWords) {
-      if (word.length > 2) { // Only consider words with more than 2 characters
+      if (word.length > 2) { 
         if (normalizedMain.contains(word)) {
           score += 10.0;
         }

@@ -1,11 +1,14 @@
 import 'dart:async';
 
+import 'package:boticart/features/pharmacy/presentation/providers/stock_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/search_provider.dart';
 import '../providers/medicine_provider.dart';
 import '../../domain/entities/medicine.dart';
+import '../screens/medicine_detail_screen.dart';
+import 'stock_badge.dart';
 
 class RecentSearchesScreen extends ConsumerStatefulWidget {
   final List<String> recentSearches;
@@ -67,7 +70,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF2A4B8D)),
+                    icon: const Icon(Icons.arrow_back, color: Color(0xFF8ECAE6)),
                     onPressed: widget.onBackPressed,
                   ),
                   Expanded(
@@ -103,7 +106,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.filter_list, color: Color(0xFF2A4B8D)),
+                    icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
                     onPressed: () {},
                   ),
                 ],
@@ -370,101 +373,158 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     final favorites = ref.watch(favoriteMedicinesProvider);
     final isFavorite = favorites.contains(medicine.id);
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+    return Consumer(
+      builder: (context, ref, child) {
+        final stockAsyncValue = ref.watch(stockStreamProvider(medicine.id));
+        
+        return stockAsyncValue.when(
+          data: (currentStock) => _buildCardWithStock(medicine, isFavorite, currentStock),
+          loading: () => _buildCardWithStock(medicine, isFavorite, medicine.stock),
+          error: (_, __) => _buildCardWithStock(medicine, isFavorite, medicine.stock),
+        );
+      },
+    );
+  }
+
+  Widget _buildCardWithStock(Medicine medicine, bool isFavorite, int currentStock) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => MedicineDetailScreen(medicine: medicine),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Medicine image
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-            child: Image.network(
-              medicine.imageURL,
-              height: 120,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  height: 120,
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(Icons.image_not_supported, color: Colors.grey),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Medicine image with stock badge overlay
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              child: Stack(
+                children: [
+                  Image.network(
+                    medicine.imageURL,
+                    height: 105, // Reduced from 110 to 105
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 105, // Reduced from 120 to 105
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(Icons.image_not_supported, color: Colors.grey),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                  // Stock badge overlay
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: StockBadge(stock: currentStock),
+                  ),
+                ],
+              ),
             ),
-          ),
-          
-          // Medicine details
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  medicine.medicineName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+            // Medicine details
+            Padding(
+              padding: const EdgeInsets.all(6.0), // Reduced from 8.0 to 6.0
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    medicine.medicineName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13, // Reduced from 14 to 13
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  ' ${medicine.productOffering.join(", ")}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '₱ ${medicine.price.toStringAsFixed(2)}',
+                  const SizedBox(height: 1), // Reduced from 2 to 1
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      medicine.majorTypeDisplayName,
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black,
+                        fontSize: 9, // Reduced from 10 to 9
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF2A4B8D),
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(
-                        isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? Colors.red : const Color(0xFF8ECAE6),
-                        size: 40,
-                      ),
-                      onPressed: () {
-                        ref.read(favoriteMedicinesProvider.notifier).toggleFavorite(medicine.id);
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(height: 1), // Reduced from 2 to 1
+                  Text(
+                    medicine.productTypeDisplayName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10, // Reduced from 11 to 10
+                      color: Colors.grey.shade600,
                     ),
-                  ],
-                ),
-              ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2), // Reduced from 4 to 2
+                  Text(
+                    ' ${medicine.productOffering.join(", ")}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10, // Reduced from 11 to 10
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '₱ ${medicine.price.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12, // Reduced from 13 to 12
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite ? Colors.red : const Color(0xFF8ECAE6),
+                          size: 40, // Reduced from 40 to 32
+                        ),
+                        onPressed: () {
+                          ref.read(favoriteMedicinesProvider.notifier).toggleFavorite(medicine.id);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Added constraints
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

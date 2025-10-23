@@ -295,9 +295,9 @@ class PharmacyDetailScreen extends ConsumerWidget {
                     ),
                     
                     // Quick Actions section
-                    const Padding(
-                      padding: EdgeInsets.only(top: 10, bottom: 20),
-                      child: QuickActionsSection(),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 20),
+                      child: QuickActionsSection(pharmacy: pharmacy),
                     ),
 
                     const SizedBox(height: 70),
