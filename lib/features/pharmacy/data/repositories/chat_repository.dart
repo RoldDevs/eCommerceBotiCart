@@ -6,7 +6,8 @@ import '../../domain/entities/pharmacy.dart';
 class ChatRepository {
   final FirebaseFirestore _firestore;
 
-  ChatRepository({required FirebaseFirestore firestore}) : _firestore = firestore;
+  ChatRepository({required FirebaseFirestore firestore})
+    : _firestore = firestore;
 
   Stream<List<ChatConversation>> getUserConversations(String userId) {
     try {
@@ -17,13 +18,15 @@ class ChatRepository {
           .snapshots()
           .map((snapshot) {
             return snapshot.docs
-                .map((doc) => ChatConversation.fromFirestore(doc.data(), doc.id))
+                .map(
+                  (doc) => ChatConversation.fromFirestore(doc.data(), doc.id),
+                )
                 .toList();
           })
           .handleError((error) {
-            if (error is FirebaseException && 
-                error.code == 'failed-precondition' && 
-                error.message != null && 
+            if (error is FirebaseException &&
+                error.code == 'failed-precondition' &&
+                error.message != null &&
                 error.message!.contains('index')) {
               return [];
             }
@@ -36,10 +39,14 @@ class ChatRepository {
           .snapshots()
           .map((snapshot) {
             final conversations = snapshot.docs
-                .map((doc) => ChatConversation.fromFirestore(doc.data(), doc.id))
+                .map(
+                  (doc) => ChatConversation.fromFirestore(doc.data(), doc.id),
+                )
                 .toList();
-            
-            conversations.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+
+            conversations.sort(
+              (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
+            );
             return conversations;
           });
     }
@@ -50,7 +57,7 @@ class ChatRepository {
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
-        .orderBy('timestamp', descending: false) 
+        .orderBy('timestamp', descending: false)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs
@@ -100,7 +107,9 @@ class ChatRepository {
         pharmacyImageUrl: pharmacy.imageUrl,
       ).toFirestore();
 
-      final docRef = await _firestore.collection('conversations').add(conversationData);
+      final docRef = await _firestore
+          .collection('conversations')
+          .add(conversationData);
       return docRef.id;
     } catch (e) {
       throw Exception('Failed to create conversation: $e');

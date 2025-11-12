@@ -198,7 +198,7 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: Color(0xFF8ECAE6),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -206,7 +206,7 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
+                              color: Color(0xFF8ECAE6),
                             ),
                           ),
                           const SizedBox(height: 8),

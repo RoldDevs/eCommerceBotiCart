@@ -13,7 +13,6 @@ class OrderStockHandler {
 
   OrderStockHandler(this._ref);
 
-  /// Initialize order status listener to handle stock decreases
   void initializeOrderListener() {
     _ref.listen<AsyncValue<List<OrderEntity>>>(
       userOrdersProvider,
@@ -29,7 +28,6 @@ class OrderStockHandler {
     );
   }
 
-  /// Handle order status changes and decrease stock when appropriate
   void _handleOrderStatusChanges(List<OrderEntity> previousOrders, List<OrderEntity> currentOrders) {
     for (final currentOrder in currentOrders) {
       final previousOrder = previousOrders.firstWhere(
@@ -37,7 +35,6 @@ class OrderStockHandler {
         orElse: () => currentOrder,
       );
 
-      // Check if order became "In Transit" (which means it's ready for delivery and stock should be decreased)
       final wasNotInTransit = previousOrder.status != OrderStatus.inTransit;
       final isNowInTransit = currentOrder.status == OrderStatus.inTransit;
 
@@ -47,17 +44,14 @@ class OrderStockHandler {
     }
   }
 
-  /// Decrease stock for a specific order
   Future<void> _decreaseStockForOrder(OrderEntity order) async {
     try {
       await _stockService.decreaseStockForOrder(order);
     } catch (e) {
       // Log error or handle appropriately
-      print('Failed to decrease stock for order ${order.orderID}: $e');
     }
   }
 
-  /// Manually decrease stock for an order (can be called from UI)
   Future<void> decreaseStockForOrder(OrderEntity order) async {
     await _decreaseStockForOrder(order);
   }

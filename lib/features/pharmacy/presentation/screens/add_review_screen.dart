@@ -404,15 +404,46 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
             ? null
             : () async {
                 final user = userAsyncValue.value;
-                if (user != null) {
-                  await ref.read(reviewFormProvider.notifier).submitReview(
-                        pharmacyId: widget.pharmacy.id,
-                        userId: user.uid,
-                        userName: '${user.firstName} ${user.lastName}',
-                      );
+                if (user == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please log in to submit a review')),
+                  );
+                  return;
+                }
 
-                  if (state.error == null && mounted) {
+                if (state.rating == 0.0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please provide a rating')),
+                  );
+                  return;
+                }
+
+                try {
+                  await ref.read(reviewFormProvider.notifier).submitReview(
+                    pharmacyId: widget.pharmacy.id,
+                    userId: user.id,
+                    userName: '${user.firstName} ${user.lastName}',
+                  );
+
+                  // Check if submission was successful
+                  final updatedState = ref.read(reviewFormProvider);
+                  if (updatedState.error == null && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Review submitted successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                     Navigator.of(context).pop();
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to submit review: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
                   }
                 }
               },
@@ -451,6 +482,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
         ref.read(reviewFormProvider.notifier).addImage(image.path);
       }
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking image: $e')),
       );
@@ -464,6 +496,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
         ref.read(reviewFormProvider.notifier).addVideo(video.path);
       }
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking video: $e')),
       );

@@ -127,11 +127,20 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
           ),
         );
 
-        // Navigate to orders screen
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const OrdersScreen()),
-          (route) => route.isFirst,
-        );
+        // Navigate based on delivery type
+        if (isHomeDelivery) {
+          // For home delivery, navigate to orders screen (no verification needed)
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const OrdersScreen()),
+            (route) => route.isFirst,
+          );
+        } else {
+          // For pickup orders, navigate to orders screen
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const OrdersScreen()),
+            (route) => route.isFirst,
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -624,26 +633,6 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Delivery Fee',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              isHomeDelivery ? '₱50.00' : '₱0.00',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
                               'Discount',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
@@ -675,7 +664,7 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                               ),
                             ),
                             Text(
-                              '₱${(finalTotal + (isHomeDelivery ? 50.0 : 0.0)).toStringAsFixed(2)}',
+                              '₱${finalTotal.toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

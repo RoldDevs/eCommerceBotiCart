@@ -161,13 +161,14 @@ class ReviewFormNotifier extends StateNotifier<ReviewFormState> {
 
       await _repository.addReview(review);
       
-      // Reset form
+      // Successfully submitted - reset form and clear loading state
       state = ReviewFormState();
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
         error: 'Failed to submit review: ${e.toString()}',
       );
+      rethrow; 
     }
   }
 

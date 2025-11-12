@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:boticart/core/theme/app_theme.dart';
+import 'package:boticart/core/utils/screen_utils.dart';
 import 'package:boticart/core/widgets/custom_modal.dart';
 import 'package:boticart/features/auth/presentation/providers/auth_logout_provider.dart';
 import 'package:boticart/features/auth/presentation/providers/prescription_upload_provider.dart';
@@ -359,7 +360,7 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     ),
                   ),
                   
-                  const SizedBox(height: 70), 
+                  SizedBox(height: ScreenUtils.getBottomPadding(context)), 
                 ],
               ),
             );

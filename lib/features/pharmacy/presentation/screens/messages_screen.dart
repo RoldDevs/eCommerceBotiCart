@@ -1,6 +1,10 @@
+import 'package:boticart/core/widgets/custom_modal.dart';
+import 'package:boticart/features/pharmacy/domain/entities/chat_message.dart';
+import 'package:boticart/features/pharmacy/presentation/services/order_message_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/screen_utils.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../providers/chat_providers.dart';
 import '../providers/pharmacy_providers.dart';
@@ -25,6 +29,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
   late TabController _tabController;
   final List<String> _filters = ['All', 'Orders', 'Chats', 'Announcements'];
   String _sortOrder = 'Newest';
+  bool _isSelectionMode = false;
+  final Set<String> _selectedItems = <String>{};
 
   @override
   void initState() {
@@ -57,15 +63,49 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         backgroundColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'MESSAGES',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF8ECAE6),
-          ),
-        ),
+        title: _isSelectionMode
+            ? Text(
+                '${_selectedItems.length} selected',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF8ECAE6),
+                ),
+              )
+            : Text(
+                'MESSAGES',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF8ECAE6),
+                ),
+              ),
         centerTitle: true,
+        actions: _isSelectionMode
+            ? [
+                IconButton(
+                  onPressed: () {
+                    _showDeleteConfirmationDialog();
+                  },
+                  icon: const Icon(
+                    Icons.delete_outline,
+                    color: Colors.red,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _isSelectionMode = false;
+                      _selectedItems.clear();
+                    });
+                  },
+                  icon: const Icon(
+                    Icons.close,
+                    color: Color(0xFF8ECAE6),
+                  ),
+                ),
+              ]
+            : null,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -152,10 +192,15 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                 ),
                 TextButton(
                   onPressed: () {
-                    // Handle select action
+                    setState(() {
+                      _isSelectionMode = !_isSelectionMode;
+                      if (!_isSelectionMode) {
+                        _selectedItems.clear();
+                      }
+                    });
                   },
                   child: Text(
-                    'Select',
+                    _isSelectionMode ? 'Cancel' : 'Select',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -188,6 +233,75 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
       ),
       bottomNavigationBar: const BottomNavBar(),
     );
+  }
+
+  void _showDeleteConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CustomModal(
+          title: 'Delete Messages',
+          content: 'Are you sure you want to delete ${_selectedItems.length} selected message${_selectedItems.length > 1 ? 's' : ''}? This action cannot be undone.',
+          cancelText: 'No',
+          confirmText: 'Yes',
+          confirmButtonColor: Colors.red,
+          onCancel: () => Navigator.of(context).pop(),
+          onConfirm: () {
+            Navigator.of(context).pop();
+            _deleteSelectedMessages();
+          },
+        );
+      },
+    );
+  }
+
+  void _deleteSelectedMessages() async {
+    try {
+      // Get the order message service
+      final orderMessageService = ref.read(orderMessageServiceProvider);
+      
+      // Delete each selected message
+      final selectedIds = List<String>.from(_selectedItems);
+      for (final messageId in selectedIds) {
+        await orderMessageService.deleteOrderMessage(messageId);
+      }
+      
+      setState(() {
+        _selectedItems.clear();
+        _isSelectionMode = false;
+      });
+      
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${selectedIds.length} message${selectedIds.length > 1 ? 's' : ''} deleted successfully',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: const Color(0xFF8ECAE6),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      // Refresh the data by invalidating the provider
+      ref.invalidate(userOrderMessagesProvider);
+      
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to delete messages: ${e.toString()}',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildAllTabContent(
@@ -246,6 +360,17 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                       items.add(
                         OrderMessageItem(
                           message: message,
+                          isSelectionMode: _isSelectionMode,
+                          isSelected: _selectedItems.contains(message.id),
+                          onSelectionToggle: () {
+                            setState(() {
+                              if (_selectedItems.contains(message.id)) {
+                                _selectedItems.remove(message.id);
+                              } else {
+                                _selectedItems.add(message.id);
+                              }
+                            });
+                          },
                           onTap: () {
                             Navigator.push(
                               context,
@@ -308,18 +433,58 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             child: ChatListItem.fromPharmacy(
                               pharmacy: selectedPharmacy,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ChatDetailScreen(
-                                      conversationId: '',
-                                      pharmacyName: selectedPharmacy.name,
-                                      pharmacyImageUrl: selectedPharmacy.imageUrl,
-                                      pharmacyId: selectedPharmacy.id,
-                                    ),
-                                  ),
-                                );
+                              onTap: () async {
+                                // Automatically create conversation with welcome message
+                                final user = ref.read(currentUserProvider).value;
+                                if (user != null) {
+                                  final chatRepository = ref.read(chatRepositoryProvider);
+                                  
+                                  try {
+                                    // Create conversation
+                                    final conversationId = await chatRepository.createConversation(user.id, selectedPharmacy);
+                                    
+                                    // Send welcome message from pharmacy
+                                    final welcomeMessage = ChatMessage(
+                                      id: '',
+                                      senderId: selectedPharmacy.id,
+                                      receiverId: user.id,
+                                      content: 'Hello! Welcome to ${selectedPharmacy.name}. How can we help you today?',
+                                      timestamp: DateTime.now(),
+                                      senderName: selectedPharmacy.name,
+                                      senderType: 'pharmacy',
+                                    );
+                                    
+                                    await chatRepository.sendMessage(conversationId, welcomeMessage);
+                                    
+                                    // Navigate to chat with the new conversation
+                                    Navigator.push(
+                                      // ignore: use_build_context_synchronously
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatDetailScreen(
+                                          conversationId: conversationId,
+                                          pharmacyName: selectedPharmacy.name,
+                                          pharmacyImageUrl: selectedPharmacy.imageUrl,
+                                          pharmacyId: selectedPharmacy.id,
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    // Fallback to empty conversation if creation fails
+                                    Navigator.push(
+                                      // ignore: use_build_context_synchronously
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatDetailScreen(
+                                          conversationId: '',
+                                          pharmacyName: selectedPharmacy.name,
+                                          pharmacyImageUrl: selectedPharmacy.imageUrl,
+                                          pharmacyId: selectedPharmacy.id,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
                               },
                             ),
                           ),
@@ -351,7 +516,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                     }
                     
                     return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 100), 
+                      padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)), 
                       itemCount: items.length,
                       itemBuilder: (context, index) => items[index],
                     );
@@ -538,12 +703,23 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.only(top: 8, bottom: 100),
+          padding: EdgeInsets.only(top: 8, bottom: ScreenUtils.getBottomPadding(context)),
           itemCount: sortedMessages.length,
           itemBuilder: (context, index) {
             final message = sortedMessages[index];
             return OrderMessageItem(
               message: message,
+              isSelectionMode: _isSelectionMode,
+              isSelected: _selectedItems.contains(message.id),
+              onSelectionToggle: () {
+                setState(() {
+                  if (_selectedItems.contains(message.id)) {
+                    _selectedItems.remove(message.id);
+                  } else {
+                    _selectedItems.add(message.id);
+                  }
+                });
+              },
               onTap: () {
                 Navigator.push(
                   context,
@@ -627,7 +803,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 100), 
+          padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)), 
           itemCount: sortedConversations.length,
           itemBuilder: (context, index) {
             final conversation = sortedConversations[index];

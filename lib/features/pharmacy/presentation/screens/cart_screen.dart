@@ -1,4 +1,5 @@
 import 'package:boticart/features/pharmacy/presentation/providers/medicine_provider.dart';
+import 'package:boticart/core/utils/screen_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -187,6 +188,7 @@ class CartScreen extends ConsumerWidget {
                     ? _buildNoSearchResults(searchQuery)
                     : _buildEmptyCart()
                 : ListView.builder(
+                    padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)),
                     itemCount: filteredCartItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredCartItems[index];

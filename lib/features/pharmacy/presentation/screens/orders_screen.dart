@@ -1,6 +1,7 @@
 import 'package:boticart/features/pharmacy/presentation/screens/order_tracking_screen.dart';
 import 'package:boticart/features/pharmacy/presentation/screens/order_verification/pending_verification_screen.dart';
 import 'package:boticart/features/pharmacy/presentation/screens/order_verification/payment_screen.dart';
+import 'package:boticart/core/utils/screen_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -197,7 +198,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
         }
         
         return ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: ScreenUtils.getBottomPadding(context),
+          ),
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];

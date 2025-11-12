@@ -6,4 +6,5 @@ abstract class ReviewRepository {
   Future<void> updateReview(Review review);
   Future<void> deleteReview(String pharmacyId, String reviewId);
   Future<String> uploadReviewMedia(String filePath, String userId, String reviewId, bool isVideo);
+  Future<void> updatePharmacyRatingAfterReviewChange(String pharmacyId);
 }

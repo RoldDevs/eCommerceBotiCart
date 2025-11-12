@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/search_provider.dart';
 import '../providers/medicine_provider.dart';
+import '../providers/filter_provider.dart';
 import '../../domain/entities/medicine.dart';
 import '../screens/medicine_detail_screen.dart';
 import 'stock_badge.dart';
+import 'filters/search_filters_screen.dart';
 
 class RecentSearchesScreen extends ConsumerStatefulWidget {
   final List<String> recentSearches;
@@ -107,7 +109,13 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SearchFiltersScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -177,8 +185,35 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
 
   Widget _buildRecentSearches() {
     // Watch filtered medicines provider instead of all medicines
-    final filteredMedicines = ref.watch(filteredMedicinesProvider);
+    final filteredMedicines = ref.watch(filteredMedicinesByFiltersProvider);
     final searchHistory = ref.watch(searchHistoryProvider);
+    final selectedProductTypes = ref.watch(selectedProductTypesProvider);
+    final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
+    
+    // Apply current filter type (relevance, latest, price, favorites) to filtered medicines
+    final filterType = ref.watch(selectedFilterProvider);
+    final favorites = ref.watch(favoriteMedicinesProvider);
+    
+    List<Medicine> finalFilteredMedicines = filteredMedicines.map((medicine) {
+      return medicine.copyWith(
+        isFavorite: favorites.contains(medicine.id)
+      );
+    }).toList();
+    
+    switch (filterType) {
+      case MedicineFilterType.relevance:
+        finalFilteredMedicines.sort((a, b) => a.medicineName.compareTo(b.medicineName));
+        break;
+      case MedicineFilterType.latest:
+        finalFilteredMedicines.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case MedicineFilterType.price:
+        finalFilteredMedicines.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      case MedicineFilterType.favorites:
+        finalFilteredMedicines = finalFilteredMedicines.where((medicine) => favorites.contains(medicine.id)).toList();
+        break;
+    }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,16 +304,15 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
         
         // Filtered medicines grid
         Expanded(
-          child: filteredMedicines.isEmpty
+          child: finalFilteredMedicines.isEmpty
               ? Center(
                   child: Text(
-                    ref.watch(selectedFilterProvider) == MedicineFilterType.favorites
-                        ? 'No favorite medicines yet'
-                        : 'No medicines available',
+                    _getEmptyStateMessage(filterType, selectedProductTypes, selectedConditionTypes),
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       color: Colors.black87,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 )
               : GridView.builder(
@@ -289,9 +323,9 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
-                  itemCount: filteredMedicines.length,
+                  itemCount: finalFilteredMedicines.length,
                   itemBuilder: (context, index) {
-                    final medicine = filteredMedicines[index];
+                    final medicine = finalFilteredMedicines[index];
                     return _buildMedicineCard(medicine);
                   },
                 ),
@@ -300,9 +334,23 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     );
   }
 
+  String _getEmptyStateMessage(MedicineFilterType filterType, Set<MedicineProductType> selectedProductTypes, Set<MedicineConditionType> selectedConditionTypes) {
+    if (filterType == MedicineFilterType.favorites) {
+      return 'No favorite medicines yet';
+    }
+    
+    if (selectedProductTypes.isNotEmpty || selectedConditionTypes.isNotEmpty) {
+      return 'No medicines found matching your filters';
+    }
+    
+    return 'No medicines available';
+  }
+
   // Update search results to use filtered medicines as well
   Widget _buildSearchResults(AsyncValue<List<Medicine>> medicinesAsyncValue) {
     final favorites = ref.watch(favoriteMedicinesProvider);
+    final selectedProductTypes = ref.watch(selectedProductTypesProvider);
+    final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
     
     return medicinesAsyncValue.when(
       data: (medicines) {
@@ -324,6 +372,20 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
             isFavorite: favorites.contains(medicine.id)
           );
         }).toList();
+        
+        // Apply product type filter
+        if (selectedProductTypes.isNotEmpty) {
+          filteredMedicines = filteredMedicines.where((medicine) {
+            return selectedProductTypes.contains(medicine.productType);
+          }).toList();
+        }
+        
+        // Apply condition type filter
+        if (selectedConditionTypes.isNotEmpty) {
+          filteredMedicines = filteredMedicines.where((medicine) {
+            return selectedConditionTypes.contains(medicine.conditionType);
+          }).toList();
+        }
         
         final filterType = ref.watch(selectedFilterProvider);
         switch (filterType) {

@@ -1,4 +1,4 @@
-import 'package:boticart/features/pharmacy/presentation/screens/order_verification/pending_verification_screen.dart';
+import 'package:boticart/features/pharmacy/presentation/screens/orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,16 +147,21 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
       
       // Navigate based on delivery type
       if (isHomeDelivery) {
-        // For home delivery, navigate to verification flow
+        // For home delivery, navigate to orders screen (no verification needed)
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => PendingVerificationScreen(orderId: newOrderId),
+            builder: (context) => const OrdersScreen(),
           ),
         );
       } else {
         // For pickup orders, navigate to orders screen
-        Navigator.pushReplacementNamed(context, '/orders');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const OrdersScreen(),
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -646,29 +651,6 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                             ),
                           ],
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Divider(),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Delivery Fee',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              '₱50.00',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
                         const SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -705,7 +687,7 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                               ),
                             ),
                             Text(
-                              '₱${(totalPrice + 50 - (applyBeneficiaryId ? totalPrice * 0.2 : 0)).toStringAsFixed(2)}',
+                              '₱${(totalPrice - (applyBeneficiaryId ? totalPrice * 0.2 : 0)).toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,

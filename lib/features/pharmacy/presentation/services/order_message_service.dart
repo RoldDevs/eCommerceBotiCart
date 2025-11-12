@@ -17,6 +17,7 @@ final orderMessageServiceProvider = Provider<OrderMessageService>((ref) {
 
 class OrderMessageService {
   final OrderMessageRepository _repository;
+  // ignore: unused_field
   final Ref _ref;
 
   OrderMessageService(this._repository, this._ref);
@@ -182,5 +183,10 @@ Thank you for your payment!
   // Get unread message count
   Stream<int> getUnreadMessageCount(String userId) {
     return _repository.getUnreadMessageCount(userId);
+  }
+
+  // Delete order message
+  Future<void> deleteOrderMessage(String messageId) {
+    return _repository.deleteOrderMessage(messageId);
   }
 }

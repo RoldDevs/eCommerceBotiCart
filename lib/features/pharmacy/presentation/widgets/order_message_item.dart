@@ -7,11 +7,17 @@ import '../services/order_message_service.dart';
 class OrderMessageItem extends ConsumerWidget {
   final OrderMessage message;
   final VoidCallback? onTap;
+  final bool isSelectionMode;
+  final bool isSelected;
+  final VoidCallback? onSelectionToggle;
 
   const OrderMessageItem({
     super.key,
     required this.message,
     this.onTap,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onSelectionToggle,
   });
 
   @override
@@ -19,15 +25,15 @@ class OrderMessageItem extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: message.isRead ? Colors.white : const Color(0xFF8ECAE6).withOpacity(0.05),
+        color: message.isRead ? Colors.white : const Color(0xFF8ECAE6).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: message.isRead ? Colors.grey.shade200 : const Color(0xFF8ECAE6).withOpacity(0.2),
+          color: message.isRead ? Colors.grey.shade200 : const Color(0xFF8ECAE6).withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -35,10 +41,14 @@ class OrderMessageItem extends ConsumerWidget {
       ),
       child: InkWell(
         onTap: () async {
-          if (!message.isRead) {
-            await ref.read(orderMessageServiceProvider).markMessageAsRead(message.id);
+          if (isSelectionMode) {
+            onSelectionToggle?.call();
+          } else {
+            if (!message.isRead) {
+              await ref.read(orderMessageServiceProvider).markMessageAsRead(message.id);
+            }
+            onTap?.call();
           }
-          onTap?.call();
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -46,13 +56,36 @@ class OrderMessageItem extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Selection checkbox (only show in selection mode)
+              if (isSelectionMode) ...[
+                Container(
+                  width: 24,
+                  height: 24,
+                  margin: const EdgeInsets.only(right: 12, top: 12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF8ECAE6) : Colors.grey.shade400,
+                      width: 2,
+                    ),
+                    color: isSelected ? const Color(0xFF8ECAE6) : Colors.transparent,
+                  ),
+                  child: isSelected
+                      ? const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                      : null,
+                ),
+              ],
               // Pharmacy Image
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFF8ECAE6).withOpacity(0.1),
+                  color: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(8),

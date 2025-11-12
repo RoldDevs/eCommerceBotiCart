@@ -39,4 +39,12 @@ class PharmacyRepositoryImpl implements PharmacyRepository {
         .toList();
     });
   }
+
+  @override
+  Future<void> updatePharmacyRating(String pharmacyId, double newRating, int newReviewCount) async {
+    await _firestore.collection('pharmacy').doc(pharmacyId).update({
+      'rating': newRating,
+      'reviewCount': newReviewCount,
+    });
+  }
 }

@@ -1,3 +1,4 @@
+import 'package:boticart/features/pharmacy/domain/entities/pharmacy.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,18 +51,41 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final user = ref.read(currentUserProvider).value;
     if (user == null) return;
 
-    final message = ChatMessage(
-      id: '',
-      senderId: user.id,
-      receiverId: widget.conversationId.split('_').firstWhere((id) => id != user.id),
-      content: _messageController.text.trim(),
-      timestamp: DateTime.now(),
-      senderName: user.firstName,
-      senderType: 'customer',
-    );
-
     try {
-      await ref.read(chatRepositoryProvider).sendMessage(widget.conversationId, message);
+      String currentConversationId = widget.conversationId;
+      
+      // If no conversation exists, create one first
+      if (currentConversationId.isEmpty) {
+        final chatRepository = ref.read(chatRepositoryProvider);
+        
+        // Create a pharmacy object for the conversation
+        final pharmacy = Pharmacy(
+          id: widget.pharmacyId,
+          name: widget.pharmacyName,
+          location: '', 
+          rating: 0.0,
+          reviewCount: 0,
+          contact: '',
+          imageUrl: widget.pharmacyImageUrl,
+          backgroundImgUrl: '',
+          description: '',
+          storeID: 0,
+        );
+        
+        currentConversationId = await chatRepository.createConversation(user.id, pharmacy);
+      }
+
+      final message = ChatMessage(
+        id: '',
+        senderId: user.id,
+        receiverId: widget.pharmacyId, // Use pharmacyId as receiverId
+        content: _messageController.text.trim(),
+        timestamp: DateTime.now(),
+        senderName: user.firstName,
+        senderType: 'customer',
+      );
+
+      await ref.read(chatRepositoryProvider).sendMessage(currentConversationId, message);
       _messageController.clear();
       
       // Scroll to bottom after sending message
@@ -77,7 +101,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message: $e')),
+          SnackBar(
+            content: Text('Failed to send message: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -85,7 +112,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsyncValue = ref.watch(conversationMessagesProvider(widget.conversationId));
+    // Handle empty conversationId by showing empty messages instead of trying to fetch
+    final messagesAsyncValue = widget.conversationId.isEmpty 
+        ? const AsyncValue.data(<ChatMessage>[])
+        : ref.watch(conversationMessagesProvider(widget.conversationId));
+    
     final currentUser = ref.watch(currentUserProvider).value;
     final primaryColor = const Color(0xFF8ECAE6);
 
@@ -173,7 +204,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 48,
-                            color: Colors.grey.shade400,
+                            color: Color(0xFF8ECAE6),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -181,7 +212,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
+                              color: Color(0xFF8ECAE6),
                             ),
                           ),
                           const SizedBox(height: 8),

@@ -32,6 +32,9 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 2);
+    _tabController.addListener(() {
+      setState(() {}); 
+    });
     _getPharmacyLocation();
   }
 
@@ -100,7 +103,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
           ],
         ),
       ),
-      floatingActionButton: _tabController.index == 2 // Only show on User Reviews tab
+      floatingActionButton: _tabController.index == 2 
           ? FloatingActionButton.extended(
               onPressed: () {
                 Navigator.push(
@@ -499,7 +502,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF2A4B8D),
+              color: const Color(0xFF8ECAE6),
             ),
           ),
         ),

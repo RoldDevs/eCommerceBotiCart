@@ -22,8 +22,8 @@ class RateStoreScreen extends ConsumerStatefulWidget {
 class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
   final TextEditingController _commentController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  List<File> _selectedImages = [];
-  List<File> _selectedVideos = [];
+  final List<File> _selectedImages = [];
+  final List<File> _selectedVideos = [];
 
   @override
   void dispose() {
@@ -509,6 +509,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
         });
       }
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick image: $e')),
       );
@@ -524,6 +525,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
         });
       }
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to pick video: $e')),
       );
@@ -544,20 +546,20 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
       
       for (final image in _selectedImages) {
         final url = await ref.read(reviewFormProvider.notifier)
-            .uploadMedia(image.path, user.uid, reviewId, false);
+            .uploadMedia(image.path, user.id, reviewId, false);
         ref.read(reviewFormProvider.notifier).addImageUrl(url);
       }
 
       for (final video in _selectedVideos) {
         final url = await ref.read(reviewFormProvider.notifier)
-            .uploadMedia(video.path, user.uid, reviewId, true);
+            .uploadMedia(video.path, user.id, reviewId, true);
         ref.read(reviewFormProvider.notifier).addVideoUrl(url);
       }
 
       // Submit the review
       await ref.read(reviewFormProvider.notifier).submitReview(
         pharmacyId: widget.pharmacy.id,
-        userId: user.uid,
+        userId: user.id,
         userName: user.firstName ?? 'Anonymous',
       );
 

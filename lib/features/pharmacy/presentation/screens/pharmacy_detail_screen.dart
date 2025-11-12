@@ -2,28 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/utils/screen_utils.dart';
 import '../widgets/recent_searches_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/quick_actions_section.dart';
 import '../providers/search_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/filter_provider.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../domain/entities/medicine.dart';
 import '../../../../features/auth/presentation/providers/user_provider.dart';
+import '../../../../features/auth/presentation/screens/account_screen.dart';
 
 class PharmacyDetailScreen extends ConsumerWidget {
   final Pharmacy pharmacy;
 
-  const PharmacyDetailScreen({
-    super.key,
-    required this.pharmacy,
-  });
+  const PharmacyDetailScreen({super.key, required this.pharmacy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(navigationIndexProvider.notifier).state = 0;
     });
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       extendBody: true,
@@ -38,64 +39,72 @@ class PharmacyDetailScreen extends ConsumerWidget {
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [  
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(35, 15, 35, 15),
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      final initialSearches = ref.read(initialSearchesProvider);
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => RecentSearchesScreen(
-                                            recentSearches: initialSearches,
-                                            onSearchTap: (query) {
-                                              ref.read(searchHistoryProvider.notifier).addSearch(query);
-                                            },
-                                            onBackPressed: () => Navigator.of(context).pop(),
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE6F3F8).withAlpha(120),
-                                        borderRadius: BorderRadius.circular(30),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 15),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.search,
-                                            color: Color(0xFF8ECAE6),
-                                            size: 35,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
-                                              child: Text(
-                                                'Search',
-                                                style: GoogleFonts.poppins(
-                                                  color: Colors.grey,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(35, 15, 35, 15),
+                      child: GestureDetector(
+                        onTap: () {
+                          final initialSearches = ref.read(
+                            initialSearchesProvider,
+                          );
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => RecentSearchesScreen(
+                                recentSearches: initialSearches,
+                                onSearchTap: (query) {
+                                  ref
+                                      .read(searchHistoryProvider.notifier)
+                                      .addSearch(query);
+                                },
+                                onBackPressed: () =>
+                                    Navigator.of(context).pop(),
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE6F3F8).withAlpha(120),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 15,
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.search,
+                                color: Color(0xFF8ECAE6),
+                                size: 35,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  child: Text(
+                                    'Search',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ),
-                    
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+
                     // Welcome message with image
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.transparent,
-                        ),
+                        decoration: BoxDecoration(color: Colors.transparent),
                         padding: const EdgeInsets.all(12),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -103,7 +112,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min, 
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
                                     'Welcome to ${pharmacy.name} -',
@@ -113,23 +122,23 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                       color: const Color(0xFF8ECAE6),
                                     ),
                                   ),
-                                  const SizedBox(height: 2), 
+                                  const SizedBox(height: 2),
                                   Text(
                                     'Your health, our\npriority.',
                                     style: GoogleFonts.poppins(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
                                       color: const Color(0xFF8ECAE6),
-                                      height: 1.2, 
+                                      height: 1.2,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            
+
                             Container(
-                              width: 140, 
-                              height: 160, 
+                              width: 140,
+                              height: 160,
                               decoration: BoxDecoration(
                                 color: Colors.transparent,
                                 borderRadius: BorderRadius.circular(10),
@@ -143,7 +152,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    
+
                     // Categories section
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
@@ -165,27 +174,171 @@ class PharmacyDetailScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _buildCategoryCard(
+                                  context: context,
+                                  ref: ref,
                                   title: 'Prescription',
                                   svgPath: 'assets/illus/prescription.svg',
-                                  onTap: () {},
+                                  onTap: () {
+                                    // Navigate to Account Screen with prescription section
+                                    ref
+                                            .read(
+                                              navigationIndexProvider.notifier,
+                                            )
+                                            .state =
+                                        4;
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AccountScreen(),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
+                                  context: context,
+                                  ref: ref,
                                   title: 'Vitamins & Supplements',
                                   svgPath: 'assets/illus/supplements.svg',
-                                  onTap: () {},
+                                  onTap: () {
+                                    // Clear existing filters
+                                    ref
+                                        .read(
+                                          selectedProductTypesProvider.notifier,
+                                        )
+                                        .clear();
+                                    ref
+                                        .read(
+                                          selectedConditionTypesProvider
+                                              .notifier,
+                                        )
+                                        .clear();
+                                    // Apply Vitamins & Supplements filter
+                                    ref
+                                        .read(
+                                          selectedProductTypesProvider.notifier,
+                                        )
+                                        .toggle(
+                                          MedicineProductType
+                                              .vitaminsSupplements,
+                                        );
+                                    // Navigate to products screen
+                                    final initialSearches = ref.read(
+                                      initialSearchesProvider,
+                                    );
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RecentSearchesScreen(
+                                              recentSearches: initialSearches,
+                                              onSearchTap: (query) {
+                                                ref
+                                                    .read(
+                                                      searchHistoryProvider
+                                                          .notifier,
+                                                    )
+                                                    .addSearch(query);
+                                              },
+                                              onBackPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
+                                  context: context,
+                                  ref: ref,
                                   title: 'Over the Counter',
                                   svgPath: 'assets/illus/counter.svg',
-                                  onTap: () {},
+                                  onTap: () {
+                                    // Clear existing filters
+                                    ref
+                                        .read(
+                                          selectedProductTypesProvider.notifier,
+                                        )
+                                        .clear();
+                                    ref
+                                        .read(
+                                          selectedConditionTypesProvider
+                                              .notifier,
+                                        )
+                                        .clear();
+                                    // Apply Over the Counter filter
+                                    ref
+                                        .read(
+                                          selectedProductTypesProvider.notifier,
+                                        )
+                                        .toggle(
+                                          MedicineProductType.overTheCounter,
+                                        );
+                                    // Navigate to products screen
+                                    final initialSearches = ref.read(
+                                      initialSearchesProvider,
+                                    );
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RecentSearchesScreen(
+                                              recentSearches: initialSearches,
+                                              onSearchTap: (query) {
+                                                ref
+                                                    .read(
+                                                      searchHistoryProvider
+                                                          .notifier,
+                                                    )
+                                                    .addSearch(query);
+                                              },
+                                              onBackPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
+                                  context: context,
+                                  ref: ref,
                                   title: 'See all products',
                                   svgPath: 'assets/illus/all.svg',
-                                  onTap: () {},
+                                  onTap: () {
+                                    // Clear all filters to show all products
+                                    ref
+                                        .read(
+                                          selectedProductTypesProvider.notifier,
+                                        )
+                                        .clear();
+                                    ref
+                                        .read(
+                                          selectedConditionTypesProvider
+                                              .notifier,
+                                        )
+                                        .clear();
+                                    // Navigate to products screen
+                                    final initialSearches = ref.read(
+                                      initialSearchesProvider,
+                                    );
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RecentSearchesScreen(
+                                              recentSearches: initialSearches,
+                                              onSearchTap: (query) {
+                                                ref
+                                                    .read(
+                                                      searchHistoryProvider
+                                                          .notifier,
+                                                    )
+                                                    .addSearch(query);
+                                              },
+                                              onBackPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                            ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -193,7 +346,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    
+
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                       child: Column(
@@ -209,8 +362,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 12),
                           GestureDetector(
-                            onTap: () {
-                            },
+                            onTap: () {},
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(15),
                               child: Stack(
@@ -230,7 +382,9 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                         end: Alignment.bottomCenter,
                                         colors: [
                                           Colors.white.withValues(alpha: 0.3),
-                                          const Color(0xFFE6F3F8).withValues(alpha: 0.8),
+                                          const Color(
+                                            0xFFE6F3F8,
+                                          ).withValues(alpha: 0.8),
                                         ],
                                       ),
                                     ),
@@ -242,7 +396,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    
+
                     // Promotions section
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
@@ -281,7 +435,9 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                         end: Alignment.bottomCenter,
                                         colors: [
                                           Colors.white.withValues(alpha: 0.3),
-                                          const Color(0xFFE6F3F8).withValues(alpha: 0.8),
+                                          const Color(
+                                            0xFFE6F3F8,
+                                          ).withValues(alpha: 0.8),
                                         ],
                                       ),
                                     ),
@@ -293,14 +449,14 @@ class PharmacyDetailScreen extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    
+
                     // Quick Actions section
                     Padding(
                       padding: const EdgeInsets.only(top: 10, bottom: 20),
                       child: QuickActionsSection(pharmacy: pharmacy),
                     ),
 
-                    const SizedBox(height: 70),
+                    SizedBox(height: ScreenUtils.getBottomPadding(context)),
                   ],
                 ),
               ),
@@ -314,7 +470,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
 
   Widget _buildTopSection(BuildContext context, WidgetRef ref) {
     final userAsyncValue = ref.watch(currentUserProvider);
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 25.0),
       decoration: BoxDecoration(
@@ -374,7 +530,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          
+
           // Notification icon
           Container(
             padding: const EdgeInsets.fromLTRB(0, 10, 20, 0),
@@ -390,6 +546,8 @@ class PharmacyDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildCategoryCard({
+    required BuildContext context,
+    required WidgetRef ref,
     required String title,
     required String svgPath,
     required VoidCallback onTap,
@@ -411,17 +569,11 @@ class PharmacyDetailScreen extends ConsumerWidget {
             Container(
               height: 105,
               width: 105,
-              decoration: BoxDecoration(
-                color: Colors.transparent,
-
-              ),
-              alignment: Alignment.center, 
+              decoration: BoxDecoration(color: Colors.transparent),
+              alignment: Alignment.center,
               child: Padding(
                 padding: const EdgeInsets.all(0),
-                child: SvgPicture.asset(
-                  svgPath,
-                  fit: BoxFit.contain,
-                ),
+                child: SvgPicture.asset(svgPath, fit: BoxFit.contain),
               ),
             ),
             const SizedBox(height: 10),

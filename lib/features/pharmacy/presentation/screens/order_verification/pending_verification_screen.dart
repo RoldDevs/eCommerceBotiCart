@@ -8,10 +8,7 @@ import 'payment_screen.dart';
 class PendingVerificationScreen extends ConsumerWidget {
   final String orderId;
 
-  const PendingVerificationScreen({
-    super.key,
-    required this.orderId,
-  });
+  const PendingVerificationScreen({super.key, required this.orderId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,11 +45,7 @@ class PendingVerificationScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 64,
-                    color: Colors.red[400],
-                  ),
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading order',
@@ -91,10 +84,9 @@ class PendingVerificationScreen extends ConsumerWidget {
           // Navigate to orders screen if completely verified
           if (order.isCompletelyVerified) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/orders',
-                (route) => false,
-              );
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/orders', (route) => false);
             });
           }
 
@@ -105,91 +97,99 @@ class PendingVerificationScreen extends ConsumerWidget {
   }
 
   Widget _buildPendingContent(BuildContext context, OrderEntity order) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Status Icon
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: const Color(0xFF8ECAE6).withOpacity(0.1),
-              shape: BoxShape.circle,
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Status Icon
+            Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                color: const Color(0xFF8ECAE6).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.hourglass_empty,
+                size: 40,
+                color: Color(0xFF8ECAE6),
+              ),
             ),
-            child: const Icon(
-              Icons.hourglass_empty,
-              size: 60,
-              color: Color(0xFF8ECAE6),
-            ),
-          ),
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Title
-          Text(
-            _getStatusTitle(order),
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF2D3748),
+            // Title
+            Text(
+              _getStatusTitle(order),
+              style: GoogleFonts.poppins(
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF2D3748),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Description
-          Text(
-            _getStatusDescription(order),
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              color: const Color(0xFF718096),
-              height: 1.5,
+            // Description
+            Text(
+              _getStatusDescription(order),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: const Color(0xFF718096),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Order Info Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Order Details',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF2D3748),
+            // Order Info Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildDetailRow('Order ID', '#${order.orderID}'),
-                _buildDetailRow('Total Amount', '₱${order.totalPrice.toStringAsFixed(2)}'),
-                _buildDetailRow('Order Date', _formatDate(order.createdAt)),
-                if (order.deliveryAddress != null)
-                  _buildDetailRow('Delivery Address', order.deliveryAddress!),
-              ],
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Order Details',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2D3748),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDetailRow('Order ID', '#${order.orderID}'),
+                  _buildDetailRow(
+                    'Total Amount',
+                    '₱${order.totalPrice.toStringAsFixed(2)}',
+                  ),
+                  _buildDetailRow('Order Date', _formatDate(order.createdAt)),
+                  if (order.deliveryAddress != null)
+                    _buildDetailRow('Delivery Address', order.deliveryAddress!),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Status Indicators
-          _buildStatusIndicators(order),
-        ],
+            // Status Indicators
+            _buildStatusIndicators(order),
+
+            // Bottom margin
+            const SizedBox(height: 50),
+          ],
+        ),
       ),
     );
   }
@@ -238,7 +238,9 @@ class PendingVerificationScreen extends ConsumerWidget {
         _buildStatusStep(
           'Initial Verification',
           order.isInitiallyVerified,
-          order.isInitiallyVerified ? Icons.check_circle : Icons.radio_button_unchecked,
+          order.isInitiallyVerified
+              ? Icons.check_circle
+              : Icons.radio_button_unchecked,
           order.isInitiallyVerified ? Colors.green : Colors.grey,
         ),
         _buildStatusConnector(order.isInitiallyVerified),
@@ -252,14 +254,21 @@ class PendingVerificationScreen extends ConsumerWidget {
         _buildStatusStep(
           'Final Verification',
           order.isCompletelyVerified,
-          order.isCompletelyVerified ? Icons.check_circle : Icons.radio_button_unchecked,
+          order.isCompletelyVerified
+              ? Icons.check_circle
+              : Icons.radio_button_unchecked,
           order.isCompletelyVerified ? Colors.green : Colors.grey,
         ),
       ],
     );
   }
 
-  Widget _buildStatusStep(String title, bool isCompleted, IconData icon, Color color) {
+  Widget _buildStatusStep(
+    String title,
+    bool isCompleted,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
       children: [
         Icon(icon, color: color, size: 24),
@@ -269,7 +278,9 @@ class PendingVerificationScreen extends ConsumerWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: isCompleted ? FontWeight.w600 : FontWeight.w400,
-            color: isCompleted ? const Color(0xFF2D3748) : const Color(0xFF718096),
+            color: isCompleted
+                ? const Color(0xFF2D3748)
+                : const Color(0xFF718096),
           ),
         ),
       ],

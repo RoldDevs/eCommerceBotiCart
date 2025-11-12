@@ -7,8 +7,10 @@ import '../../domain/entities/medicine.dart';
 import '../providers/medicine_provider.dart'; 
 import '../providers/selected_medicine_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/filter_provider.dart';
 import '../widgets/related_product_card.dart';
 import '../widgets/buy_now_modal.dart';
+import '../widgets/filters/search_filters_screen.dart';
 import 'order_information_screen.dart';
 
 class MedicineDetailScreen extends ConsumerStatefulWidget {
@@ -49,19 +51,36 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
     final isFavorite = favorites.contains(widget.medicine.id);
     final searchQuery = ref.watch(medicineSearchQueryProvider);
     
-    // Get medicines based on search query
+    // Get medicines based on search query and filters
     final List<Medicine> relatedMedicines;
     if (searchQuery.isEmpty) {
-      // Use related medicines provider (returns List<Medicine> directly)
-      relatedMedicines = ref.watch(relatedMedicinesProvider);
+      // Use filtered medicines provider to apply any active filters
+      final filteredMedicines = ref.watch(filteredMedicinesByFiltersProvider);
+      relatedMedicines = filteredMedicines.isNotEmpty ? filteredMedicines : ref.watch(relatedMedicinesProvider);
     } else {
-      // Use search provider (returns AsyncValue<List<Medicine>>)
+      // Use search provider and then apply filters
       final searchAsyncValue = ref.watch(medicineSearchProvider(searchQuery));
-      relatedMedicines = searchAsyncValue.when(
+      final baseSearchResults = searchAsyncValue.when(
         data: (medicines) => medicines,
         loading: () => <Medicine>[],
         error: (_, __) => <Medicine>[],
       );
+      
+      // Apply filters to search results
+      final selectedProductTypes = ref.watch(selectedProductTypesProvider);
+      final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
+      
+      if (selectedProductTypes.isEmpty && selectedConditionTypes.isEmpty) {
+        relatedMedicines = baseSearchResults;
+      } else {
+        relatedMedicines = baseSearchResults.where((medicine) {
+          bool matchesProductType = selectedProductTypes.isEmpty || 
+              selectedProductTypes.contains(medicine.productType);
+          bool matchesConditionType = selectedConditionTypes.isEmpty || 
+              selectedConditionTypes.contains(medicine.conditionType);
+          return matchesProductType && matchesConditionType;
+        }).toList();
+      }
     }
     
     return Scaffold(
@@ -123,7 +142,11 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                     IconButton(
                       icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
                       onPressed: () {
-                        // Filter functionality
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const SearchFiltersScreen(),
+                          ),
+                        );
                       },
                     ),
                   ],
