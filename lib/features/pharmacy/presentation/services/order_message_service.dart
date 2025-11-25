@@ -29,7 +29,8 @@ class OrderMessageService {
     required Pharmacy pharmacy,
   }) async {
     final title = 'Order Confirmed - ${pharmacy.name}';
-    final message = '''
+    final message =
+        '''
 Hello! Your order has been confirmed.
 
 Product: ${medicine.medicineName}
@@ -67,6 +68,58 @@ Thank you for choosing ${pharmacy.name}!
     await _repository.createOrderMessage(orderMessage);
   }
 
+  // Create order confirmation message for multiple items
+  Future<void> createOrderConfirmationMessageForMultipleItems({
+    required OrderEntity order,
+    required List<dynamic> orderItems,
+    required Pharmacy pharmacy,
+  }) async {
+    final title = 'Order Confirmed - ${pharmacy.name}';
+
+    final itemsList = orderItems
+        .map((item) => '• ${item.medicine.medicineName} x${item.quantity}')
+        .join('\n');
+
+    final message =
+        '''
+Hello! Your order has been confirmed.
+
+Items:
+$itemsList
+
+Order ID: #${order.orderID}
+Total Payment: ₱${order.totalPrice.toStringAsFixed(2)}
+
+${order.isHomeDelivery ? 'Your order will be delivered to: ${order.deliveryAddress}' : 'Your order is ready for pickup at: ${pharmacy.location}'}
+
+We are now processing your order and will notify you once it's ready.
+
+Thank you for choosing ${pharmacy.name}!
+''';
+
+    final orderMessage = OrderMessage(
+      id: '',
+      orderId: order.orderID,
+      userId: order.userUID,
+      pharmacyId: pharmacy.id,
+      pharmacyName: pharmacy.name,
+      pharmacyImageUrl: pharmacy.imageUrl,
+      title: title,
+      message: message,
+      type: OrderMessageType.orderConfirmation,
+      createdAt: DateTime.now(),
+      metadata: {
+        'itemCount': orderItems.length,
+        'quantity': order.quantity,
+        'totalPrice': order.totalPrice,
+        'isHomeDelivery': order.isHomeDelivery,
+        'deliveryAddress': order.deliveryAddress,
+      },
+    );
+
+    await _repository.createOrderMessage(orderMessage);
+  }
+
   // Create in-transit message
   Future<void> createInTransitMessage({
     required OrderEntity order,
@@ -74,7 +127,8 @@ Thank you for choosing ${pharmacy.name}!
     required Pharmacy pharmacy,
   }) async {
     final title = 'Order In Transit - ${pharmacy.name}';
-    final message = '''
+    final message =
+        '''
 Great news! Your order is now in transit.
 
 Product: ${medicine.medicineName}
@@ -124,6 +178,71 @@ Thank you for your patience!
     await _repository.createOrderMessage(orderMessage);
   }
 
+  // Create in-transit message for multiple items
+  Future<void> createInTransitMessageForMultipleItems({
+    required OrderEntity order,
+    required List<dynamic> orderItems,
+    required Pharmacy pharmacy,
+  }) async {
+    final title = 'Order In Transit - ${pharmacy.name}';
+
+    final itemsList = orderItems
+        .map((item) => '• ${item.medicine.medicineName} x${item.quantity}')
+        .join('\n');
+
+    final message =
+        '''
+Great news! Your order is now in transit.
+
+Items:
+$itemsList
+
+Order ID: #${order.orderID}
+
+${order.isHomeDelivery ? '''
+Your order is on its way to: ${order.deliveryAddress}
+
+Delivery Information:
+- Your order has been verified and is now being prepared for delivery
+- Our delivery partner will contact you shortly
+- Estimated delivery time: 30-60 minutes
+- Please ensure someone is available to receive the order
+
+${order.lalamoveTrackingUrl != null ? 'Track your delivery: ${order.lalamoveTrackingUrl}' : ''}
+''' : '''
+Your order is ready for pickup at: ${pharmacy.location}
+
+Pickup Information:
+- Your order has been verified and is ready for collection
+- Store hours: Please contact ${pharmacy.contact} for store hours
+- Please bring a valid ID when picking up your order
+'''}
+
+Thank you for your patience!
+''';
+
+    final orderMessage = OrderMessage(
+      id: '',
+      orderId: order.orderID,
+      userId: order.userUID,
+      pharmacyId: pharmacy.id,
+      pharmacyName: pharmacy.name,
+      pharmacyImageUrl: pharmacy.imageUrl,
+      title: title,
+      message: message,
+      type: OrderMessageType.inTransit,
+      createdAt: DateTime.now(),
+      metadata: {
+        'itemCount': orderItems.length,
+        'isHomeDelivery': order.isHomeDelivery,
+        'deliveryAddress': order.deliveryAddress,
+        'trackingUrl': order.lalamoveTrackingUrl,
+      },
+    );
+
+    await _repository.createOrderMessage(orderMessage);
+  }
+
   // Create payment received message
   Future<void> createPaymentReceivedMessage({
     required OrderEntity order,
@@ -131,7 +250,8 @@ Thank you for your patience!
     required Pharmacy pharmacy,
   }) async {
     final title = 'Payment Received - ${pharmacy.name}';
-    final message = '''
+    final message =
+        '''
 Payment Confirmed!
 
 We have successfully received your payment for:

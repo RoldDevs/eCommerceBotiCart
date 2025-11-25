@@ -4,10 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../../domain/entities/medicine.dart';
+import '../../domain/entities/pharmacy.dart';
 import '../../../auth/presentation/providers/user_provider.dart';
 import '../providers/location_provider.dart';
-import '../../../auth/presentation/models/file_item.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../providers/pharmacy_providers.dart';
 import '../services/checkout_service.dart';
 
 class OrderInformationScreen extends ConsumerStatefulWidget {
@@ -21,17 +21,21 @@ class OrderInformationScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<OrderInformationScreen> createState() => _OrderInformationScreenState();
+  ConsumerState<OrderInformationScreen> createState() =>
+      _OrderInformationScreenState();
 }
 
-class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen> {
+class _OrderInformationScreenState
+    extends ConsumerState<OrderInformationScreen> {
   bool isHomeDelivery = true;
   GoogleMapController? mapController;
   Set<Marker> markers = {};
   bool isApplyingBeneficiaryId = false;
   bool isLoading = false;
   String? orderId;
-  
+  Pharmacy? pharmacy;
+  LatLng? pharmacyLocation;
+
   @override
   void initState() {
     super.initState();
@@ -41,19 +45,53 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
       ref.read(selectedAddressLocationProvider.notifier).state = null;
       ref.read(applyBeneficiaryIdProvider.notifier).state = false;
       ref.read(selectedBeneficiaryIdProvider.notifier).state = null;
-      
-      // Load default address if available
-      _loadDefaultAddress();
+
+      // Load pharmacy information
+      _loadPharmacyInfo();
+
+      // Load default address if available (only for home delivery)
+      if (isHomeDelivery) {
+        _loadDefaultAddress();
+      }
     });
   }
-  
+
+  Future<void> _loadPharmacyInfo() async {
+    final pharmaciesAsyncValue = ref.read(pharmaciesStreamProvider);
+    pharmaciesAsyncValue.whenData((pharmacies) async {
+      try {
+        final foundPharmacy = pharmacies.firstWhere(
+          (p) => p.storeID == widget.medicine.storeID,
+        );
+        setState(() {
+          pharmacy = foundPharmacy;
+        });
+
+        // Get pharmacy location
+        if (foundPharmacy.location.isNotEmpty) {
+          final location = await getLocationFromAddress(foundPharmacy.location);
+          if (location != null) {
+            setState(() {
+              pharmacyLocation = location;
+            });
+            if (!isHomeDelivery) {
+              _updateMapLocation(location, foundPharmacy.name);
+            }
+          }
+        }
+      } catch (e) {
+        // Pharmacy not found, handle gracefully
+      }
+    });
+  }
+
   Future<void> _loadDefaultAddress() async {
     final userAsyncValue = ref.read(currentUserProvider);
     userAsyncValue.whenData((user) async {
       if (user != null && user.defaultAddress != null) {
         // Set the selected address to the default address
         ref.read(selectedAddressProvider.notifier).state = user.defaultAddress;
-        
+
         // Get location from address and update map
         final location = await getLocationFromAddress(user.defaultAddress!);
         if (location != null) {
@@ -63,24 +101,34 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
       }
     });
   }
-  
-  void _updateMapLocation(LatLng location) {
+
+  void _updateMapLocation(LatLng location, [String? title]) {
     if (mapController != null) {
       mapController!.animateCamera(CameraUpdate.newLatLngZoom(location, 15));
       setState(() {
-        markers = {
-          Marker(
-            markerId: const MarkerId('selectedLocation'),
-            position: location,
-          ),
-        };
+        if (title != null) {
+          markers = {
+            Marker(
+              markerId: const MarkerId('selectedLocation'),
+              position: location,
+              infoWindow: InfoWindow(title: title),
+            ),
+          };
+        } else {
+          markers = {
+            Marker(
+              markerId: const MarkerId('selectedLocation'),
+              position: location,
+            ),
+          };
+        }
       });
     }
   }
 
   Future<void> _onAddressSelected(String address) async {
     ref.read(selectedAddressProvider.notifier).state = address;
-    
+
     // Get location from address and update map
     final location = await getLocationFromAddress(address);
     if (location != null) {
@@ -92,8 +140,9 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
   Future<void> _processCheckout() async {
     final selectedAddress = ref.read(selectedAddressProvider);
     final selectedBeneficiaryId = ref.read(selectedBeneficiaryIdProvider);
-    
-    if (selectedAddress == null) {
+
+    // For home delivery, address is required
+    if (isHomeDelivery && selectedAddress == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -109,27 +158,51 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
       );
       return;
     }
-    
+
+    // For pickup, use pharmacy location as address
+    final String? deliveryAddress = isHomeDelivery
+        ? selectedAddress
+        : pharmacy?.location;
+
+    if (deliveryAddress == null || deliveryAddress.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isHomeDelivery
+                ? 'Please select a delivery address'
+                : 'Pharmacy location not available',
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
-    
+
     try {
       final checkoutService = ref.read(checkoutServiceProvider);
-      
+
       // Create the order
       final newOrderId = await checkoutService.checkoutSingleItem(
         medicine: widget.medicine,
         quantity: widget.quantity,
-        deliveryAddress: selectedAddress,
+        deliveryAddress: deliveryAddress,
         isHomeDelivery: isHomeDelivery,
         beneficiaryId: selectedBeneficiaryId,
       );
-      
+
       setState(() {
         orderId = newOrderId;
       });
-      
+
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -144,23 +217,19 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
           behavior: SnackBarBehavior.floating,
         ),
       );
-      
+
       // Navigate based on delivery type
       if (isHomeDelivery) {
         // For home delivery, navigate to orders screen (no verification needed)
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const OrdersScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const OrdersScreen()),
         );
       } else {
         // For pickup orders, navigate to orders screen
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => const OrdersScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const OrdersScreen()),
         );
       }
     } catch (e) {
@@ -190,7 +259,6 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
     final userAsync = ref.watch(currentUserProvider);
     final selectedAddress = ref.watch(selectedAddressProvider);
     final selectedLocation = ref.watch(selectedAddressLocationProvider);
-    final applyBeneficiaryId = ref.watch(applyBeneficiaryIdProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -241,14 +309,22 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                                   setState(() {
                                     isHomeDelivery = true;
                                   });
+                                  // Reload default address when switching to home delivery
+                                  _loadDefaultAddress();
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: isHomeDelivery ? const Color(0xFF8ECAE6) : Colors.white,
+                                    color: isHomeDelivery
+                                        ? const Color(0xFF8ECAE6)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: isHomeDelivery ? const Color(0xFF8ECAE6) : Colors.grey.shade300,
+                                      color: isHomeDelivery
+                                          ? const Color(0xFF8ECAE6)
+                                          : Colors.grey.shade300,
                                     ),
                                   ),
                                   alignment: Alignment.center,
@@ -257,7 +333,9 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: isHomeDelivery ? Colors.white : Colors.black,
+                                      color: isHomeDelivery
+                                          ? Colors.white
+                                          : Colors.black,
                                     ),
                                   ),
                                 ),
@@ -270,14 +348,28 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                                   setState(() {
                                     isHomeDelivery = false;
                                   });
+                                  // Update map to show pharmacy location when switching to pickup
+                                  if (pharmacyLocation != null &&
+                                      pharmacy != null) {
+                                    _updateMapLocation(
+                                      pharmacyLocation!,
+                                      pharmacy!.name,
+                                    );
+                                  }
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: !isHomeDelivery ? const Color(0xFF8ECAE6) : Colors.white,
+                                    color: !isHomeDelivery
+                                        ? const Color(0xFF8ECAE6)
+                                        : Colors.white,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                      color: !isHomeDelivery ? const Color(0xFF8ECAE6) : Colors.grey.shade300,
+                                      color: !isHomeDelivery
+                                          ? const Color(0xFF8ECAE6)
+                                          : Colors.grey.shade300,
                                     ),
                                   ),
                                   alignment: Alignment.center,
@@ -286,7 +378,9 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: !isHomeDelivery ? Colors.white : Colors.black,
+                                      color: !isHomeDelivery
+                                          ? Colors.white
+                                          : Colors.black,
                                     ),
                                   ),
                                 ),
@@ -294,7 +388,7 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                             ),
                           ],
                         ),
-                        
+
                         // Lalamove delivery info section
                         if (isHomeDelivery) ...[
                           const SizedBox(height: 16),
@@ -303,7 +397,9 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                             decoration: BoxDecoration(
                               color: Colors.blue.shade50,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFF8ECAE6)),
+                              border: Border.all(
+                                color: const Color(0xFF8ECAE6),
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -315,7 +411,8 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Lalamove Delivery',
@@ -340,12 +437,71 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                             ),
                           ),
                         ],
+                        // Pickup benefits section
+                        if (!isHomeDelivery) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF8ECAE6,
+                              ).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFF8ECAE6),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.store_outlined,
+                                      color: const Color(0xFF8ECAE6),
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Pickup Benefits',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF8ECAE6),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                _buildBenefitItem(
+                                  Icons.access_time,
+                                  'Skip the line - Order ahead and pick up when ready',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildBenefitItem(
+                                  Icons.notifications_outlined,
+                                  'Get notified when your order is ready for pickup',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildBenefitItem(
+                                  Icons.verified_outlined,
+                                  'Guaranteed availability - Your items are reserved',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildBenefitItem(
+                                  Icons.receipt_long_outlined,
+                                  'Order history tracking - Keep records of all purchases',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Map and address section
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -363,107 +519,184 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: selectedLocation != null
-                              ? GoogleMap(
-                                  initialCameraPosition: CameraPosition(
-                                    target: selectedLocation,
-                                    zoom: 15,
+                            child:
+                                (isHomeDelivery && selectedLocation != null) ||
+                                    (!isHomeDelivery &&
+                                        pharmacyLocation != null)
+                                ? GoogleMap(
+                                    initialCameraPosition: CameraPosition(
+                                      target: isHomeDelivery
+                                          ? selectedLocation!
+                                          : pharmacyLocation!,
+                                      zoom: 15,
+                                    ),
+                                    markers: markers,
+                                    onMapCreated: (controller) {
+                                      mapController = controller;
+                                      // Update map location after controller is ready
+                                      if (!isHomeDelivery &&
+                                          pharmacyLocation != null &&
+                                          pharmacy != null) {
+                                        _updateMapLocation(
+                                          pharmacyLocation!,
+                                          pharmacy!.name,
+                                        );
+                                      } else if (isHomeDelivery &&
+                                          selectedLocation != null) {
+                                        _updateMapLocation(selectedLocation);
+                                      }
+                                    },
+                                    zoomControlsEnabled: false,
+                                    mapToolbarEnabled: false,
+                                  )
+                                : Center(
+                                    child: Icon(
+                                      Icons.map,
+                                      size: 50,
+                                      color: Colors.grey.shade400,
+                                    ),
                                   ),
-                                  markers: markers,
-                                  onMapCreated: (controller) {
-                                    mapController = controller;
-                                  },
-                                  zoomControlsEnabled: false,
-                                  mapToolbarEnabled: false,
-                                )
-                              : Center(
-                                  child: Icon(
-                                    Icons.map,
-                                    size: 50,
-                                    color: Colors.grey.shade400,
-                                  ),
-                                ),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Address dropdown
-                        userAsync.when(
-                          data: (user) {
-                            if (user == null || user.addresses.isEmpty) {
-                              return const Text('No saved addresses found');
-                            }
-                            
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Select delivery address',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey.shade300),
-                                    borderRadius: BorderRadius.circular(8),
-                                    color: Colors.white,
-                                  ),
-                                  child: DropdownButtonFormField<String>(
-                                    icon: const Icon(Icons.keyboard_arrow_down),
-                                    iconSize: 24,
-                                    elevation: 2,
-                                    isExpanded: true, 
-                                    initialValue: selectedAddress,
-                                    decoration: InputDecoration(
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                      border: InputBorder.none,
-                                      hintText: 'Select address',
-                                      hintStyle: GoogleFonts.poppins(
-                                        color: Colors.grey,
-                                        fontSize: 14,
-                                      ),
-                                    ),
+                        // Address dropdown for delivery OR pickup location info
+                        if (isHomeDelivery)
+                          userAsync.when(
+                            data: (user) {
+                              if (user == null || user.addresses.isEmpty) {
+                                return const Text('No saved addresses found');
+                              }
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Select delivery address',
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
-                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    menuMaxHeight: 300,
-                                    items: user.addresses.map((address) {
-                                      return DropdownMenuItem<String>(
-                                        value: address,
-                                        child: Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.only(right: 30),
-                                          child: Text(
-                                            address,
-                                            style: GoogleFonts.poppins(fontSize: 14),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 1,
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    onChanged: (value) {
-                                      if (value != null) {
-                                        _onAddressSelected(value);
-                                      }
-                                    },
                                   ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: Colors.white,
+                                    ),
+                                    child: DropdownButtonFormField<String>(
+                                      icon: const Icon(
+                                        Icons.keyboard_arrow_down,
+                                      ),
+                                      iconSize: 24,
+                                      elevation: 2,
+                                      isExpanded: true,
+                                      initialValue: selectedAddress,
+                                      decoration: InputDecoration(
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 16,
+                                              vertical: 12,
+                                            ),
+                                        border: InputBorder.none,
+                                        hintText: 'Select address',
+                                        hintStyle: GoogleFonts.poppins(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.black87,
+                                      ),
+                                      menuMaxHeight: 300,
+                                      items: user.addresses.map((address) {
+                                        return DropdownMenuItem<String>(
+                                          value: address,
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.only(
+                                              right: 30,
+                                            ),
+                                            child: Text(
+                                              address,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                              maxLines: 1,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          _onAddressSelected(value);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                            loading: () => const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                            error: (_, __) =>
+                                const Text('Error loading addresses'),
+                          )
+                        else
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'You will pickup your item here',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                              ],
-                            );
-                          },
-                          loading: () => const Center(child: CircularProgressIndicator()),
-                          error: (_, __) => const Text('Error loading addresses'),
-                        ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.white,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      color: const Color(0xFF8ECAE6),
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        pharmacy?.location ??
+                                            'Loading pharmacy location...',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
+
                   // Order summary
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -480,16 +713,25 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: widget.medicine.imageURL.isNotEmpty
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.network(
-                                  widget.medicine.imageURL,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) => 
-                                    const Icon(Icons.medication, size: 30, color: Color(0xFF8ECAE6)),
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    widget.medicine.imageURL,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(
+                                              Icons.medication,
+                                              size: 30,
+                                              color: Color(0xFF8ECAE6),
+                                            ),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.medication,
+                                  size: 30,
+                                  color: Color(0xFF8ECAE6),
                                 ),
-                              )
-                            : const Icon(Icons.medication, size: 30, color: Color(0xFF8ECAE6)),
                         ),
                         const SizedBox(width: 16),
                         // Product details
@@ -506,7 +748,8 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Total item: ${widget.quantity}',
@@ -531,92 +774,9 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 8),
-                  
-                  // Beneficiary ID section
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Colors.white,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Apply Beneficiary ID Card for discount?',
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    isApplyingBeneficiaryId = true;
-                                  });
-                                  ref.read(applyBeneficiaryIdProvider.notifier).state = true;
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: applyBeneficiaryId ? const Color(0xFF8ECAE6) : Colors.white,
-                                  foregroundColor: applyBeneficiaryId ? Colors.white : Colors.black,
-                                  side: BorderSide(color: applyBeneficiaryId ? const Color(0xFF8ECAE6) : Colors.grey.shade300),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                child: Text(
-                                  'Yes',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  setState(() {
-                                    isApplyingBeneficiaryId = false;
-                                  });
-                                  ref.read(applyBeneficiaryIdProvider.notifier).state = false;
-                                  ref.read(selectedBeneficiaryIdProvider.notifier).state = null;
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: !applyBeneficiaryId ? const Color(0xFF8ECAE6) : Colors.white,
-                                  foregroundColor: !applyBeneficiaryId ? Colors.white : Colors.black,
-                                  side: BorderSide(color: !applyBeneficiaryId ? const Color(0xFF8ECAE6) : Colors.grey.shade300),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                ),
-                                child: Text(
-                                  'No',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (applyBeneficiaryId) ...[
-                          const SizedBox(height: 16),
-                          _buildBeneficiaryIdSelector(),
-                        ],
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 8),
-                  
+
                   // Order Summary section
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -663,11 +823,10 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                               ),
                             ),
                             Text(
-                              applyBeneficiaryId ? '-₱${(totalPrice * 0.2).toStringAsFixed(2)}' : '₱0.00',
+                              '₱0.00',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
-                                color: applyBeneficiaryId ? Colors.green : null,
                               ),
                             ),
                           ],
@@ -687,7 +846,7 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                               ),
                             ),
                             Text(
-                              '₱${(totalPrice - (applyBeneficiaryId ? totalPrice * 0.2 : 0)).toStringAsFixed(2)}',
+                              '₱${totalPrice.toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -703,7 +862,7 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
               ),
             ),
           ),
-          
+
           // Bottom checkout button
           Container(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 50),
@@ -720,7 +879,12 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: selectedAddress != null && !isLoading ? _processCheckout : null,
+                onPressed:
+                    ((isHomeDelivery && selectedAddress != null) ||
+                            (!isHomeDelivery && pharmacy != null)) &&
+                        !isLoading
+                    ? _processCheckout
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8ECAE6),
                   foregroundColor: Colors.white,
@@ -730,22 +894,22 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
                   ),
                   disabledBackgroundColor: Colors.grey.shade300,
                 ),
-                child: isLoading 
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
+                child: isLoading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'CHECKOUT',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    )
-                  : Text(
-                      'CHECKOUT',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
               ),
             ),
           ),
@@ -753,133 +917,20 @@ class _OrderInformationScreenState extends ConsumerState<OrderInformationScreen>
       ),
     );
   }
-  
-  Widget _buildBeneficiaryIdSelector() {
-    final userAsync = ref.watch(currentUserProvider);
-    final selectedBeneficiaryId = ref.watch(selectedBeneficiaryIdProvider);
-    
-    return userAsync.when(
-      data: (user) {
-        if (user == null) return const SizedBox();
-        
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.id)
-              .collection('discountCards')
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            
-            if (snapshot.hasError) {
-              return Text('Error: ${snapshot.error}');
-            }
-            
-            final discountCards = snapshot.data?.docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              return FileItem(
-                url: data['url'] as String,
-                fileName: data['fileName'] as String,
-                fileType: data['fileType'] as String,
-                createdAt: data['uploadedAt'] != null 
-                    ? (data['uploadedAt'] as Timestamp).toDate() 
-                    : null,
-              );
-            }).toList() ?? [];
-            
-            if (discountCards.isEmpty) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'No beneficiary ID cards found',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () {
-                      // Navigate to account screen to upload ID
-                      Navigator.pushNamed(context, '/account');
-                    },
-                    child: Text(
-                      'Upload ID in Account Settings',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        color: const Color(0xFF8ECAE6),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-            
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Select Beneficiary ID Card',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: DropdownButtonFormField<String>(
-                    initialValue: selectedBeneficiaryId,
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      border: InputBorder.none,
-                      hintText: 'Select ID card',
-                      hintStyle: GoogleFonts.poppins(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    items: discountCards.map((card) {
-                      return DropdownMenuItem<String>(
-                        value: card.url,
-                        child: Text(
-                          'Senior Citizen ID (${card.fileType})',
-                          style: GoogleFonts.poppins(fontSize: 14),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        ref.read(selectedBeneficiaryIdProvider.notifier).state = value;
-                      }
-                    },
-                  ),
-                ),
-                if (selectedBeneficiaryId != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    '20% discount will be applied',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.green,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ],
-            );
-          },
-        );
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Text('Error loading user data'),
+
+  Widget _buildBenefitItem(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF8ECAE6)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black87),
+          ),
+        ),
+      ],
     );
   }
 }

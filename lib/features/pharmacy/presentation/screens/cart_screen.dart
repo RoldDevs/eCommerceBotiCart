@@ -1,5 +1,4 @@
 import 'package:boticart/features/pharmacy/presentation/providers/medicine_provider.dart';
-import 'package:boticart/core/utils/screen_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -22,7 +21,7 @@ class CartScreen extends ConsumerWidget {
     final selectedItemsTotal = cartNotifier.selectedItemsTotal;
     final searchQuery = ref.watch(cartSearchProvider);
     final favorites = ref.watch(favoriteMedicinesProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -61,17 +60,27 @@ class CartScreen extends ConsumerWidget {
                           color: Colors.grey,
                           fontSize: 15,
                         ),
-                        prefixIcon: const Icon(Icons.search, color: Color(0xFF8ECAE6), size: 30),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Color(0xFF8ECAE6),
+                          size: 30,
+                        ),
                         suffixIcon: searchQuery.isNotEmpty
                             ? IconButton(
-                                icon: const Icon(Icons.clear, color: Colors.grey),
+                                icon: const Icon(
+                                  Icons.clear,
+                                  color: Colors.grey,
+                                ),
                                 onPressed: () {
-                                  ref.read(cartSearchProvider.notifier).state = '';
+                                  ref.read(cartSearchProvider.notifier).state =
+                                      '';
                                 },
                               )
                             : null,
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -83,17 +92,23 @@ class CartScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
+                    icon: const Icon(
+                      Icons.filter_list,
+                      color: Color(0xFF8ECAE6),
+                    ),
                     onPressed: () {},
                   ),
                 ),
               ],
             ),
           ),
-          
+
           // Selection controls
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
             child: Row(
               children: [
                 if (isSelectionMode) ...[
@@ -105,7 +120,10 @@ class CartScreen extends ConsumerWidget {
                       cartNotifier.selectAll(newValue);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(4),
@@ -123,9 +141,11 @@ class CartScreen extends ConsumerWidget {
                   const SizedBox(width: 8),
                   // Delete button (only visible in selection mode)
                   InkWell(
-                    onTap: hasSelectedItems ? () {
-                      cartNotifier.removeSelectedItems();
-                    } : null,
+                    onTap: hasSelectedItems
+                        ? () {
+                            cartNotifier.removeSelectedItems();
+                          }
+                        : null,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -133,9 +153,13 @@ class CartScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: Icon(Icons.delete_outline, 
-                        color: hasSelectedItems ? Colors.grey.shade700 : Colors.grey.shade400, 
-                        size: 20),
+                      child: Icon(
+                        Icons.delete_outline,
+                        color: hasSelectedItems
+                            ? Colors.grey.shade700
+                            : Colors.grey.shade400,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],
@@ -145,7 +169,7 @@ class CartScreen extends ConsumerWidget {
                   onPressed: () {
                     final newMode = !isSelectionMode;
                     ref.read(selectionModeProvider.notifier).state = newMode;
-                    
+
                     // If turning off selection mode, clear all selections
                     if (!newMode) {
                       ref.read(selectAllProvider.notifier).state = false;
@@ -153,58 +177,65 @@ class CartScreen extends ConsumerWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isSelectionMode ? Colors.grey : const Color(0xFF8ECAE6),
+                    backgroundColor: isSelectionMode
+                        ? Colors.grey
+                        : const Color(0xFF8ECAE6),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: Text(
                     isSelectionMode ? 'Cancel' : 'Select',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
             ),
           ),
-          
+
           // Search results info
           if (searchQuery.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(children: [
                 ],
               ),
             ),
-          
+
           // Cart items
           Expanded(
             child: filteredCartItems.isEmpty
                 ? searchQuery.isNotEmpty
-                    ? _buildNoSearchResults(searchQuery)
-                    : _buildEmptyCart()
+                      ? _buildNoSearchResults(searchQuery)
+                      : _buildEmptyCart()
                 : ListView.builder(
-                    padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)),
                     itemCount: filteredCartItems.length,
                     itemBuilder: (context, index) {
                       final item = filteredCartItems[index];
                       final isFavorite = favorites.contains(item.medicine.id);
-                      
+
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: item.isSelected && isSelectionMode 
-                                ? const Color(0xFF8ECAE6) 
+                            color: item.isSelected && isSelectionMode
+                                ? const Color(0xFF8ECAE6)
                                 : Colors.grey.shade300,
                             width: 1,
                           ),
                           borderRadius: BorderRadius.circular(8),
-                          color: item.isSelected && isSelectionMode 
+                          color: item.isSelected && isSelectionMode
                               ? const Color(0xFFEDF6F9)
                               : Colors.white,
                           boxShadow: [
@@ -217,14 +248,19 @@ class CartScreen extends ConsumerWidget {
                           ],
                         ),
                         child: InkWell(
-                          onTap: isSelectionMode ? () {
-                            cartNotifier.toggleItemSelection(item.medicine.id);
-                            
-                            // Update select all state if needed
-                            if (!item.isSelected && isSelectAllActive) {
-                              ref.read(selectAllProvider.notifier).state = false;
-                            }
-                          } : null,
+                          onTap: isSelectionMode
+                              ? () {
+                                  cartNotifier.toggleItemSelection(
+                                    item.medicine.id,
+                                  );
+
+                                  // Update select all state if needed
+                                  if (!item.isSelected && isSelectAllActive) {
+                                    ref.read(selectAllProvider.notifier).state =
+                                        false;
+                                  }
+                                }
+                              : null,
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
                             child: Row(
@@ -236,19 +272,29 @@ class CartScreen extends ConsumerWidget {
                                   height: 80,
                                   margin: const EdgeInsets.only(right: 12),
                                   child: item.medicine.imageURL.isNotEmpty
-                                    ? Image.network(
-                                        item.medicine.imageURL,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (context, error, stackTrace) => 
-                                          const Icon(Icons.medication, size: 40, color: Color(0xFF8ECAE6)),
-                                      )
-                                    : const Icon(Icons.medication, size: 40, color: Color(0xFF8ECAE6)),
+                                      ? Image.network(
+                                          item.medicine.imageURL,
+                                          fit: BoxFit.contain,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  const Icon(
+                                                    Icons.medication,
+                                                    size: 40,
+                                                    color: Color(0xFF8ECAE6),
+                                                  ),
+                                        )
+                                      : const Icon(
+                                          Icons.medication,
+                                          size: 40,
+                                          color: Color(0xFF8ECAE6),
+                                        ),
                                 ),
-                                
+
                                 // Medicine name and price in a column
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         item.medicine.medicineName,
@@ -264,13 +310,21 @@ class CartScreen extends ConsumerWidget {
                                         runSpacing: 2,
                                         children: [
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: const Color(
+                                                0xFF8ECAE6,
+                                              ).withValues(alpha: 0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              item.medicine.majorTypeDisplayName,
+                                              item
+                                                  .medicine
+                                                  .majorTypeDisplayName,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w500,
@@ -279,13 +333,21 @@ class CartScreen extends ConsumerWidget {
                                             ),
                                           ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: const Color(
+                                                0xFF8ECAE6,
+                                              ).withValues(alpha: 0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
-                                              item.medicine.productTypeDisplayName,
+                                              item
+                                                  .medicine
+                                                  .productTypeDisplayName,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w500,
@@ -307,10 +369,16 @@ class CartScreen extends ConsumerWidget {
                                           ),
                                           const SizedBox(width: 8),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
                                             decoration: BoxDecoration(
-                                              color: Colors.grey.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(8),
+                                              color: Colors.grey.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
                                             child: Text(
                                               'Qty: ${item.quantity}',
@@ -326,7 +394,7 @@ class CartScreen extends ConsumerWidget {
                                     ],
                                   ),
                                 ),
-                                
+
                                 // Action buttons column
                                 Column(
                                   children: [
@@ -334,19 +402,34 @@ class CartScreen extends ConsumerWidget {
                                     Row(
                                       children: [
                                         IconButton(
-                                          icon: const Icon(Icons.share, color: Color(0xFF8ECAE6), size: 20),
+                                          icon: const Icon(
+                                            Icons.share,
+                                            color: Color(0xFF8ECAE6),
+                                            size: 20,
+                                          ),
                                           onPressed: () {},
                                           constraints: const BoxConstraints(),
                                           padding: const EdgeInsets.all(8),
                                         ),
                                         IconButton(
                                           icon: Icon(
-                                            isFavorite ? Icons.favorite : Icons.favorite_border,
-                                            color: isFavorite ? Colors.red : Color(0xFF8ECAE6),
+                                            isFavorite
+                                                ? Icons.favorite
+                                                : Icons.favorite_border,
+                                            color: isFavorite
+                                                ? Colors.red
+                                                : Color(0xFF8ECAE6),
                                             size: 20,
                                           ),
                                           onPressed: () {
-                                            ref.read(favoriteMedicinesProvider.notifier).toggleFavorite(item.medicine.id);
+                                            ref
+                                                .read(
+                                                  favoriteMedicinesProvider
+                                                      .notifier,
+                                                )
+                                                .toggleFavorite(
+                                                  item.medicine.id,
+                                                );
                                           },
                                           constraints: const BoxConstraints(),
                                           padding: const EdgeInsets.all(8),
@@ -358,41 +441,70 @@ class CartScreen extends ConsumerWidget {
                                     Row(
                                       children: [
                                         IconButton(
-                                          icon: const Icon(Icons.remove, color: Color(0xFF8ECAE6), size: 16),
-                                          onPressed: item.quantity > 1 ? () async {
-                                            try {
-                                              await cartNotifier.decrementQuantity(item.medicine.id);
-                                            } catch (e) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('Failed to update quantity: ${e.toString()}'),
-                                                    backgroundColor: Colors.red,
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          } : null,
+                                          icon: const Icon(
+                                            Icons.remove,
+                                            color: Color(0xFF8ECAE6),
+                                            size: 16,
+                                          ),
+                                          onPressed: item.quantity > 1
+                                              ? () async {
+                                                  try {
+                                                    await cartNotifier
+                                                        .decrementQuantity(
+                                                          item.medicine.id,
+                                                        );
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Failed to update quantity: ${e.toString()}',
+                                                          ),
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                }
+                                              : null,
                                           constraints: const BoxConstraints(),
                                           padding: const EdgeInsets.all(4),
                                           style: IconButton.styleFrom(
-                                            backgroundColor: item.quantity > 1 
-                                                ? const Color(0xFF8ECAE6).withValues(alpha: 0.1)
-                                                : Colors.grey.withValues(alpha: 0.1),
+                                            backgroundColor: item.quantity > 1
+                                                ? const Color(
+                                                    0xFF8ECAE6,
+                                                  ).withValues(alpha: 0.1)
+                                                : Colors.grey.withValues(
+                                                    alpha: 0.1,
+                                                  ),
                                             minimumSize: const Size(24, 24),
                                           ),
                                         ),
                                         const SizedBox(width: 4),
                                         IconButton(
-                                          icon: const Icon(Icons.add, color: Color(0xFF8ECAE6), size: 16),
+                                          icon: const Icon(
+                                            Icons.add,
+                                            color: Color(0xFF8ECAE6),
+                                            size: 16,
+                                          ),
                                           onPressed: () async {
                                             try {
-                                              await cartNotifier.incrementQuantity(item.medicine.id);
+                                              await cartNotifier
+                                                  .incrementQuantity(
+                                                    item.medicine.id,
+                                                  );
                                             } catch (e) {
                                               if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
                                                   SnackBar(
-                                                    content: Text('Failed to update quantity: ${e.toString()}'),
+                                                    content: Text(
+                                                      'Failed to update quantity: ${e.toString()}',
+                                                    ),
                                                     backgroundColor: Colors.red,
                                                   ),
                                                 );
@@ -402,7 +514,9 @@ class CartScreen extends ConsumerWidget {
                                           constraints: const BoxConstraints(),
                                           padding: const EdgeInsets.all(4),
                                           style: IconButton.styleFrom(
-                                            backgroundColor: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
+                                            backgroundColor: const Color(
+                                              0xFF8ECAE6,
+                                            ).withValues(alpha: 0.1),
                                             minimumSize: const Size(24, 24),
                                           ),
                                         ),
@@ -418,7 +532,7 @@ class CartScreen extends ConsumerWidget {
                     },
                   ),
           ),
-          
+
           // Total and checkout
           Container(
             padding: const EdgeInsets.all(16),
@@ -446,14 +560,22 @@ class CartScreen extends ConsumerWidget {
                   ),
                 ),
                 ElevatedButton(
-                  onPressed: (isSelectionMode && hasSelectedItems) || (!isSelectionMode && cartItems.isNotEmpty) ? () {
-                    // Navigate to checkout screen
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const CartCheckoutScreen(),
-                      ),
-                    );
-                  } : null,
+                  onPressed:
+                      (isSelectionMode && hasSelectedItems) ||
+                          (!isSelectionMode && cartItems.isNotEmpty)
+                      ? () {
+                          // If not in selection mode, automatically select all items for checkout
+                          if (!isSelectionMode) {
+                            cartNotifier.selectAll(true);
+                          }
+                          // Navigate to checkout screen
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const CartCheckoutScreen(),
+                            ),
+                          );
+                        }
+                      : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8ECAE6),
                     foregroundColor: Colors.white,
@@ -461,15 +583,16 @@ class CartScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: Text(
-                    isSelectionMode && hasSelectedItems 
-                        ? 'Check out ($selectedItemsCount)' 
+                    isSelectionMode && hasSelectedItems
+                        ? 'Check out ($selectedItemsCount)'
                         : 'Check out',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500),
                   ),
                 ),
               ],
@@ -502,10 +625,7 @@ class CartScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'Add items to your cart to checkout',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),
@@ -517,11 +637,7 @@ class CartScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.search_off,
-            size: 80,
-            color: Color(0xFF8ECAE6),
-          ),
+          const Icon(Icons.search_off, size: 80, color: Color(0xFF8ECAE6)),
           const SizedBox(height: 16),
           Text(
             'No items found',
@@ -533,10 +649,7 @@ class CartScreen extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             'No items match "$query"',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
           ),
         ],
       ),

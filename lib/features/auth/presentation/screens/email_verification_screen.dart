@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:boticart/features/auth/presentation/providers/auth_providers.dart';
-import 'package:boticart/features/auth/presentation/screens/main_screen.dart';
+import 'package:boticart/features/auth/presentation/screens/login_screen.dart';
 
 class EmailVerificationScreen extends ConsumerStatefulWidget {
   final String email;
   final bool isPasswordReset;
   final Function? onVerificationComplete;
-  
+
   const EmailVerificationScreen({
     super.key,
     required this.email,
@@ -18,10 +18,12 @@ class EmailVerificationScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<EmailVerificationScreen> createState() => _EmailVerificationScreenState();
+  ConsumerState<EmailVerificationScreen> createState() =>
+      _EmailVerificationScreenState();
 }
 
-class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScreen> {
+class _EmailVerificationScreenState
+    extends ConsumerState<EmailVerificationScreen> {
   bool _isLoading = false;
   bool _isVerified = false;
   Timer? _timer;
@@ -31,13 +33,13 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
 
   String _maskEmail(String email) {
     if (email.isEmpty || !email.contains('@')) return email;
-    
+
     final parts = email.split('@');
     final username = parts[0];
     final domain = parts[1];
-    
+
     if (username.length <= 2) return email;
-    
+
     final maskedUsername = '${username.substring(0, 2)}***';
     return '$maskedUsername@$domain';
   }
@@ -74,7 +76,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
   void _startVerificationCheck() {
     // Check immediately first
     _checkEmailVerification();
-    
+
     // Then set up periodic checks
     _verificationTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
       if (!_isVerified) {
@@ -87,31 +89,38 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
 
   void _checkEmailVerification() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // Force reload user before checking verification status
       await ref.read(reloadUserUseCaseProvider).call();
       final isVerified = await ref.read(isEmailVerifiedUseCaseProvider).call();
-      
+
       if (isVerified && mounted) {
         setState(() {
           _isVerified = true;
           _isLoading = false;
         });
-        
+
         // For password reset flow, call the callback
         if (widget.isPasswordReset && widget.onVerificationComplete != null) {
           widget.onVerificationComplete!();
         } else {
-          // For regular signup flow, navigate to main screen
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const MainScreen()),
-            (route) => false,
-          );
+          // For regular signup flow, show success message and navigate to login screen
+          if (mounted) {
+            // Navigate to login screen after a short delay
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
+            });
+          }
         }
       } else if (mounted) {
         setState(() {
@@ -123,7 +132,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
         setState(() {
           _isLoading = false;
         });
-        
+
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -137,16 +146,18 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
 
   Future<void> _resendVerificationEmail() async {
     if (!_canResend) return;
-    
+
     setState(() {
       _resendSeconds = 60;
       _canResend = false;
     });
-    
+
     try {
-      final sendEmailVerificationUseCase = ref.read(sendEmailVerificationUseCaseProvider);
+      final sendEmailVerificationUseCase = ref.read(
+        sendEmailVerificationUseCaseProvider,
+      );
       await sendEmailVerificationUseCase();
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -155,7 +166,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
           ),
         );
       }
-      
+
       _startResendTimer();
     } catch (e) {
       if (mounted) {
@@ -238,10 +249,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 ),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Color(0xFF3BBFB2),
-                    ),
+                    const Icon(Icons.check_circle, color: Color(0xFF3BBFB2)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -267,7 +275,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                           ? 'Resend Verification Email'
                           : 'Resend in $_resendSeconds seconds',
                       style: TextStyle(
-                        color: _canResend ? const Color(0xFF3BBFB2) : Colors.grey,
+                        color: _canResend
+                            ? const Color(0xFF3BBFB2)
+                            : Colors.grey,
                         fontFamily: GoogleFonts.poppins().fontFamily,
                       ),
                     ),

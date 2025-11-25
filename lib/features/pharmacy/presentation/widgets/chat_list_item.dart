@@ -23,18 +23,36 @@ class ChatListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String pharmacyName = conversation?.pharmacyName ?? pharmacy?.name ?? '';
-    final String pharmacyImageUrl = conversation?.pharmacyImageUrl ?? pharmacy?.imageUrl ?? '';
-    final String lastMessage = conversation?.lastMessage ?? 'Start a conversation';
-    final DateTime lastMessageTime = conversation?.lastMessageTime ?? DateTime.now();
+    // Safely extract values with proper null handling
+    final String pharmacyName =
+        (conversation?.pharmacyName ?? pharmacy?.name ?? '').toString();
+    final String pharmacyImageUrl =
+        (conversation?.pharmacyImageUrl ?? pharmacy?.imageUrl ?? '').toString();
+    String lastMessage = (conversation?.lastMessage ?? 'Start a conversation')
+        .toString();
+    final DateTime lastMessageTime =
+        conversation?.lastMessageTime ?? DateTime.now();
     final int unreadCount = conversation?.unreadCount ?? 0;
+    final bool hasUnread = conversation?.hasUnreadMessages ?? false;
+    final String lastMessageSenderType =
+        (conversation?.lastMessageSenderType ?? 'customer').toString();
+
+    // Add pharmacy name prefix if last message is from pharmacy/admin
+    // Handle variations: 'admin', 'pharmacy', or anything that's not 'customer'/'custom'
+    if (lastMessage != 'Start a conversation' &&
+        lastMessageSenderType != 'customer' &&
+        lastMessageSenderType != 'custom') {
+      lastMessage = '$pharmacyName: $lastMessage';
+    }
 
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: hasUnread
+              ? const Color(0xFF8ECAE6).withValues(alpha: 0.05)
+              : Colors.white,
           border: Border(
             bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
           ),
@@ -51,9 +69,7 @@ class ChatListItem extends StatelessWidget {
                       : null,
                   child: pharmacyImageUrl.isEmpty
                       ? Text(
-                          pharmacyName.isNotEmpty
-                              ? pharmacyName[0]
-                              : '?',
+                          pharmacyName.isNotEmpty ? pharmacyName[0] : '?',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -70,7 +86,7 @@ class ChatListItem extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8ECAE6),
+                        color: Colors.red,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
@@ -100,7 +116,7 @@ class ChatListItem extends StatelessWidget {
                     pharmacyName,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      fontWeight: conversation != null && unreadCount > 0 ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
                       color: Colors.black87,
                     ),
                   ),
@@ -109,8 +125,8 @@ class ChatListItem extends StatelessWidget {
                     lastMessage,
                     style: GoogleFonts.poppins(
                       fontSize: 13,
-                      color: conversation != null && unreadCount > 0 ? Colors.black87 : Colors.grey.shade600,
-                      fontWeight: conversation != null && unreadCount > 0 ? FontWeight.w500 : FontWeight.w400,
+                      color: hasUnread ? Colors.black87 : Colors.grey.shade600,
+                      fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -126,17 +142,19 @@ class ChatListItem extends StatelessWidget {
                   _formatTime(lastMessageTime),
                   style: GoogleFonts.poppins(
                     fontSize: 11,
-                    color: conversation != null && unreadCount > 0 ? const Color(0xFF8ECAE6) : Colors.grey.shade500,
-                    fontWeight: conversation != null && unreadCount > 0 ? FontWeight.w600 : FontWeight.w400,
+                    color: hasUnread
+                        ? const Color(0xFF8ECAE6)
+                        : Colors.grey.shade500,
+                    fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
                   ),
                 ),
-                if (conversation != null && unreadCount > 0) ...[
+                if (hasUnread) ...[
                   const SizedBox(height: 4),
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     decoration: const BoxDecoration(
-                      color: Color(0xFF8ECAE6),
+                      color: Colors.red,
                       shape: BoxShape.circle,
                     ),
                   ),

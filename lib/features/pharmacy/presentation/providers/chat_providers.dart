@@ -15,7 +15,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 final userConversationsProvider = StreamProvider<List<ChatConversation>>((ref) {
   final userAsyncValue = ref.watch(currentUserProvider);
   final repository = ref.watch(chatRepositoryProvider);
-  
+
   return userAsyncValue.when(
     data: (user) {
       if (user == null) return Stream.value([]);
@@ -26,42 +26,63 @@ final userConversationsProvider = StreamProvider<List<ChatConversation>>((ref) {
   );
 });
 
-final filteredUserConversationsProvider = StreamProvider.autoDispose<List<ChatConversation>>((ref) {
-  final conversationsAsyncValue = ref.watch(userConversationsProvider);
-  final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
-  final pharmaciesAsyncValue = ref.watch(pharmaciesStreamProvider);
-  
-  return conversationsAsyncValue.when(
-    data: (conversations) {
-      if (selectedStoreId == null) return Stream.value([]);
-      
-      return pharmaciesAsyncValue.when(
-        data: (pharmacies) {
-          final selectedPharmacy = pharmacies.firstWhere(
-            (p) => p.storeID == selectedStoreId,
-            orElse: () => throw Exception('Pharmacy not found'),
+final filteredUserConversationsProvider =
+    StreamProvider.autoDispose<List<ChatConversation>>((ref) {
+      final conversationsAsyncValue = ref.watch(userConversationsProvider);
+      final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
+      final pharmaciesAsyncValue = ref.watch(pharmaciesStreamProvider);
+
+      return conversationsAsyncValue.when(
+        data: (conversations) {
+          if (selectedStoreId == null) return Stream.value([]);
+
+          return pharmaciesAsyncValue.when(
+            data: (pharmacies) {
+              final selectedPharmacy = pharmacies.firstWhere(
+                (p) => p.storeID == selectedStoreId,
+                orElse: () => throw Exception('Pharmacy not found'),
+              );
+
+              final filteredConversations = conversations
+                  .where(
+                    (conversation) =>
+                        conversation.pharmacyId == selectedPharmacy.id,
+                  )
+                  .toList();
+
+              return Stream.value(filteredConversations);
+            },
+            loading: () => Stream.value([]),
+            error: (_, __) => Stream.value([]),
           );
-          
-          final filteredConversations = conversations.where((conversation) => 
-            conversation.pharmacyId == selectedPharmacy.id
-          ).toList();
-          
-          return Stream.value(filteredConversations);
         },
         loading: () => Stream.value([]),
         error: (_, __) => Stream.value([]),
       );
-    },
-    loading: () => Stream.value([]),
-    error: (_, __) => Stream.value([]),
-  );
-});
+    });
 
-final conversationMessagesProvider = StreamProvider.family<List<ChatMessage>, String>((ref, conversationId) {
-  final repository = ref.watch(chatRepositoryProvider);
-  return repository.getConversationMessages(conversationId);
-});
+final conversationMessagesProvider =
+    StreamProvider.family<List<ChatMessage>, String>((ref, conversationId) {
+      final repository = ref.watch(chatRepositoryProvider);
+      return repository.getConversationMessages(conversationId);
+    });
 
 final selectedConversationIdProvider = StateProvider<String?>((ref) => null);
 
 final selectedPharmacyForChatProvider = StateProvider<Pharmacy?>((ref) => null);
+
+// Provider for unread chat conversation count
+final unreadChatConversationCountProvider = StreamProvider<int>((ref) {
+  final conversationsAsyncValue = ref.watch(userConversationsProvider);
+
+  return conversationsAsyncValue.when(
+    data: (conversations) {
+      final unreadCount = conversations
+          .where((conversation) => conversation.hasUnreadMessages)
+          .length;
+      return Stream.value(unreadCount);
+    },
+    loading: () => Stream.value(0),
+    error: (_, __) => Stream.value(0),
+  );
+});

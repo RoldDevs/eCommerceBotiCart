@@ -6,7 +6,7 @@ class ChatMessage {
   final DateTime timestamp;
   final bool isRead;
   final String senderName;
-  final String senderType; 
+  final String senderType;
   final List<Map<String, dynamic>> replies;
 
   ChatMessage({
@@ -22,6 +22,7 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromFirestore(Map<String, dynamic> data, String id) {
+    // Safely handle replies conversion
     List<Map<String, dynamic>> repliesList = [];
     if (data['replies'] != null) {
       final repliesData = data['replies'] as List;
@@ -29,19 +30,24 @@ class ChatMessage {
         if (reply is Map<String, dynamic>) {
           return reply;
         } else if (reply is Map) {
+          // Convert Map<String, Object?> to Map<String, dynamic>
           return Map<String, dynamic>.from(reply);
         } else if (reply is String) {
+          // Handle incorrect format where reply is just a string
+          // Note: senderName will be set to pharmacy name in the UI
           return <String, dynamic>{
             'content': reply,
             'senderType': 'admin',
-            'senderName': 'Admin',
+            'senderName': '', // Empty, will use pharmacy name in UI
             'timestamp': DateTime.now(),
           };
         } else {
+          // Handle unexpected data types
+          // Note: senderName will be set to pharmacy name in the UI
           return <String, dynamic>{
             'content': reply.toString(),
             'senderType': 'admin',
-            'senderName': 'Admin',
+            'senderName': '', // Empty, will use pharmacy name in UI
             'timestamp': DateTime.now(),
           };
         }

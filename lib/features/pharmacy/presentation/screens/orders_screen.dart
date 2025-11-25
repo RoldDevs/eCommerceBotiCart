@@ -1,7 +1,6 @@
 import 'package:boticart/features/pharmacy/presentation/screens/order_tracking_screen.dart';
 import 'package:boticart/features/pharmacy/presentation/screens/order_verification/pending_verification_screen.dart';
 import 'package:boticart/features/pharmacy/presentation/screens/order_verification/payment_screen.dart';
-import 'package:boticart/core/utils/screen_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,23 +8,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/presentation/providers/user_provider.dart';
 import '../../domain/entities/order.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/orders/order_card_widget.dart';
+import '../providers/order_status_change_provider.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
-  const OrdersScreen({super.key});
+  final int? initialTabIndex;
+
+  const OrdersScreen({super.key, this.initialTabIndex});
 
   @override
   ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
 }
 
-class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerProviderStateMixin {
+class _OrdersScreenState extends ConsumerState<OrdersScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 9, vsync: this);
+    final initialIndex = widget.initialTabIndex ?? 0;
+    _tabController = TabController(
+      length: 9,
+      vsync: this,
+      initialIndex: initialIndex,
+    );
   }
-  
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -35,7 +44,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -71,7 +80,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
           ),
           tabs: const [
             Tab(text: 'All Orders'),
-            Tab(text: 'To Process'), 
+            Tab(text: 'To Process'),
             Tab(text: 'To Receive'),
             Tab(text: 'To Ship'),
             Tab(text: 'To Pickup'),
@@ -85,46 +94,42 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
       body: userAsync.when(
         data: (user) {
           if (user == null) {
-            return const Center(
-              child: Text('Please log in to view orders'),
-            );
+            return const Center(child: Text('Please log in to view orders'));
           }
-          
+
           return TabBarView(
             controller: _tabController,
             children: [
               _buildOrdersList(user.id, null),
-              _buildOrdersList(user.id, OrderStatus.toProcess), 
+              _buildOrdersList(user.id, OrderStatus.toProcess),
               _buildOrdersList(user.id, OrderStatus.toReceive),
               _buildOrdersList(user.id, OrderStatus.toShip),
               _buildOrdersList(user.id, OrderStatus.toPickup),
               _buildOrdersList(user.id, OrderStatus.inTransit),
               _buildOrdersList(user.id, OrderStatus.delivered),
-              _buildOrdersList(user.id, OrderStatus.completed), 
+              _buildOrdersList(user.id, OrderStatus.completed),
               _buildOrdersList(user.id, OrderStatus.cancelled),
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(
-          child: Text('Error loading user data'),
-        ),
+        error: (_, __) => const Center(child: Text('Error loading user data')),
       ),
       bottomNavigationBar: const BottomNavBar(),
     );
   }
-  
+
   Stream<QuerySnapshot> _getOrdersStream(String userUID, OrderStatus? status) {
     Query query = FirebaseFirestore.instance
         .collection('orders')
         .where('userUID', isEqualTo: userUID);
-    
+
     // Don't filter by status at database level for "To Process" tab
     // because "To Process" is determined by verification status, not order status
     if (status != null && status != OrderStatus.toProcess) {
       query = query.where('status', isEqualTo: status.displayName);
     }
-    
+
     return query.snapshots();
   }
 
@@ -135,17 +140,15 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        
+
         if (snapshot.hasError) {
-          return Center(
-            child: Text('Error: ${snapshot.error}'),
-          );
+          return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final allOrders = snapshot.data!.docs
             .map((doc) => OrderEntity.fromFirestore(doc))
             .toList();
-        
+
         // Filter orders based on status and verification
         final orders = allOrders.where((order) {
           if (status == null) {
@@ -157,12 +160,12 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
           } else {
             // For other tabs, show orders that match the status AND are not "To Process"
             bool matchesStatus = order.status == status;
-            bool isNotToProcess = !(order.isHomeDelivery && !order.isCompletelyVerified);
+            bool isNotToProcess =
+                !(order.isHomeDelivery && !order.isCompletelyVerified);
             return matchesStatus && isNotToProcess;
           }
-        }).toList()
-          ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); 
-        
+        }).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
         if (orders.isEmpty) {
           return Center(
             child: Column(
@@ -184,7 +187,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  status == null 
+                  status == null
                       ? 'You haven\'t placed any orders yet'
                       : 'No orders with ${status.displayName} status',
                   style: GoogleFonts.poppins(
@@ -196,341 +199,79 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
             ),
           );
         }
-        
+
         return ListView.builder(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: ScreenUtils.getBottomPadding(context),
-          ),
+          padding: const EdgeInsets.all(16),
           itemCount: orders.length,
           itemBuilder: (context, index) {
             final order = orders[index];
-            return _buildOrderCard(order);
+            return OrderCardWidget(
+              order: order,
+              onViewDetails: () => _showOrderDetails(order),
+            );
           },
         );
       },
     );
   }
-  
-  Widget _buildOrderCard(OrderEntity order) {
-    // Determine display status - show "To Process" for unverified home delivery orders
-    String displayStatus;
-    Color statusColor;
-    
-    if (order.isHomeDelivery && !order.isCompletelyVerified) {
-      displayStatus = 'To Process';
-      statusColor = Colors.orange;
-    } else {
-      displayStatus = order.status.displayName;
-      statusColor = _getStatusColor(order.status);
-    }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '#${order.orderID}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF8ECAE6),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    displayStatus,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: statusColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Ordered on: ${_formatDate(order.createdAt)}',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance
-                      .collection('medicines')
-                      .doc(order.medicineID)
-                      .get(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8ECAE6)),
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                    
-                    if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
-                      return Container(
-                        width: 50,
-                        height: 50,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.medication,
-                          color: Color(0xFF8ECAE6),
-                          size: 24,
-                        ),
-                      );
-                    }
-                    
-                    final medicineData = snapshot.data!.data() as Map<String, dynamic>;
-                    final imageURL = medicineData['imageURL'] as String?;
-                    
-                    return Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.grey.shade200,
-                          width: 1,
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imageURL != null && imageURL.isNotEmpty
-                            ? Image.network(
-                                imageURL,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Container(
-                                    color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                                    child: const Icon(
-                                      Icons.medication,
-                                      color: Color(0xFF8ECAE6),
-                                      size: 24,
-                                    ),
-                                  );
-                                },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  if (loadingProgress == null) return child;
-                                  return Container(
-                                    color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                                    child: const Center(
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8ECAE6)),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Container(
-                                color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                                child: const Icon(
-                                  Icons.medication,
-                                  color: Color(0xFF8ECAE6),
-                                  size: 24,
-                                ),
-                              ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Medicine Order',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      Text(
-                        'Qty: ${order.quantity}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      if (order.isHomeDelivery) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.local_shipping,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Home Delivery',
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Total: ₱${order.totalPrice.toStringAsFixed(2)}',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF8ECAE6),
-                      ),
-                    ),
-                    if (order.discountAmount != null && order.discountAmount! > 0) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Discount: -₱${order.discountAmount!.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                if (order.deliveryAddress != null && order.deliveryAddress!.isNotEmpty) ...[
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.location_on,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            order.deliveryAddress!,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-                TextButton(
-                  onPressed: () {
-                    _showOrderDetails(order);
-                  },
-                  child: Text(
-                    'View Details',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: const Color(0xFF8ECAE6),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  Color _getStatusColor(OrderStatus status) {
-    switch (status) {
-      case OrderStatus.toProcess:
-        return Colors.orange;
-      case OrderStatus.toReceive:
-        return Colors.blue;
-      case OrderStatus.toShip:
-        return Colors.purple;
-      case OrderStatus.toPickup:
-        return Colors.amber;
-      case OrderStatus.inTransit:
-        return Colors.indigo;
-      case OrderStatus.completed:
-        return Colors.green;
-      case OrderStatus.delivered:
-        return Colors.green;
-      case OrderStatus.cancelled:
-        return Colors.red;
-    }
-  }
-  
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
-  
+
+  String _formatTime(DateTime date) {
+    final hour = date.hour > 12
+        ? date.hour - 12
+        : (date.hour == 0 ? 12 : date.hour);
+    final minute = date.minute.toString().padLeft(2, '0');
+    final period = date.hour >= 12 ? 'PM' : 'AM';
+    return '$hour:$minute $period';
+  }
+
   void _showOrderDetails(OrderEntity order) {
+    // Mark order status changes as read when viewing details
+    final user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      final repository = ref.read(orderStatusChangeRepositoryProvider);
+
+      // Mark existing status change records as read
+      repository.markOrderStatusChangesAsRead(order.orderID, user.id);
+
+      // If order is in verification state, create a "read" record to prevent showing indicator again
+      if (order.isHomeDelivery &&
+          order.isInitiallyVerified &&
+          !order.isPaid &&
+          !order.isCompletelyVerified) {
+        // Check if a status change record exists for this state
+        FirebaseFirestore.instance
+            .collection('orderStatusChanges')
+            .where('orderId', isEqualTo: order.orderID)
+            .where('userId', isEqualTo: user.id)
+            .where('newStatus', isEqualTo: 'Initial Verification')
+            .get()
+            .then((snapshot) {
+              if (snapshot.docs.isEmpty) {
+                // Create a read record so it doesn't show again
+                repository
+                    .createStatusChange(
+                      orderId: order.orderID,
+                      userId: user.id,
+                      oldStatus: 'Pending',
+                      newStatus: 'Initial Verification',
+                      timestamp: DateTime.now(),
+                    )
+                    .then((_) {
+                      // Immediately mark it as read
+                      repository.markOrderStatusChangesAsRead(
+                        order.orderID,
+                        user.id,
+                      );
+                    });
+              }
+            });
+      }
+    }
+
     // For home delivery orders that need verification, navigate to appropriate screen
     if (order.isHomeDelivery && !order.isCompletelyVerified) {
       if (!order.isInitiallyVerified) {
@@ -538,7 +279,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PendingVerificationScreen(orderId: order.orderID),
+            builder: (context) =>
+                PendingVerificationScreen(orderId: order.orderID),
           ),
         );
       } else if (!order.isPaid) {
@@ -554,7 +296,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PendingVerificationScreen(orderId: order.orderID),
+            builder: (context) =>
+                PendingVerificationScreen(orderId: order.orderID),
           ),
         );
       }
@@ -599,18 +342,75 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
                   _buildDetailRow('Order ID', '#${order.orderID}'),
                   _buildDetailRow('Status', order.status.displayName),
                   _buildDetailRow('Quantity', '${order.quantity}'),
-                  _buildDetailRow('Total Price', '₱${order.totalPrice.toStringAsFixed(2)}'),
+                  _buildDetailRow(
+                    'Total Price',
+                    '₱${order.totalPrice.toStringAsFixed(2)}',
+                  ),
                   if (order.discountAmount != null && order.discountAmount! > 0)
-                    _buildDetailRow('Discount', '-₱${order.discountAmount!.toStringAsFixed(2)}'),
-                  _buildDetailRow('Delivery Type', order.isHomeDelivery ? 'Home Delivery' : 'Pickup'),
-                  if (order.deliveryAddress != null && order.deliveryAddress!.isNotEmpty)
+                    _buildDetailRow(
+                      'Discount',
+                      '-₱${order.discountAmount!.toStringAsFixed(2)}',
+                    ),
+                  _buildDetailRow(
+                    'Delivery Type',
+                    order.isHomeDelivery ? 'Home Delivery' : 'Pickup',
+                  ),
+                  if (order.deliveryAddress != null &&
+                      order.deliveryAddress!.isNotEmpty)
                     _buildDetailRow('Delivery Address', order.deliveryAddress!),
                   _buildDetailRow('Order Date', _formatDate(order.createdAt)),
                   if (order.idDiscount != null)
                     _buildDetailRow('Beneficiary ID Applied', 'Yes'),
-                
-                  // Add Track Order button if it's a home delivery
-                  if (order.isHomeDelivery && order.lalamoveOrderId != null) ...[
+
+                  // Show delivery date/time if order is completed or delivered
+                  if (order.status == OrderStatus.completed ||
+                      order.status == OrderStatus.delivered) ...[
+                    const SizedBox(height: 20),
+                    FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('orders')
+                          .doc(order.orderID)
+                          .get(),
+                      builder: (context, snapshot) {
+                        DateTime? deliveredDate;
+
+                        if (snapshot.hasData && snapshot.data!.exists) {
+                          final data =
+                              snapshot.data!.data() as Map<String, dynamic>;
+                          // Check for deliveredAt, completedAt, or updatedAt field
+                          if (data['deliveredAt'] != null) {
+                            deliveredDate = (data['deliveredAt'] as Timestamp)
+                                .toDate();
+                          } else if (data['completedAt'] != null) {
+                            deliveredDate = (data['completedAt'] as Timestamp)
+                                .toDate();
+                          } else if (data['updatedAt'] != null) {
+                            deliveredDate = (data['updatedAt'] as Timestamp)
+                                .toDate();
+                          }
+                        }
+
+                        // Fallback to createdAt if no delivery date found
+                        deliveredDate ??= order.createdAt;
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildDetailRow(
+                              'Date Delivered',
+                              _formatDate(deliveredDate),
+                            ),
+                            _buildDetailRow(
+                              'Time Delivered',
+                              _formatTime(deliveredDate),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ] else if (order.isHomeDelivery &&
+                      order.lalamoveOrderId != null) ...[
+                    // Add Track Order button if it's a home delivery and not completed/delivered
                     const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
@@ -620,7 +420,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => OrderTrackingScreen(orderId: order.orderID),
+                              builder: (context) =>
+                                  OrderTrackingScreen(orderId: order.orderID),
                             ),
                           );
                         },
@@ -650,7 +451,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> with SingleTickerPr
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),

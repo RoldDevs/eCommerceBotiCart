@@ -21,7 +21,7 @@ class OrderMessage {
   final OrderMessageType type;
   final DateTime createdAt;
   final bool isRead;
-  final Map<String, dynamic>? metadata; 
+  final Map<String, dynamic>? metadata; // For additional order details
 
   OrderMessage({
     required this.id,

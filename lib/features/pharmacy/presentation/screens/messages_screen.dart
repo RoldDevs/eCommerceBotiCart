@@ -4,7 +4,6 @@ import 'package:boticart/features/pharmacy/presentation/services/order_message_s
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/utils/screen_utils.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../providers/chat_providers.dart';
 import '../providers/pharmacy_providers.dart';
@@ -516,7 +515,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                     }
                     
                     return ListView.builder(
-                      padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)), 
+                      padding: const EdgeInsets.only(bottom: 100), 
                       itemCount: items.length,
                       itemBuilder: (context, index) => items[index],
                     );
@@ -703,7 +702,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         }
 
         return ListView.builder(
-          padding: EdgeInsets.only(top: 8, bottom: ScreenUtils.getBottomPadding(context)),
+          padding: const EdgeInsets.only(top: 8, bottom: 100),
           itemCount: sortedMessages.length,
           itemBuilder: (context, index) {
             final message = sortedMessages[index];
@@ -803,7 +802,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         }
 
         return ListView.builder(
-          padding: EdgeInsets.only(bottom: ScreenUtils.getBottomPadding(context)), 
+          padding: const EdgeInsets.only(bottom: 100), 
           itemCount: sortedConversations.length,
           itemBuilder: (context, index) {
             final conversation = sortedConversations[index];

@@ -18,7 +18,10 @@ final orderRepositoryProvider = Provider<OrderRepository>((ref) {
 });
 
 // Provider for a single order by ID
-final orderByIdProvider = FutureProvider.family<OrderEntity?, String>((ref, orderId) {
+final orderByIdProvider = FutureProvider.family<OrderEntity?, String>((
+  ref,
+  orderId,
+) {
   final orderRepository = ref.watch(orderRepositoryProvider);
   return orderRepository.getOrderById(orderId);
 });
@@ -37,7 +40,7 @@ class OrderState {
   OrderState({
     this.medicine,
     this.quantity = 1,
-    this.isHomeDelivery = true,
+    this.isHomeDelivery = false, // Default to pickup (delivery disabled)
     this.address,
     this.applyBeneficiaryDiscount = false,
     this.selectedBeneficiaryId,
@@ -62,8 +65,10 @@ class OrderState {
       quantity: quantity ?? this.quantity,
       isHomeDelivery: isHomeDelivery ?? this.isHomeDelivery,
       address: address ?? this.address,
-      applyBeneficiaryDiscount: applyBeneficiaryDiscount ?? this.applyBeneficiaryDiscount,
-      selectedBeneficiaryId: selectedBeneficiaryId ?? this.selectedBeneficiaryId,
+      applyBeneficiaryDiscount:
+          applyBeneficiaryDiscount ?? this.applyBeneficiaryDiscount,
+      selectedBeneficiaryId:
+          selectedBeneficiaryId ?? this.selectedBeneficiaryId,
       discountAmount: discountAmount ?? this.discountAmount,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
@@ -128,7 +133,7 @@ class OrderNotifier extends StateNotifier<OrderState> {
 
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
-    
+
     if (user == null) {
       state = state.copyWith(error: 'User not logged in');
       return null;
@@ -182,7 +187,7 @@ final orderProvider = StateNotifierProvider<OrderNotifier, OrderState>((ref) {
 final userOrdersProvider = StreamProvider<List<OrderEntity>>((ref) {
   final orderRepository = ref.watch(orderRepositoryProvider);
   final userAsyncValue = ref.watch(currentUserProvider);
-  
+
   return userAsyncValue.when(
     data: (user) {
       if (user == null) return Stream.value([]);
@@ -194,19 +199,20 @@ final userOrdersProvider = StreamProvider<List<OrderEntity>>((ref) {
 });
 
 // Provider for orders by status
-final ordersByStatusProvider = StreamProvider.family<List<OrderEntity>, OrderStatus>((ref, status) {
-  final orderRepository = ref.watch(orderRepositoryProvider);
-  final userAsyncValue = ref.watch(currentUserProvider);
-  
-  return userAsyncValue.when(
-    data: (user) {
-      if (user == null) return Stream.value([]);
-      return orderRepository.getUserOrdersByStatus(user.id, status);
-    },
-    loading: () => Stream.value([]),
-    error: (_, __) => Stream.value([]),
-  );
-});
+final ordersByStatusProvider =
+    StreamProvider.family<List<OrderEntity>, OrderStatus>((ref, status) {
+      final orderRepository = ref.watch(orderRepositoryProvider);
+      final userAsyncValue = ref.watch(currentUserProvider);
+
+      return userAsyncValue.when(
+        data: (user) {
+          if (user == null) return Stream.value([]);
+          return orderRepository.getUserOrdersByStatus(user.id, status);
+        },
+        loading: () => Stream.value([]),
+        error: (_, __) => Stream.value([]),
+      );
+    });
 
 // Provider for order status filter
 final selectedOrderStatusProvider = StateProvider<OrderStatus?>((ref) => null);
@@ -215,11 +221,11 @@ final selectedOrderStatusProvider = StateProvider<OrderStatus?>((ref) => null);
 final filteredOrdersProvider = Provider<AsyncValue<List<OrderEntity>>>((ref) {
   final selectedStatus = ref.watch(selectedOrderStatusProvider);
   final allOrders = ref.watch(userOrdersProvider);
-  
+
   if (selectedStatus == null) {
     return allOrders;
   }
-  
+
   return allOrders.when(
     data: (orders) => AsyncValue.data(
       orders.where((order) => order.status == selectedStatus).toList(),

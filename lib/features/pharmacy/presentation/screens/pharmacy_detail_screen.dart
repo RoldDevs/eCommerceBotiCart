@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../core/utils/screen_utils.dart';
 import '../widgets/recent_searches_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/quick_actions_section.dart';
@@ -12,7 +11,6 @@ import '../providers/filter_provider.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../../domain/entities/medicine.dart';
 import '../../../../features/auth/presentation/providers/user_provider.dart';
-import '../../../../features/auth/presentation/screens/account_screen.dart';
 
 class PharmacyDetailScreen extends ConsumerWidget {
   final Pharmacy pharmacy;
@@ -178,21 +176,8 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                   ref: ref,
                                   title: 'Prescription',
                                   svgPath: 'assets/illus/prescription.svg',
-                                  onTap: () {
-                                    // Navigate to Account Screen with prescription section
-                                    ref
-                                            .read(
-                                              navigationIndexProvider.notifier,
-                                            )
-                                            .state =
-                                        4;
-                                    Navigator.of(context).pushReplacement(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AccountScreen(),
-                                      ),
-                                    );
-                                  },
+                                  productType:
+                                      MedicineProductType.prescriptionMedicines,
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
@@ -200,51 +185,8 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                   ref: ref,
                                   title: 'Vitamins & Supplements',
                                   svgPath: 'assets/illus/supplements.svg',
-                                  onTap: () {
-                                    // Clear existing filters
-                                    ref
-                                        .read(
-                                          selectedProductTypesProvider.notifier,
-                                        )
-                                        .clear();
-                                    ref
-                                        .read(
-                                          selectedConditionTypesProvider
-                                              .notifier,
-                                        )
-                                        .clear();
-                                    // Apply Vitamins & Supplements filter
-                                    ref
-                                        .read(
-                                          selectedProductTypesProvider.notifier,
-                                        )
-                                        .toggle(
-                                          MedicineProductType
-                                              .vitaminsSupplements,
-                                        );
-                                    // Navigate to products screen
-                                    final initialSearches = ref.read(
-                                      initialSearchesProvider,
-                                    );
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            RecentSearchesScreen(
-                                              recentSearches: initialSearches,
-                                              onSearchTap: (query) {
-                                                ref
-                                                    .read(
-                                                      searchHistoryProvider
-                                                          .notifier,
-                                                    )
-                                                    .addSearch(query);
-                                              },
-                                              onBackPressed: () =>
-                                                  Navigator.of(context).pop(),
-                                            ),
-                                      ),
-                                    );
-                                  },
+                                  productType:
+                                      MedicineProductType.vitaminsSupplements,
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
@@ -252,50 +194,8 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                   ref: ref,
                                   title: 'Over the Counter',
                                   svgPath: 'assets/illus/counter.svg',
-                                  onTap: () {
-                                    // Clear existing filters
-                                    ref
-                                        .read(
-                                          selectedProductTypesProvider.notifier,
-                                        )
-                                        .clear();
-                                    ref
-                                        .read(
-                                          selectedConditionTypesProvider
-                                              .notifier,
-                                        )
-                                        .clear();
-                                    // Apply Over the Counter filter
-                                    ref
-                                        .read(
-                                          selectedProductTypesProvider.notifier,
-                                        )
-                                        .toggle(
-                                          MedicineProductType.overTheCounter,
-                                        );
-                                    // Navigate to products screen
-                                    final initialSearches = ref.read(
-                                      initialSearchesProvider,
-                                    );
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            RecentSearchesScreen(
-                                              recentSearches: initialSearches,
-                                              onSearchTap: (query) {
-                                                ref
-                                                    .read(
-                                                      searchHistoryProvider
-                                                          .notifier,
-                                                    )
-                                                    .addSearch(query);
-                                              },
-                                              onBackPressed: () =>
-                                                  Navigator.of(context).pop(),
-                                            ),
-                                      ),
-                                    );
-                                  },
+                                  productType:
+                                      MedicineProductType.overTheCounter,
                                 ),
                                 const SizedBox(width: 12),
                                 _buildCategoryCard(
@@ -303,42 +203,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                   ref: ref,
                                   title: 'See all products',
                                   svgPath: 'assets/illus/all.svg',
-                                  onTap: () {
-                                    // Clear all filters to show all products
-                                    ref
-                                        .read(
-                                          selectedProductTypesProvider.notifier,
-                                        )
-                                        .clear();
-                                    ref
-                                        .read(
-                                          selectedConditionTypesProvider
-                                              .notifier,
-                                        )
-                                        .clear();
-                                    // Navigate to products screen
-                                    final initialSearches = ref.read(
-                                      initialSearchesProvider,
-                                    );
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            RecentSearchesScreen(
-                                              recentSearches: initialSearches,
-                                              onSearchTap: (query) {
-                                                ref
-                                                    .read(
-                                                      searchHistoryProvider
-                                                          .notifier,
-                                                    )
-                                                    .addSearch(query);
-                                              },
-                                              onBackPressed: () =>
-                                                  Navigator.of(context).pop(),
-                                            ),
-                                      ),
-                                    );
-                                  },
+                                  productType: null,
                                 ),
                               ],
                             ),
@@ -456,7 +321,7 @@ class PharmacyDetailScreen extends ConsumerWidget {
                       child: QuickActionsSection(pharmacy: pharmacy),
                     ),
 
-                    SizedBox(height: ScreenUtils.getBottomPadding(context)),
+                    const SizedBox(height: 70),
                   ],
                 ),
               ),
@@ -550,10 +415,36 @@ class PharmacyDetailScreen extends ConsumerWidget {
     required WidgetRef ref,
     required String title,
     required String svgPath,
-    required VoidCallback onTap,
+    MedicineProductType? productType,
   }) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        // Clear condition filters when selecting a category
+        ref.read(selectedConditionTypesProvider.notifier).clear();
+
+        if (productType == null) {
+          // "See all products" - clear all product type filters to show all products
+          ref.read(selectedProductTypesProvider.notifier).clear();
+        } else {
+          // Set only this product type filter (clear others first, then add this one)
+          ref.read(selectedProductTypesProvider.notifier).clear();
+          ref.read(selectedProductTypesProvider.notifier).toggle(productType);
+        }
+
+        // Navigate to the search screen to show filtered products
+        final initialSearches = ref.read(initialSearchesProvider);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => RecentSearchesScreen(
+              recentSearches: initialSearches,
+              onSearchTap: (query) {
+                ref.read(searchHistoryProvider.notifier).addSearch(query);
+              },
+              onBackPressed: () => Navigator.of(context).pop(),
+            ),
+          ),
+        );
+      },
       child: Container(
         width: 120,
         height: 160,

@@ -8,6 +8,8 @@ import '../screens/orders_screen.dart';
 import '../screens/pharmacy_detail_screen.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../providers/pharmacy_providers.dart';
+import '../providers/chat_providers.dart';
+import '../providers/order_status_change_provider.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class BottomNavBar extends ConsumerWidget {
@@ -16,7 +18,11 @@ class BottomNavBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(navigationIndexProvider);
-    
+    final unreadChatCount = ref.watch(unreadChatConversationCountProvider);
+    final unreadOrderChangesCount = ref.watch(
+      unreadOrderStatusChangesCountProvider,
+    );
+
     return Container(
       height: 70,
       margin: EdgeInsets.only(bottom: MediaQuery.of(context).padding.bottom),
@@ -46,6 +52,8 @@ class BottomNavBar extends ConsumerWidget {
             iconPath: 'assets/navbar/navbar-messages.svg',
             ref: ref,
             context: context,
+            hasUnread:
+                unreadChatCount.value != null && unreadChatCount.value! > 0,
           ),
           _buildNavItem(
             index: 0,
@@ -60,6 +68,9 @@ class BottomNavBar extends ConsumerWidget {
             iconPath: 'assets/navbar/navbar-orders.svg',
             ref: ref,
             context: context,
+            hasUnread:
+                unreadOrderChangesCount.value != null &&
+                unreadOrderChangesCount.value! > 0,
           ),
           _buildNavItem(
             index: 4,
@@ -79,36 +90,42 @@ class BottomNavBar extends ConsumerWidget {
     required String iconPath,
     required WidgetRef ref,
     required BuildContext context,
+    bool hasUnread = false,
   }) {
     final isSelected = index == currentIndex;
-    
+
     return GestureDetector(
       onTap: () {
         // Set the navigation index
         ref.read(navigationIndexProvider.notifier).state = index;
-        
+
         // Navigate to the appropriate screen based on the index
-        if (index == 4) { // Profile tab
+        if (index == 4) {
+          // Profile tab
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const AccountScreen()),
           );
-        } else if (index == 1) { // Cart tab
+        } else if (index == 1) {
+          // Cart tab
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const CartScreen()),
           );
-        } else if (index == 3) { // Messages tab
+        } else if (index == 3) {
+          // Messages tab
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const MessagesScreen()),
           );
-        } else if (index == 2) { // Orders tab
+        } else if (index == 2) {
+          // Orders tab
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const OrdersScreen()),
           );
-        } else if (index == 0) { // Home tab
+        } else if (index == 0) {
+          // Home tab
           final selectedStoreId = ref.read(selectedPharmacyStoreIdProvider);
-          
+
           final pharmaciesAsyncValue = ref.read(pharmaciesStreamProvider);
-          
+
           pharmaciesAsyncValue.whenData((pharmacies) {
             final selectedPharmacy = pharmacies.firstWhere(
               (pharmacy) => pharmacy.storeID == selectedStoreId,
@@ -121,7 +138,7 @@ class BottomNavBar extends ConsumerWidget {
                 imageUrl: '',
                 backgroundImgUrl: '',
                 description: '',
-                storeID: 1, 
+                storeID: 1,
                 contact: '',
                 amount: null,
                 status: null,
@@ -129,14 +146,15 @@ class BottomNavBar extends ConsumerWidget {
                 remittanceId: null,
                 receiptImageURL: null,
                 billingStart: null,
-                billingEnd: null, 
+                billingEnd: null,
               ),
             );
-            
+
             // Navigate to the pharmacy detail screen with the selected pharmacy
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
-                builder: (context) => PharmacyDetailScreen(pharmacy: selectedPharmacy),
+                builder: (context) =>
+                    PharmacyDetailScreen(pharmacy: selectedPharmacy),
               ),
             );
           });
@@ -146,39 +164,54 @@ class BottomNavBar extends ConsumerWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        width: 70, 
+        width: 70,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          border: isSelected 
+          border: isSelected
               ? Border(
-                  top: BorderSide(
-                    color: const Color(0xFF8ECAE6),
-                    width: 3,
-                  ),
+                  top: BorderSide(color: const Color(0xFF8ECAE6), width: 3),
                 )
               : null,
         ),
-        child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(
-            begin: 0.8,
-            end: isSelected ? 1.2 : 0.8,
-          ),
-          curve: Curves.elasticOut,
-          duration: const Duration(milliseconds: 500),
-          builder: (context, value, child) {
-            return Transform.scale(
-              scale: value,
-              child: SvgPicture.asset(
-                iconPath,
-                width: 36,
-                height: 36,
-                colorFilter: ColorFilter.mode(
-                  isSelected ? const Color(0xFF8ECAE6) : Colors.grey.shade400,
-                  BlendMode.srcIn,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0.8, end: isSelected ? 1.2 : 0.8),
+              curve: Curves.elasticOut,
+              duration: const Duration(milliseconds: 500),
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: SvgPicture.asset(
+                    iconPath,
+                    width: 36,
+                    height: 36,
+                    colorFilter: ColorFilter.mode(
+                      isSelected
+                          ? const Color(0xFF8ECAE6)
+                          : Colors.grey.shade400,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Red circle indicator for unread messages
+            if (hasUnread && !isSelected)
+              Positioned(
+                top: 8,
+                right: 12,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
                 ),
               ),
-            );
-          },
+          ],
         ),
       ),
     );

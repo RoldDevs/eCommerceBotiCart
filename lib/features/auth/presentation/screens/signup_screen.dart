@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:boticart/features/auth/presentation/providers/auth_providers.dart';
 import 'package:boticart/features/auth/presentation/screens/email_verification_screen.dart';
 import 'package:boticart/features/auth/presentation/widgets/custom_text_field.dart';
-import 'package:boticart/features/auth/presentation/widgets/custom_checkbox.dart';
+import 'package:boticart/features/auth/presentation/widgets/terms_and_privacy_modal.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -17,26 +17,43 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _addressController = TextEditingController(); 
   final _passwordController = TextEditingController();
-  
-  bool _termsAgreed = false;
-  bool _medicalComplianceAgreed = false;
+
   bool _obscurePassword = true;
   bool _hasError = false;
   String _errorMessage = '';
   bool _isLoading = false;
+  bool _termsAccepted = false;
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showTermsModal() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => TermsAndPrivacyModal(
+        onAccept: () {
+          setState(() {
+            _termsAccepted = true;
+          });
+          Navigator.of(context).pop();
+          _signUp();
+        },
+        onDecline: () {
+          Navigator.of(context).pop();
+          setState(() {
+            _termsAccepted = false;
+          });
+        },
+      ),
+    );
   }
 
   @override
@@ -54,7 +71,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios, color: Color(0xFF8ECAE6)),
+                      icon: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Color(0xFF8ECAE6),
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                     const Expanded(
@@ -73,7 +93,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ],
                 ),
                 const SizedBox(height: 30),
-                
+
                 // First Name Field
                 CustomTextField(
                   controller: _firstNameController,
@@ -81,7 +101,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hasError: _hasError && _firstNameController.text.isEmpty,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Last Name Field
                 CustomTextField(
                   controller: _lastNameController,
@@ -89,7 +109,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hasError: _hasError && _lastNameController.text.isEmpty,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Email Field
                 CustomTextField(
                   controller: _emailController,
@@ -98,25 +118,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hasError: _hasError && _emailController.text.isEmpty,
                 ),
                 const SizedBox(height: 16),
-                
-                // Phone Number Field
-                CustomTextField(
-                  controller: _phoneController,
-                  hintText: 'Phone Number',
-                  keyboardType: TextInputType.phone,
-                  hasError: _hasError && _phoneController.text.isEmpty,
-                ),
-                const SizedBox(height: 16),
-                
-                // Address Field (New)
-                CustomTextField(
-                  controller: _addressController,
-                  hintText: 'Address',
-                  keyboardType: TextInputType.streetAddress,
-                  hasError: _hasError && _addressController.text.isEmpty,
-                ),
-                const SizedBox(height: 16),
-                
+
                 // Password Field
                 CustomTextField(
                   controller: _passwordController,
@@ -125,7 +127,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   hasError: _hasError && _passwordController.text.isEmpty,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -134,66 +138,43 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                     },
                   ),
                 ),
-                
+
                 if (_hasError)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       _errorMessage,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Colors.red, fontSize: 14),
                     ),
                   ),
-                
-                const SizedBox(height: 24),
-                
-                // Terms of Service Checkbox
-                CustomCheckbox(
-                  value: _termsAgreed,
-                  onChanged: (value) {
-                    setState(() {
-                      _termsAgreed = value ?? false;
-                    });
-                  },
-                  text: 'I agree to the Terms of Service and Privacy Policy',
-                  hasError: _hasError && !_termsAgreed,
-                ),
-                const SizedBox(height: 16),
-                
-                // Medical Compliance Checkbox
-                CustomCheckbox(
-                  value: _medicalComplianceAgreed,
-                  onChanged: (value) {
-                    setState(() {
-                      _medicalComplianceAgreed = value ?? false;
-                    });
-                  },
-                  text: 'I agree to the Medical Compliance guidelines and the Agreement for Doctor prescription handling',
-                  hasError: _hasError && !_medicalComplianceAgreed,
-                ),
+
                 const SizedBox(height: 30),
-                
+
                 // Sign Up Button
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _signUp,
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ).copyWith(
-                    backgroundColor: WidgetStateProperty.resolveWith<Color?>(
-                      (states) {
-                        if (states.contains(WidgetState.disabled)) {
-                          return const Color(0xFF8ECAE6).withAlpha(128); 
-                        }
-                        return const Color(0xFF8ECAE6); 
-                      },
-                    ),
-                  ),
+                  onPressed: _isLoading
+                      ? null
+                      : () {
+                          if (_validateInputs()) {
+                            _showTermsModal();
+                          }
+                        },
+                  style:
+                      ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ).copyWith(
+                        backgroundColor:
+                            WidgetStateProperty.resolveWith<Color?>((states) {
+                              if (states.contains(WidgetState.disabled)) {
+                                return const Color(0xFF8ECAE6).withAlpha(128);
+                              }
+                              return const Color(0xFF8ECAE6);
+                            }),
+                      ),
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
@@ -219,43 +200,68 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  Future<void> _signUp() async {
-    // Validate inputs
+  bool _validateInputs() {
     if (_firstNameController.text.isEmpty ||
         _lastNameController.text.isEmpty ||
         _emailController.text.isEmpty ||
-        _phoneController.text.isEmpty ||
-        _addressController.text.isEmpty ||
-        _passwordController.text.isEmpty ||
-        !_termsAgreed ||
-        !_medicalComplianceAgreed) {
-      
+        _passwordController.text.isEmpty) {
       setState(() {
         _hasError = true;
-        _errorMessage = 'Please fill in all fields and agree to the terms';
+        _errorMessage = 'Please fill in all required fields';
       });
+      return false;
+    }
+
+    // Validate email format
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(_emailController.text.trim())) {
+      setState(() {
+        _hasError = true;
+        _errorMessage = 'Please enter a valid email address';
+      });
+      return false;
+    }
+
+    // Validate password length
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _hasError = true;
+        _errorMessage = 'Password must be at least 6 characters';
+      });
+      return false;
+    }
+
+    setState(() {
+      _hasError = false;
+      _errorMessage = '';
+    });
+    return true;
+  }
+
+  Future<void> _signUp() async {
+    if (!_termsAccepted) {
       return;
     }
-    
+
     // If validation passes, proceed with sign up
     setState(() {
       _hasError = false;
       _errorMessage = '';
       _isLoading = true;
     });
-    
+
     try {
       final signUpUseCase = ref.read(signUpUseCaseProvider);
-      
+
       final user = await signUpUseCase(
         firstName: _firstNameController.text.trim(),
         lastName: _lastNameController.text.trim(),
         email: _emailController.text.trim(),
-        contact: _phoneController.text.trim(),
-        address: _addressController.text.trim(),
+        contact: '', // Empty - can be filled later in account screen
+        address: '', // Empty - can be filled later in account screen
         password: _passwordController.text,
       );
-      
+
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -266,7 +272,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'An error occurred during sign up';
-      
+
       if (e.code == 'weak-password') {
         errorMessage = 'The password provided is too weak';
       } else if (e.code == 'email-already-in-use') {
@@ -274,15 +280,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       } else if (e.code == 'invalid-email') {
         errorMessage = 'The email address is not valid';
       }
-      
+
       setState(() {
         _hasError = true;
         _errorMessage = errorMessage;
+        _termsAccepted = false;
       });
     } catch (e) {
       setState(() {
         _hasError = true;
         _errorMessage = 'An unexpected error occurred. Please try again.';
+        _termsAccepted = false;
       });
     } finally {
       if (mounted) {

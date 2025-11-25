@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'quick_action_card.dart';
-import 'recent_searches_screen.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../domain/entities/chat_message.dart';
 import '../screens/pharmacy_reviews_screen.dart';
-import '../screens/chat_detail_screen.dart';
 import '../screens/orders_screen.dart';
-import '../providers/navigation_provider.dart';
-import '../providers/medicine_provider.dart';
+import '../screens/chat_detail_screen.dart';
+import '../widgets/recent_searches_screen.dart';
 import '../providers/search_provider.dart';
-import '../../../../features/auth/presentation/screens/account_screen.dart';
+import '../providers/medicine_provider.dart';
+import '../providers/filter_provider.dart';
+import '../providers/chat_providers.dart';
+import '../../../auth/presentation/screens/account_screen.dart';
+import '../../../auth/presentation/providers/user_provider.dart';
 
 class QuickActionsSection extends ConsumerWidget {
   final Pharmacy? pharmacy;
 
-  const QuickActionsSection({
-    super.key,
-    this.pharmacy,
-  });
+  const QuickActionsSection({super.key, this.pharmacy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,9 +50,7 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'Upload Prescription',
                 icon: Icons.upload_file_outlined,
                 onTap: () {
-                  // Navigate to Account Screen (Profile) for prescription management
-                  ref.read(navigationIndexProvider.notifier).state = 4;
-                  Navigator.of(context).pushReplacement(
+                  Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => const AccountScreen(),
                     ),
@@ -63,15 +61,21 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'Wishlist',
                 icon: Icons.favorite_border,
                 onTap: () {
-                  // Navigate to favorites products
-                  ref.read(selectedFilterProvider.notifier).state = MedicineFilterType.favorites;
+                  // Clear product type filters and set favorites filter
+                  ref.read(selectedProductTypesProvider.notifier).clear();
+                  ref.read(selectedConditionTypesProvider.notifier).clear();
+                  ref.read(selectedFilterProvider.notifier).state =
+                      MedicineFilterType.favorites;
+
                   final initialSearches = ref.read(initialSearchesProvider);
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => RecentSearchesScreen(
                         recentSearches: initialSearches,
                         onSearchTap: (query) {
-                          ref.read(searchHistoryProvider.notifier).addSearch(query);
+                          ref
+                              .read(searchHistoryProvider.notifier)
+                              .addSearch(query);
                         },
                         onBackPressed: () => Navigator.of(context).pop(),
                       ),
@@ -82,19 +86,131 @@ class QuickActionsSection extends ConsumerWidget {
               QuickActionCard(
                 title: 'Chat With Pharmacist',
                 icon: Icons.chat_bubble_outline,
-                onTap: () {
-                  // Navigate to chat with this pharmacy
-                  if (pharmacy != null) {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ChatDetailScreen(
-                          conversationId: '', // Empty means it will create new if doesn't exist
-                          pharmacyName: pharmacy!.name,
-                          pharmacyImageUrl: pharmacy!.imageUrl,
-                          pharmacyId: pharmacy!.id,
+                onTap: () async {
+                  if (pharmacy == null) return;
+                  final currentPharmacy = pharmacy!;
+
+                  final user = ref.read(currentUserProvider).value;
+                  if (user == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Please log in to chat',
+                          style: GoogleFonts.poppins(),
                         ),
                       ),
                     );
+                    return;
+                  }
+
+                  try {
+                    final chatRepository = ref.read(chatRepositoryProvider);
+
+                    // Find existing conversation or create new one
+                    final conversationsAsync = ref.read(
+                      userConversationsProvider,
+                    );
+                    String? conversationId;
+
+                    await conversationsAsync.when(
+                      data: (conversations) async {
+                        try {
+                          final existingConversation = conversations.firstWhere(
+                            (conv) => conv.pharmacyId == currentPharmacy.id,
+                          );
+                          conversationId = existingConversation.id;
+                        } catch (e) {
+                          // No conversation found, will create one
+                        }
+                      },
+                      loading: () {},
+                      error: (_, __) {},
+                    );
+
+                    // If no conversation found, create one
+                    if (conversationId == null) {
+                      conversationId = await chatRepository.createConversation(
+                        user.id,
+                        currentPharmacy,
+                      );
+
+                      // Send welcome message from pharmacy
+                      if (conversationId != null) {
+                        final welcomeMessage = ChatMessage(
+                          id: '',
+                          senderId: currentPharmacy.id,
+                          receiverId: user.id,
+                          content:
+                              'Hello! Welcome to ${currentPharmacy.name}. How can we help you today?',
+                          timestamp: DateTime.now(),
+                          senderName: currentPharmacy.name,
+                          senderType: 'pharmacy',
+                        );
+
+                        await chatRepository.sendMessage(
+                          conversationId!,
+                          welcomeMessage,
+                        );
+                      }
+                    }
+
+                    // Navigate to chat
+                    if (conversationId != null) {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ChatDetailScreen(
+                            conversationId: conversationId!,
+                            pharmacyName: currentPharmacy.name,
+                            pharmacyImageUrl: currentPharmacy.imageUrl,
+                            pharmacyId: currentPharmacy.id,
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    // If conversation doesn't exist, create it
+                    try {
+                      final chatRepository = ref.read(chatRepositoryProvider);
+                      final conversationId = await chatRepository
+                          .createConversation(user.id, currentPharmacy);
+
+                      // Send welcome message from pharmacy
+                      final welcomeMessage = ChatMessage(
+                        id: '',
+                        senderId: currentPharmacy.id,
+                        receiverId: user.id,
+                        content:
+                            'Hello! Welcome to ${currentPharmacy.name}. How can we help you today?',
+                        timestamp: DateTime.now(),
+                        senderName: currentPharmacy.name,
+                        senderType: 'pharmacy',
+                      );
+
+                      await chatRepository.sendMessage(
+                        conversationId,
+                        welcomeMessage,
+                      );
+
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ChatDetailScreen(
+                            conversationId: conversationId,
+                            pharmacyName: currentPharmacy.name,
+                            pharmacyImageUrl: currentPharmacy.imageUrl,
+                            pharmacyId: currentPharmacy.id,
+                          ),
+                        ),
+                      );
+                    } catch (error) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            'Failed to start chat. Please try again.',
+                            style: GoogleFonts.poppins(),
+                          ),
+                        ),
+                      );
+                    }
                   }
                 },
               ),
@@ -102,11 +218,11 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'Track Orders',
                 icon: Icons.local_shipping_outlined,
                 onTap: () {
-                  // Navigate to Orders screen
-                  ref.read(navigationIndexProvider.notifier).state = 2;
+                  // Navigate to OrdersScreen with "In Transit" tab (index 5)
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const OrdersScreen(),
+                      builder: (context) =>
+                          const OrdersScreen(initialTabIndex: 5),
                     ),
                   );
                 },
@@ -115,11 +231,31 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'About Us',
                 icon: Icons.info_outline,
                 onTap: () {
-                  // Nothing for now - could show a dialog or snackbar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Coming soon!'),
-                      duration: Duration(seconds: 1),
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(
+                        'About Us',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF8ECAE6),
+                        ),
+                      ),
+                      content: Text(
+                        'Coming Soon',
+                        style: GoogleFonts.poppins(),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: Text(
+                            'OK',
+                            style: GoogleFonts.poppins(
+                              color: const Color(0xFF8ECAE6),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 },
@@ -128,11 +264,11 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'Reorder',
                 icon: Icons.refresh,
                 onTap: () {
-                  // Nothing for now - could show a dialog or snackbar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Coming soon!'),
-                      duration: Duration(seconds: 1),
+                  // Navigate to OrdersScreen with "Complete" tab (index 7)
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const OrdersScreen(initialTabIndex: 7),
                     ),
                   );
                 },
@@ -144,7 +280,8 @@ class QuickActionsSection extends ConsumerWidget {
                   if (pharmacy != null) {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => PharmacyReviewsScreen(pharmacy: pharmacy!),
+                        builder: (context) =>
+                            PharmacyReviewsScreen(pharmacy: pharmacy!),
                       ),
                     );
                   }

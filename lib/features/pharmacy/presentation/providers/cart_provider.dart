@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../../domain/entities/medicine.dart';
 import '../../data/repositories/cart_repository.dart';
 
+// Cart Repository Provider
 final cartRepositoryProvider = Provider<CartRepository>((ref) {
   return CartRepository(firestore: FirebaseFirestore.instance);
 });
@@ -44,6 +45,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
   CartNotifier(this._cartRepository, this._ref) : super([]);
 
   Future<void> addToCart(Medicine medicine, int quantity) async {
+    // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
     
@@ -52,15 +54,18 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
 
     try {
+      // Add to Firestore
       await _cartRepository.addToCart(
         userUID: user.id,
         medicineID: medicine.id,
         quantity: quantity,
       );
 
+      // Update local state
       final existingIndex = state.indexWhere((item) => item.medicine.id == medicine.id);
       
       if (existingIndex >= 0) {
+        // Update quantity if item already exists
         final updatedItems = [...state];
         updatedItems[existingIndex] = CartItem(
           medicine: medicine,
@@ -69,6 +74,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
         );
         state = updatedItems;
       } else {
+        // Add new item
         state = [...state, CartItem(medicine: medicine, quantity: quantity)];
       }
     } catch (e) {
@@ -77,6 +83,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
   }
 
   Future<void> removeFromCart(String medicineId) async {
+    // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
     
@@ -85,6 +92,9 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     }
 
     try {
+      // Find the cart item to get the itemCartNo
+      // Since we don't have itemCartNo in the current CartItem model,
+      // we'll need to query Firestore to find and delete the item
       final cartItems = await FirebaseFirestore.instance
           .collection('cart')
           .where('userUID', isEqualTo: user.id)
@@ -92,10 +102,12 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
           .where('status', isEqualTo: 'active')
           .get();
 
+      // Delete all matching items (should be only one)
       for (final doc in cartItems.docs) {
         await _cartRepository.removeFromCart(doc.id);
       }
 
+      // Update local state
       state = state.where((item) => item.medicine.id != medicineId).toList();
     } catch (e) {
       throw Exception('Failed to remove item from cart: $e');
@@ -103,6 +115,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
   }
   
   Future<void> removeSelectedItems() async {
+    // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
     

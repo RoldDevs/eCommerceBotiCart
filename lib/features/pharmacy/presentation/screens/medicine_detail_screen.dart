@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../../domain/entities/medicine.dart';
-import '../providers/medicine_provider.dart'; 
+import '../providers/medicine_provider.dart';
 import '../providers/selected_medicine_provider.dart';
 import '../providers/cart_provider.dart';
 import '../providers/filter_provider.dart';
@@ -16,13 +16,11 @@ import 'order_information_screen.dart';
 class MedicineDetailScreen extends ConsumerStatefulWidget {
   final Medicine medicine;
 
-  const MedicineDetailScreen({
-    super.key,
-    required this.medicine,
-  });
+  const MedicineDetailScreen({super.key, required this.medicine});
 
   @override
-  ConsumerState<MedicineDetailScreen> createState() => _MedicineDetailScreenState();
+  ConsumerState<MedicineDetailScreen> createState() =>
+      _MedicineDetailScreenState();
 }
 
 class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
@@ -50,13 +48,15 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
     final favorites = ref.watch(favoriteMedicinesProvider);
     final isFavorite = favorites.contains(widget.medicine.id);
     final searchQuery = ref.watch(medicineSearchQueryProvider);
-    
+
     // Get medicines based on search query and filters
     final List<Medicine> relatedMedicines;
     if (searchQuery.isEmpty) {
       // Use filtered medicines provider to apply any active filters
       final filteredMedicines = ref.watch(filteredMedicinesByFiltersProvider);
-      relatedMedicines = filteredMedicines.isNotEmpty ? filteredMedicines : ref.watch(relatedMedicinesProvider);
+      relatedMedicines = filteredMedicines.isNotEmpty
+          ? filteredMedicines
+          : ref.watch(relatedMedicinesProvider);
     } else {
       // Use search provider and then apply filters
       final searchAsyncValue = ref.watch(medicineSearchProvider(searchQuery));
@@ -65,24 +65,31 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
         loading: () => <Medicine>[],
         error: (_, __) => <Medicine>[],
       );
-      
+
       // Apply filters to search results
       final selectedProductTypes = ref.watch(selectedProductTypesProvider);
       final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
-      
+
       if (selectedProductTypes.isEmpty && selectedConditionTypes.isEmpty) {
         relatedMedicines = baseSearchResults;
       } else {
         relatedMedicines = baseSearchResults.where((medicine) {
-          bool matchesProductType = selectedProductTypes.isEmpty || 
+          bool matchesProductType =
+              selectedProductTypes.isEmpty ||
               selectedProductTypes.contains(medicine.productType);
-          bool matchesConditionType = selectedConditionTypes.isEmpty || 
+          bool matchesConditionType =
+              selectedConditionTypes.isEmpty ||
               selectedConditionTypes.contains(medicine.conditionType);
           return matchesProductType && matchesConditionType;
         }).toList();
       }
     }
-    
+
+    // Exclude the current medicine from related products to avoid redundancy
+    final filteredRelatedMedicines = relatedMedicines
+        .where((medicine) => medicine.id != widget.medicine.id)
+        .toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -108,7 +115,10 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Color(0xFF8ECAE6)),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Color(0xFF8ECAE6),
+                      ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                     Expanded(
@@ -121,13 +131,23 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             fontSize: 15,
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                          ),
                         ),
                         onChanged: (value) {
                           if (_debounce?.isActive ?? false) _debounce!.cancel();
-                          _debounce = Timer(const Duration(milliseconds: 500), () {
-                            ref.read(medicineSearchQueryProvider.notifier).state = value;
-                          });
+                          _debounce = Timer(
+                            const Duration(milliseconds: 500),
+                            () {
+                              ref
+                                      .read(
+                                        medicineSearchQueryProvider.notifier,
+                                      )
+                                      .state =
+                                  value;
+                            },
+                          );
                         },
                       ),
                     ),
@@ -136,11 +156,15 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         icon: const Icon(Icons.clear, color: Color(0xFF8ECAE6)),
                         onPressed: () {
                           _searchController.clear();
-                          ref.read(medicineSearchQueryProvider.notifier).state = '';
+                          ref.read(medicineSearchQueryProvider.notifier).state =
+                              '';
                         },
                       ),
                     IconButton(
-                      icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
+                      icon: const Icon(
+                        Icons.filter_list,
+                        color: Color(0xFF8ECAE6),
+                      ),
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -153,7 +177,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                 ),
               ),
             ),
-            
+
             // Scrollable content below the search bar
             Expanded(
               child: SingleChildScrollView(
@@ -177,7 +201,11 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                 height: 150,
                                 color: Colors.white,
                                 child: const Center(
-                                  child: Icon(Icons.image_not_supported, color: Colors.grey, size: 50),
+                                  child: Icon(
+                                    Icons.image_not_supported,
+                                    color: Colors.grey,
+                                    size: 50,
+                                  ),
                                 ),
                               );
                             },
@@ -188,32 +216,39 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             right: 16,
                             child: Consumer(
                               builder: (context, ref, child) {
-                                final stockAsyncValue = ref.watch(stockStreamProvider(widget.medicine.id));
-                                
+                                final stockAsyncValue = ref.watch(
+                                  stockStreamProvider(widget.medicine.id),
+                                );
+
                                 return stockAsyncValue.when(
                                   data: (currentStock) => Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: currentStock <= 0 
+                                      color: currentStock <= 0
                                           ? Colors.red.shade600
-                                          : currentStock <= 5 
-                                              ? Colors.orange.shade600
-                                              : Colors.green.shade600,
+                                          : currentStock <= 5
+                                          ? Colors.orange.shade600
+                                          : Colors.green.shade600,
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
                                     ),
                                     child: Text(
-                                      currentStock <= 0 
+                                      currentStock <= 0
                                           ? 'Out of Stock'
-                                          : currentStock <= 5 
-                                              ? '$currentStock left'
-                                              : '$currentStock in stock',
+                                          : currentStock <= 5
+                                          ? '$currentStock left'
+                                          : '$currentStock in stock',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -222,13 +257,18 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                     ),
                                   ),
                                   loading: () => Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.grey.shade600,
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
@@ -244,28 +284,33 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                     ),
                                   ),
                                   error: (_, __) => Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color: widget.medicine.stock <= 0 
+                                      color: widget.medicine.stock <= 0
                                           ? Colors.red.shade600
-                                          : widget.medicine.stock <= 5 
-                                              ? Colors.orange.shade600
-                                              : Colors.green.shade600,
+                                          : widget.medicine.stock <= 5
+                                          ? Colors.orange.shade600
+                                          : Colors.green.shade600,
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
                                           blurRadius: 4,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
                                     ),
                                     child: Text(
-                                      widget.medicine.stock <= 0 
+                                      widget.medicine.stock <= 0
                                           ? 'Out of Stock'
-                                          : widget.medicine.stock <= 5 
-                                              ? '${widget.medicine.stock} left'
-                                              : '${widget.medicine.stock} in stock',
+                                          : widget.medicine.stock <= 5
+                                          ? '${widget.medicine.stock} left'
+                                          : '${widget.medicine.stock} in stock',
                                       style: GoogleFonts.poppins(
                                         fontSize: 11,
                                         fontWeight: FontWeight.w600,
@@ -280,10 +325,13 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Price and Share/Favorite
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -298,18 +346,29 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                           Row(
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.share, color: Color(0xFF8ECAE6), size: 32),
+                                icon: const Icon(
+                                  Icons.share,
+                                  color: Color(0xFF8ECAE6),
+                                  size: 32,
+                                ),
                                 onPressed: () {
                                   // Share functionality
                                 },
                               ),
                               IconButton(
                                 icon: Icon(
-                                  isFavorite ? Icons.favorite : Icons.favorite_border,
-                                  color: isFavorite ? Colors.red : Color(0xFF8ECAE6), size: 32,
+                                  isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavorite
+                                      ? Colors.red
+                                      : Color(0xFF8ECAE6),
+                                  size: 32,
                                 ),
                                 onPressed: () {
-                                  ref.read(favoriteMedicinesProvider.notifier).toggleFavorite(widget.medicine.id);
+                                  ref
+                                      .read(favoriteMedicinesProvider.notifier)
+                                      .toggleFavorite(widget.medicine.id);
                                 },
                               ),
                             ],
@@ -317,7 +376,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Medicine Name and Type
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -336,9 +395,14 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                                  color: const Color(
+                                    0xFF8ECAE6,
+                                  ).withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -352,9 +416,14 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                                  color: const Color(
+                                    0xFF8ECAE6,
+                                  ).withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -370,9 +439,14 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                           ),
                           const SizedBox(height: 4),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                              color: const Color(
+                                0xFF8ECAE6,
+                              ).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -387,9 +461,9 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Product Offerings
                     Container(
                       padding: const EdgeInsets.all(16.0),
@@ -403,30 +477,36 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey,
+                              color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...widget.medicine.productOffering.map((offering) => Padding(
-                            padding: const EdgeInsets.only(bottom: 4.0),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.circle, size: 6, color: Colors.black54),
-                                const SizedBox(width: 8),
-                                Text(
-                                  offering,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
+                          ...widget.medicine.productOffering.map(
+                            (offering) => Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.circle,
+                                    size: 6,
                                     color: Colors.black54,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    offering,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          )),
+                          ),
                         ],
                       ),
                     ),
-                    
+
                     // Product Description
                     Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -438,7 +518,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey,
+                              color: Colors.black,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -452,85 +532,127 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Add to Cart and Buy Now buttons
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
                       child: Consumer(
                         builder: (context, ref, child) {
-                          final stockAsyncValue = ref.watch(stockStreamProvider(widget.medicine.id));
-                          
+                          final stockAsyncValue = ref.watch(
+                            stockStreamProvider(widget.medicine.id),
+                          );
+
                           return stockAsyncValue.when(
                             data: (currentStock) => Row(
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: currentStock <= 0 ? null : () {
-                                      int quantity = 1;
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => BuyNowModal(
-                                          medicine: widget.medicine,
-                                          buttonText: 'ADD TO CART', 
-                                          onQuantityChanged: (newQuantity) {
-                                            quantity = newQuantity;
+                                    onPressed: currentStock <= 0
+                                        ? null
+                                        : () {
+                                            int quantity = 1;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => BuyNowModal(
+                                                medicine: widget.medicine,
+                                                buttonText: 'ADD TO CART',
+                                                onQuantityChanged:
+                                                    (newQuantity) {
+                                                      quantity = newQuantity;
+                                                    },
+                                                onBuyNow: () async {
+                                                  Navigator.of(context).pop();
+
+                                                  try {
+                                                    await ref
+                                                        .read(
+                                                          cartProvider.notifier,
+                                                        )
+                                                        .addToCart(
+                                                          widget.medicine,
+                                                          quantity,
+                                                        );
+
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Added to cart successfully!',
+                                                            style:
+                                                                GoogleFonts.poppins(),
+                                                          ),
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF8ECAE6,
+                                                              ),
+                                                          duration:
+                                                              const Duration(
+                                                                seconds: 2,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Failed to add to cart: ${e.toString()}',
+                                                            style:
+                                                                GoogleFonts.poppins(),
+                                                          ),
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                          duration:
+                                                              const Duration(
+                                                                seconds: 3,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                              ),
+                                            );
                                           },
-                                          onBuyNow: () async {
-                                            Navigator.of(context).pop();
-                                            
-                                            try {
-                                              await ref.read(cartProvider.notifier).addToCart(
-                                                widget.medicine,
-                                                quantity,
-                                              );
-                                              
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Added to cart successfully!',
-                                                      style: GoogleFonts.poppins(),
-                                                    ),
-                                                    backgroundColor: const Color(0xFF8ECAE6),
-                                                    duration: const Duration(seconds: 2),
-                                                  ),
-                                                );
-                                              }
-                                            } catch (e) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Failed to add to cart: ${e.toString()}',
-                                                      style: GoogleFonts.poppins(),
-                                                    ),
-                                                    backgroundColor: Colors.red,
-                                                    duration: const Duration(seconds: 3),
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      );
-                                    },
                                     icon: Icon(
-                                      Icons.shopping_cart_outlined, 
-                                      color: currentStock <= 0 ? Colors.grey : const Color(0xFF8ECAE6), 
+                                      Icons.shopping_cart_outlined,
+                                      color: currentStock <= 0
+                                          ? Colors.grey
+                                          : const Color(0xFF8ECAE6),
                                       size: 24,
                                     ),
                                     label: Text(
-                                      currentStock <= 0 ? 'Out of Stock' : 'Add to Cart',
+                                      currentStock <= 0
+                                          ? 'Out of Stock'
+                                          : 'Add to Cart',
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: currentStock <= 0 ? Colors.grey.shade200 : Colors.white,
-                                      foregroundColor: currentStock <= 0 ? Colors.grey : Colors.black,
-                                      side: BorderSide(color: currentStock <= 0 ? Colors.grey : Colors.black26),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      backgroundColor: currentStock <= 0
+                                          ? Colors.grey.shade200
+                                          : Colors.white,
+                                      foregroundColor: currentStock <= 0
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      side: BorderSide(
+                                        color: currentStock <= 0
+                                            ? Colors.grey
+                                            : Colors.black26,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -540,47 +662,66 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: currentStock <= 0 ? null : () {
-                                      int quantity = 1;
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => BuyNowModal(
-                                          medicine: widget.medicine,
-                                          buttonText: 'BUY NOW', 
-                                          onQuantityChanged: (newQuantity) {
-                                            quantity = newQuantity;
-                                          },
-                                          onBuyNow: () {
-                                            Navigator.of(context).pop();
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) => OrderInformationScreen(
-                                                  medicine: widget.medicine,
-                                                  quantity: quantity,
-                                                ),
+                                    onPressed: currentStock <= 0
+                                        ? null
+                                        : () {
+                                            int quantity = 1;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => BuyNowModal(
+                                                medicine: widget.medicine,
+                                                buttonText: 'BUY NOW',
+                                                onQuantityChanged:
+                                                    (newQuantity) {
+                                                      quantity = newQuantity;
+                                                    },
+                                                onBuyNow: () {
+                                                  Navigator.of(context).pop();
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          OrderInformationScreen(
+                                                            medicine:
+                                                                widget.medicine,
+                                                            quantity: quantity,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             );
                                           },
-                                        ),
-                                      );
-                                    },
                                     icon: Icon(
-                                      Icons.shopping_bag_outlined, 
-                                      color: currentStock <= 0 ? Colors.grey : const Color(0xFF8ECAE6), 
+                                      Icons.shopping_bag_outlined,
+                                      color: currentStock <= 0
+                                          ? Colors.grey
+                                          : const Color(0xFF8ECAE6),
                                       size: 24,
                                     ),
                                     label: Text(
-                                      currentStock <= 0 ? 'Out of Stock' : 'Buy Now',
+                                      currentStock <= 0
+                                          ? 'Out of Stock'
+                                          : 'Buy Now',
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: currentStock <= 0 ? Colors.grey.shade200 : Colors.white,
-                                      foregroundColor: currentStock <= 0 ? Colors.grey : Colors.black,
-                                      side: BorderSide(color: currentStock <= 0 ? Colors.grey : Colors.black26),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      backgroundColor: currentStock <= 0
+                                          ? Colors.grey.shade200
+                                          : Colors.white,
+                                      foregroundColor: currentStock <= 0
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      side: BorderSide(
+                                        color: currentStock <= 0
+                                            ? Colors.grey
+                                            : Colors.black26,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -595,8 +736,8 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                   child: ElevatedButton.icon(
                                     onPressed: null,
                                     icon: const Icon(
-                                      Icons.shopping_cart_outlined, 
-                                      color: Colors.grey, 
+                                      Icons.shopping_cart_outlined,
+                                      color: Colors.grey,
                                       size: 24,
                                     ),
                                     label: Text(
@@ -609,8 +750,12 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.grey.shade200,
                                       foregroundColor: Colors.grey,
-                                      side: const BorderSide(color: Colors.grey),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -622,8 +767,8 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                   child: ElevatedButton.icon(
                                     onPressed: null,
                                     icon: const Icon(
-                                      Icons.shopping_bag_outlined, 
-                                      color: Colors.grey, 
+                                      Icons.shopping_bag_outlined,
+                                      color: Colors.grey,
                                       size: 24,
                                     ),
                                     label: Text(
@@ -636,8 +781,12 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.grey.shade200,
                                       foregroundColor: Colors.grey,
-                                      side: const BorderSide(color: Colors.grey),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      side: const BorderSide(
+                                        color: Colors.grey,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -650,73 +799,112 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: widget.medicine.stock <= 0 ? null : () {
-                                      // Add to cart functionality (fallback to original stock)
-                                      int quantity = 1;
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => BuyNowModal(
-                                          medicine: widget.medicine,
-                                          buttonText: 'ADD TO CART', 
-                                          onQuantityChanged: (newQuantity) {
-                                            quantity = newQuantity;
+                                    onPressed: widget.medicine.stock <= 0
+                                        ? null
+                                        : () {
+                                            // Add to cart functionality (fallback to original stock)
+                                            int quantity = 1;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => BuyNowModal(
+                                                medicine: widget.medicine,
+                                                buttonText: 'ADD TO CART',
+                                                onQuantityChanged:
+                                                    (newQuantity) {
+                                                      quantity = newQuantity;
+                                                    },
+                                                onBuyNow: () async {
+                                                  Navigator.of(context).pop();
+
+                                                  try {
+                                                    await ref
+                                                        .read(
+                                                          cartProvider.notifier,
+                                                        )
+                                                        .addToCart(
+                                                          widget.medicine,
+                                                          quantity,
+                                                        );
+
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Added to cart successfully!',
+                                                            style:
+                                                                GoogleFonts.poppins(),
+                                                          ),
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF8ECAE6,
+                                                              ),
+                                                          duration:
+                                                              const Duration(
+                                                                seconds: 2,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  } catch (e) {
+                                                    if (context.mounted) {
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Failed to add to cart: ${e.toString()}',
+                                                            style:
+                                                                GoogleFonts.poppins(),
+                                                          ),
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                          duration:
+                                                              const Duration(
+                                                                seconds: 3,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                              ),
+                                            );
                                           },
-                                          onBuyNow: () async {
-                                            Navigator.of(context).pop();
-                                            
-                                            try {
-                                              await ref.read(cartProvider.notifier).addToCart(
-                                                widget.medicine,
-                                                quantity,
-                                              );
-                                              
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Added to cart successfully!',
-                                                      style: GoogleFonts.poppins(),
-                                                    ),
-                                                    backgroundColor: const Color(0xFF8ECAE6),
-                                                    duration: const Duration(seconds: 2),
-                                                  ),
-                                                );
-                                              }
-                                            } catch (e) {
-                                              if (context.mounted) {
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      'Failed to add to cart: ${e.toString()}',
-                                                      style: GoogleFonts.poppins(),
-                                                    ),
-                                                    backgroundColor: Colors.red,
-                                                    duration: const Duration(seconds: 3),
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      );
-                                    },
                                     icon: Icon(
-                                      Icons.shopping_cart_outlined, 
-                                      color: widget.medicine.stock <= 0 ? Colors.grey : const Color(0xFF8ECAE6), 
+                                      Icons.shopping_cart_outlined,
+                                      color: widget.medicine.stock <= 0
+                                          ? Colors.grey
+                                          : const Color(0xFF8ECAE6),
                                       size: 24,
                                     ),
                                     label: Text(
-                                      widget.medicine.stock <= 0 ? 'Out of Stock' : 'Add to Cart',
+                                      widget.medicine.stock <= 0
+                                          ? 'Out of Stock'
+                                          : 'Add to Cart',
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: widget.medicine.stock <= 0 ? Colors.grey.shade200 : Colors.white,
-                                      foregroundColor: widget.medicine.stock <= 0 ? Colors.grey : Colors.black,
-                                      side: BorderSide(color: widget.medicine.stock <= 0 ? Colors.grey : Colors.black26),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      backgroundColor:
+                                          widget.medicine.stock <= 0
+                                          ? Colors.grey.shade200
+                                          : Colors.white,
+                                      foregroundColor:
+                                          widget.medicine.stock <= 0
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      side: BorderSide(
+                                        color: widget.medicine.stock <= 0
+                                            ? Colors.grey
+                                            : Colors.black26,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -726,47 +914,68 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: widget.medicine.stock <= 0 ? null : () {
-                                      int quantity = 1;
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => BuyNowModal(
-                                          medicine: widget.medicine,
-                                          buttonText: 'BUY NOW', 
-                                          onQuantityChanged: (newQuantity) {
-                                            quantity = newQuantity;
-                                          },
-                                          onBuyNow: () {
-                                            Navigator.of(context).pop();
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) => OrderInformationScreen(
-                                                  medicine: widget.medicine,
-                                                  quantity: quantity,
-                                                ),
+                                    onPressed: widget.medicine.stock <= 0
+                                        ? null
+                                        : () {
+                                            int quantity = 1;
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => BuyNowModal(
+                                                medicine: widget.medicine,
+                                                buttonText: 'BUY NOW',
+                                                onQuantityChanged:
+                                                    (newQuantity) {
+                                                      quantity = newQuantity;
+                                                    },
+                                                onBuyNow: () {
+                                                  Navigator.of(context).pop();
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          OrderInformationScreen(
+                                                            medicine:
+                                                                widget.medicine,
+                                                            quantity: quantity,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
                                               ),
                                             );
                                           },
-                                        ),
-                                      );
-                                    },
                                     icon: Icon(
-                                      Icons.shopping_bag_outlined, 
-                                      color: widget.medicine.stock <= 0 ? Colors.grey : const Color(0xFF8ECAE6), 
+                                      Icons.shopping_bag_outlined,
+                                      color: widget.medicine.stock <= 0
+                                          ? Colors.grey
+                                          : const Color(0xFF8ECAE6),
                                       size: 24,
                                     ),
                                     label: Text(
-                                      widget.medicine.stock <= 0 ? 'Out of Stock' : 'Buy Now',
+                                      widget.medicine.stock <= 0
+                                          ? 'Out of Stock'
+                                          : 'Buy Now',
                                       style: GoogleFonts.poppins(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 16,
                                       ),
                                     ),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: widget.medicine.stock <= 0 ? Colors.grey.shade200 : Colors.white,
-                                      foregroundColor: widget.medicine.stock <= 0 ? Colors.grey : Colors.black,
-                                      side: BorderSide(color: widget.medicine.stock <= 0 ? Colors.grey : Colors.black26),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                      backgroundColor:
+                                          widget.medicine.stock <= 0
+                                          ? Colors.grey.shade200
+                                          : Colors.white,
+                                      foregroundColor:
+                                          widget.medicine.stock <= 0
+                                          ? Colors.grey
+                                          : Colors.black,
+                                      side: BorderSide(
+                                        color: widget.medicine.stock <= 0
+                                            ? Colors.grey
+                                            : Colors.black26,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -786,7 +995,9 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            searchQuery.isEmpty ? 'Related Products' : 'Search Results',
+                            searchQuery.isEmpty
+                                ? 'Related Products'
+                                : 'Search Results',
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -797,15 +1008,18 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                           GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 0.75,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                            ),
-                            itemCount: relatedMedicines.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  childAspectRatio: 0.75,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                ),
+                            itemCount: filteredRelatedMedicines.length,
                             itemBuilder: (context, index) {
-                              return RelatedProductCard(medicine: relatedMedicines[index]);
+                              return RelatedProductCard(
+                                medicine: filteredRelatedMedicines[index],
+                              );
                             },
                           ),
                         ],

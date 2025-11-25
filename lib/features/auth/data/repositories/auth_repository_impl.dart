@@ -21,8 +21,8 @@ class AuthRepositoryImpl implements AuthRepository {
     required String firstName,
     required String lastName,
     required String email,
-    required String contact,
-    required String address,
+    String contact = '',
+    String address = '',
     required String password,
   }) async {
     try {

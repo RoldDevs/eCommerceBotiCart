@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/search_provider.dart';
 import '../providers/medicine_provider.dart';
 import '../providers/filter_provider.dart';
+import '../providers/recommendation_provider.dart';
 import '../../domain/entities/medicine.dart';
 import '../screens/medicine_detail_screen.dart';
 import 'stock_badge.dart';
@@ -25,7 +26,8 @@ class RecentSearchesScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<RecentSearchesScreen> createState() => _RecentSearchesScreenState();
+  ConsumerState<RecentSearchesScreen> createState() =>
+      _RecentSearchesScreenState();
 }
 
 class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
@@ -44,10 +46,10 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     setState(() {
       _searchQuery = value;
     });
-    
+
     // Cancel previous timer if it exists
     _debounceTimer?.cancel();
-    
+
     // Only save search after user stops typing for 1 second
     if (value.isNotEmpty) {
       _debounceTimer = Timer(const Duration(seconds: 1), () {
@@ -60,7 +62,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
   Widget build(BuildContext context) {
     final medicinesAsyncValue = ref.watch(medicineSearchProvider(_searchQuery));
     final selectedFilter = ref.watch(selectedFilterProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -72,7 +74,10 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF8ECAE6)),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: Color(0xFF8ECAE6),
+                    ),
                     onPressed: widget.onBackPressed,
                   ),
                   Expanded(
@@ -85,7 +90,11 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                       child: Row(
                         children: [
                           const SizedBox(width: 12),
-                          const Icon(Icons.search, color: Color(0xFF8ECAE6), size: 35),
+                          const Icon(
+                            Icons.search,
+                            color: Color(0xFF8ECAE6),
+                            size: 35,
+                          ),
                           Expanded(
                             child: TextField(
                               controller: _searchController,
@@ -97,7 +106,11 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                                 ),
                                 border: InputBorder.none,
                                 isDense: true,
-                                contentPadding: const EdgeInsets.only(left: 5, top: 15, bottom: 15),
+                                contentPadding: const EdgeInsets.only(
+                                  left: 5,
+                                  top: 15,
+                                  bottom: 15,
+                                ),
                               ),
                               autofocus: true,
                               onChanged: _onSearchChanged,
@@ -108,7 +121,10 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.filter_list, color: Color(0xFF8ECAE6)),
+                    icon: const Icon(
+                      Icons.filter_list,
+                      color: Color(0xFF8ECAE6),
+                    ),
                     onPressed: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -120,7 +136,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                 ],
               ),
             ),
-            
+
             // Filter tabs
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -128,24 +144,44 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
-                    _buildFilterChip('Relevance', selectedFilter == MedicineFilterType.relevance, () {
-                      ref.read(selectedFilterProvider.notifier).state = MedicineFilterType.relevance;
-                    }),
-                    _buildFilterChip('Latest', selectedFilter == MedicineFilterType.latest, () {
-                      ref.read(selectedFilterProvider.notifier).state = MedicineFilterType.latest;
-                    }),
-                    _buildFilterChip('Price', selectedFilter == MedicineFilterType.price, () {
-                      ref.read(selectedFilterProvider.notifier).state = MedicineFilterType.price;
-                    }),
-                    _buildFilterChip('Favorites', selectedFilter == MedicineFilterType.favorites, () {
-                      ref.read(selectedFilterProvider.notifier).state = MedicineFilterType.favorites;
-                    }),
+                    _buildFilterChip(
+                      'Relevance',
+                      selectedFilter == MedicineFilterType.relevance,
+                      () {
+                        ref.read(selectedFilterProvider.notifier).state =
+                            MedicineFilterType.relevance;
+                      },
+                    ),
+                    _buildFilterChip(
+                      'Latest',
+                      selectedFilter == MedicineFilterType.latest,
+                      () {
+                        ref.read(selectedFilterProvider.notifier).state =
+                            MedicineFilterType.latest;
+                      },
+                    ),
+                    _buildFilterChip(
+                      'Price',
+                      selectedFilter == MedicineFilterType.price,
+                      () {
+                        ref.read(selectedFilterProvider.notifier).state =
+                            MedicineFilterType.price;
+                      },
+                    ),
+                    _buildFilterChip(
+                      'Favorites',
+                      selectedFilter == MedicineFilterType.favorites,
+                      () {
+                        ref.read(selectedFilterProvider.notifier).state =
+                            MedicineFilterType.favorites;
+                      },
+                    ),
                     const SizedBox(width: 8),
                   ],
                 ),
               ),
             ),
-            
+
             // Content area - either recent searches or search results
             Expanded(
               child: _searchQuery.isEmpty
@@ -189,32 +225,36 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     final searchHistory = ref.watch(searchHistoryProvider);
     final selectedProductTypes = ref.watch(selectedProductTypesProvider);
     final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
-    
+
     // Apply current filter type (relevance, latest, price, favorites) to filtered medicines
     final filterType = ref.watch(selectedFilterProvider);
     final favorites = ref.watch(favoriteMedicinesProvider);
-    
+
     List<Medicine> finalFilteredMedicines = filteredMedicines.map((medicine) {
-      return medicine.copyWith(
-        isFavorite: favorites.contains(medicine.id)
-      );
+      return medicine.copyWith(isFavorite: favorites.contains(medicine.id));
     }).toList();
-    
+
     switch (filterType) {
       case MedicineFilterType.relevance:
-        finalFilteredMedicines.sort((a, b) => a.medicineName.compareTo(b.medicineName));
+        finalFilteredMedicines.sort(
+          (a, b) => a.medicineName.compareTo(b.medicineName),
+        );
         break;
       case MedicineFilterType.latest:
-        finalFilteredMedicines.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        finalFilteredMedicines.sort(
+          (a, b) => b.createdAt.compareTo(a.createdAt),
+        );
         break;
       case MedicineFilterType.price:
         finalFilteredMedicines.sort((a, b) => b.price.compareTo(a.price));
         break;
       case MedicineFilterType.favorites:
-        finalFilteredMedicines = finalFilteredMedicines.where((medicine) => favorites.contains(medicine.id)).toList();
+        finalFilteredMedicines = finalFilteredMedicines
+            .where((medicine) => favorites.contains(medicine.id))
+            .toList();
         break;
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -248,17 +288,17 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
             ],
           ),
         ),
-        
+
         // Recent searches list
         searchHistory.isEmpty
             ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Text(
                   'No recent searches',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
                 ),
               )
             : ListView.builder(
@@ -275,7 +315,11 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                         color: Colors.black87,
                       ),
                     ),
-                    trailing: const Icon(Icons.north_west, size: 20, color: Colors.grey),
+                    trailing: const Icon(
+                      Icons.north_west,
+                      size: 20,
+                      color: Colors.grey,
+                    ),
                     onTap: () {
                       _searchController.text = searchHistory[index];
                       setState(() {
@@ -286,13 +330,74 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                   );
                 },
               ),
-        
+
+        // Recommended Products Section (only if user has purchased from target categories)
+        Consumer(
+          builder: (context, ref, child) {
+            final hasPurchased = ref.watch(
+              hasPurchasedFromTargetCategoriesProvider,
+            );
+            final recommendedMedicinesAsync = ref.watch(
+              recommendedMedicinesProvider,
+            );
+
+            if (!hasPurchased) {
+              return const SizedBox.shrink();
+            }
+
+            return recommendedMedicinesAsync.when(
+              data: (recommendedMedicines) {
+                if (recommendedMedicines.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Recommended Products header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                      child: Text(
+                        'Recommended Products',
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                    // Recommended medicines grid
+                    SizedBox(
+                      height: 280,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: recommendedMedicines.length,
+                        itemBuilder: (context, index) {
+                          final medicine = recommendedMedicines[index];
+                          return Container(
+                            width: 180,
+                            margin: const EdgeInsets.only(right: 16),
+                            child: _buildMedicineCard(medicine),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
+        ),
+
         // All Medicines Section
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
           child: Text(
-            ref.watch(selectedFilterProvider) == MedicineFilterType.favorites 
-                ? 'Favorite Medicines' 
+            ref.watch(selectedFilterProvider) == MedicineFilterType.favorites
+                ? 'Favorite Medicines'
                 : 'All Medicines',
             style: GoogleFonts.poppins(
               fontSize: 18,
@@ -301,13 +406,17 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
             ),
           ),
         ),
-        
+
         // Filtered medicines grid
         Expanded(
           child: finalFilteredMedicines.isEmpty
               ? Center(
                   child: Text(
-                    _getEmptyStateMessage(filterType, selectedProductTypes, selectedConditionTypes),
+                    _getEmptyStateMessage(
+                      filterType,
+                      selectedProductTypes,
+                      selectedConditionTypes,
+                    ),
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       color: Colors.black87,
@@ -334,15 +443,19 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     );
   }
 
-  String _getEmptyStateMessage(MedicineFilterType filterType, Set<MedicineProductType> selectedProductTypes, Set<MedicineConditionType> selectedConditionTypes) {
+  String _getEmptyStateMessage(
+    MedicineFilterType filterType,
+    Set<MedicineProductType> selectedProductTypes,
+    Set<MedicineConditionType> selectedConditionTypes,
+  ) {
     if (filterType == MedicineFilterType.favorites) {
       return 'No favorite medicines yet';
     }
-    
+
     if (selectedProductTypes.isNotEmpty || selectedConditionTypes.isNotEmpty) {
       return 'No medicines found matching your filters';
     }
-    
+
     return 'No medicines available';
   }
 
@@ -351,58 +464,59 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     final favorites = ref.watch(favoriteMedicinesProvider);
     final selectedProductTypes = ref.watch(selectedProductTypesProvider);
     final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
-    
+
     return medicinesAsyncValue.when(
       data: (medicines) {
         if (medicines.isEmpty) {
           return Center(
             child: Text(
               'No medicines found',
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                color: Colors.black87,
-              ),
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
             ),
           );
         }
-        
+
         // Apply current filter to search results
         List<Medicine> filteredMedicines = medicines.map((medicine) {
-          return medicine.copyWith(
-            isFavorite: favorites.contains(medicine.id)
-          );
+          return medicine.copyWith(isFavorite: favorites.contains(medicine.id));
         }).toList();
-        
+
         // Apply product type filter
         if (selectedProductTypes.isNotEmpty) {
           filteredMedicines = filteredMedicines.where((medicine) {
             return selectedProductTypes.contains(medicine.productType);
           }).toList();
         }
-        
+
         // Apply condition type filter
         if (selectedConditionTypes.isNotEmpty) {
           filteredMedicines = filteredMedicines.where((medicine) {
             return selectedConditionTypes.contains(medicine.conditionType);
           }).toList();
         }
-        
+
         final filterType = ref.watch(selectedFilterProvider);
         switch (filterType) {
           case MedicineFilterType.relevance:
-            filteredMedicines.sort((a, b) => a.medicineName.compareTo(b.medicineName));
+            filteredMedicines.sort(
+              (a, b) => a.medicineName.compareTo(b.medicineName),
+            );
             break;
           case MedicineFilterType.latest:
-            filteredMedicines.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            filteredMedicines.sort(
+              (a, b) => b.createdAt.compareTo(a.createdAt),
+            );
             break;
           case MedicineFilterType.price:
             filteredMedicines.sort((a, b) => b.price.compareTo(a.price));
             break;
           case MedicineFilterType.favorites:
-            filteredMedicines = filteredMedicines.where((medicine) => favorites.contains(medicine.id)).toList();
+            filteredMedicines = filteredMedicines
+                .where((medicine) => favorites.contains(medicine.id))
+                .toList();
             break;
         }
-        
+
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -422,10 +536,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
       error: (error, stackTrace) => Center(
         child: Text(
           'Error loading medicines: $error',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            color: Colors.red,
-          ),
+          style: GoogleFonts.poppins(fontSize: 16, color: Colors.red),
         ),
       ),
     );
@@ -434,21 +545,28 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
   Widget _buildMedicineCard(Medicine medicine) {
     final favorites = ref.watch(favoriteMedicinesProvider);
     final isFavorite = favorites.contains(medicine.id);
-    
+
     return Consumer(
       builder: (context, ref, child) {
         final stockAsyncValue = ref.watch(stockStreamProvider(medicine.id));
-        
+
         return stockAsyncValue.when(
-          data: (currentStock) => _buildCardWithStock(medicine, isFavorite, currentStock),
-          loading: () => _buildCardWithStock(medicine, isFavorite, medicine.stock),
-          error: (_, __) => _buildCardWithStock(medicine, isFavorite, medicine.stock),
+          data: (currentStock) =>
+              _buildCardWithStock(medicine, isFavorite, currentStock),
+          loading: () =>
+              _buildCardWithStock(medicine, isFavorite, medicine.stock),
+          error: (_, __) =>
+              _buildCardWithStock(medicine, isFavorite, medicine.stock),
         );
       },
     );
   }
 
-  Widget _buildCardWithStock(Medicine medicine, bool isFavorite, int currentStock) {
+  Widget _buildCardWithStock(
+    Medicine medicine,
+    bool isFavorite,
+    int currentStock,
+  ) {
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -491,7 +609,10 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                         height: 105, // Reduced from 120 to 105
                         color: Colors.grey.shade200,
                         child: const Center(
-                          child: Icon(Icons.image_not_supported, color: Colors.grey),
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
                         ),
                       );
                     },
@@ -523,7 +644,10 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                   ),
                   const SizedBox(height: 1), // Reduced from 2 to 1
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
@@ -571,14 +695,21 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                       IconButton(
                         icon: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? Colors.red : const Color(0xFF8ECAE6),
+                          color: isFavorite
+                              ? Colors.red
+                              : const Color(0xFF8ECAE6),
                           size: 40, // Reduced from 40 to 32
                         ),
                         onPressed: () {
-                          ref.read(favoriteMedicinesProvider.notifier).toggleFavorite(medicine.id);
+                          ref
+                              .read(favoriteMedicinesProvider.notifier)
+                              .toggleFavorite(medicine.id);
                         },
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Added constraints
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ), // Added constraints
                       ),
                     ],
                   ),

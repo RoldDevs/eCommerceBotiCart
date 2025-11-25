@@ -47,8 +47,10 @@ class CartEntity {
     this.quantity = 1,
   });
 
+  // Get status as enum
   CartStatus get statusEnum => CartStatus.fromString(status);
 
+  // Convert CartEntity to Map for Firestore
   Map<String, dynamic> toFirestore() {
     return {
       'itemCartNo': itemCartNo,
@@ -60,6 +62,7 @@ class CartEntity {
     };
   }
 
+  // Create CartEntity from Firestore document
   factory CartEntity.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return CartEntity(
@@ -72,6 +75,7 @@ class CartEntity {
     );
   }
 
+  // Create CartEntity from Map
   factory CartEntity.fromMap(Map<String, dynamic> data, String id) {
     return CartEntity(
       itemCartNo: id,

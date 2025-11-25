@@ -7,6 +7,7 @@ class OrderMessageRepository {
   OrderMessageRepository({required FirebaseFirestore firestore})
       : _firestore = firestore;
 
+  // Create a new order message
   Future<String> createOrderMessage(OrderMessage message) async {
     try {
       final docRef = _firestore.collection('order_messages').doc();
@@ -19,6 +20,7 @@ class OrderMessageRepository {
     }
   }
 
+  // Get order messages for a specific user
   Stream<List<OrderMessage>> getUserOrderMessages(String userId) {
     return _firestore
         .collection('order_messages')
@@ -30,6 +32,7 @@ class OrderMessageRepository {
             .toList());
   }
 
+  // Get order messages for a specific order
   Stream<List<OrderMessage>> getOrderMessages(String orderId) {
     return _firestore
         .collection('order_messages')
@@ -41,6 +44,7 @@ class OrderMessageRepository {
             .toList());
   }
 
+  // Mark message as read
   Future<void> markMessageAsRead(String messageId) async {
     try {
       await _firestore
@@ -52,6 +56,7 @@ class OrderMessageRepository {
     }
   }
 
+  // Get unread message count for user
   Stream<int> getUnreadMessageCount(String userId) {
     return _firestore
         .collection('order_messages')
@@ -61,6 +66,7 @@ class OrderMessageRepository {
         .map((snapshot) => snapshot.docs.length);
   }
 
+  // Delete order message
   Future<void> deleteOrderMessage(String messageId) async {
     try {
       await _firestore.collection('order_messages').doc(messageId).delete();

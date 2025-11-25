@@ -4,11 +4,13 @@ import 'package:crypto/crypto.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class LalamoveService {
+  // Sandbox credentials
   static const String _apiKey = 'pk_test_712aacaf0ce4aab3b4472b5cac86a36d';
   static const String _apiSecret = 'sk_test_3BZBBzCuRcAKWFtObygYa8bUBejrPlxMqpB25b98Pw6LcPIo4SElsKL+PrT9pwMX';
   static const String _baseUrl = 'https://rest.sandbox.lalamove.com';
   static const String _apiVersion = 'v3';
   
+  // Create a delivery order with Lalamove
   Future<Map<String, dynamic>> createDeliveryOrder({
     required String orderId,
     required String pickupAddress,
@@ -21,6 +23,7 @@ class LalamoveService {
     LatLng? deliveryCoordinates,
   }) async {
     try {
+      // First, get a quotation
       final quotationResult = await _getQuotation(
         orderId: orderId,
         pickupAddress: pickupAddress,
@@ -31,6 +34,7 @@ class LalamoveService {
       
       final quotationId = quotationResult['data']['quotationId'];
       
+      // Extract stop IDs from quotation result
       final stops = quotationResult['data']['stops'] as List;
       final pickupStopId = stops[0]['stopId'];
       final deliveryStopId = stops[1]['stopId'];
@@ -38,6 +42,7 @@ class LalamoveService {
       final path = '/$_apiVersion/orders';
       final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       
+      // Create request body
       final body = {
         'data': {
           'quotationId': quotationId,
@@ -57,6 +62,7 @@ class LalamoveService {
         }
       };
 
+      // Generate signature
       final signature = _generateSignature(
         method: 'POST',
         path: path,
@@ -64,6 +70,7 @@ class LalamoveService {
         body: jsonEncode(body),
       );
 
+      // Make API request
       final response = await http.post(
         Uri.parse('$_baseUrl$path'),
         headers: {
@@ -85,6 +92,7 @@ class LalamoveService {
     }
   }
 
+  // Get a quotation first before creating an order
   Future<Map<String, dynamic>> _getQuotation({
     required String orderId,
     required String pickupAddress,
@@ -95,6 +103,7 @@ class LalamoveService {
     final path = '/$_apiVersion/quotations';
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     
+    // Create request body with proper structure matching Lalamove API requirements
     final body = {
       'data': {
         'serviceType': 'MOTORCYCLE',
@@ -118,6 +127,7 @@ class LalamoveService {
       }
     };
 
+    // Generate signature
     final signature = _generateSignature(
       method: 'POST',
       path: path,
@@ -125,6 +135,7 @@ class LalamoveService {
       body: jsonEncode(body),
     );
 
+    // Make API request
     final response = await http.post(
       Uri.parse('$_baseUrl$path'),
       headers: {
@@ -143,10 +154,13 @@ class LalamoveService {
     }
   }
 
+
+  // Get delivery status
   Future<Map<String, dynamic>> getDeliveryStatus(String deliveryId) async {
     final path = '/$_apiVersion/orders/$deliveryId';
     final timestamp = DateTime.now().millisecondsSinceEpoch.toString();
     
+    // Generate signature
     final signature = _generateSignature(
       method: 'GET',
       path: path,
@@ -154,6 +168,7 @@ class LalamoveService {
       body: '',
     );
 
+    // Make API request
     final response = await http.get(
       Uri.parse('$_baseUrl$path'),
       headers: {
@@ -170,6 +185,7 @@ class LalamoveService {
     }
   }
 
+  // Generate HMAC signature for Lalamove API
   String _generateSignature({
     required String method,
     required String path,

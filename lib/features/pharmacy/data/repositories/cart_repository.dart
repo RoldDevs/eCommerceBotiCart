@@ -7,6 +7,7 @@ class CartRepository {
 
   CartRepository({required FirebaseFirestore firestore}) : _firestore = firestore;
 
+  // Add item to cart
   Future<void> addToCart({
     required String userUID,
     required String medicineID,
@@ -14,6 +15,7 @@ class CartRepository {
   }) async {
     final cartRef = _firestore.collection('cart');
     
+    // Check if item already exists in cart
     final existingItem = await cartRef
         .where('userUID', isEqualTo: userUID)
         .where('medicineID', isEqualTo: medicineID)
@@ -21,12 +23,14 @@ class CartRepository {
         .get();
 
     if (existingItem.docs.isNotEmpty) {
+      // Update existing item quantity
       final doc = existingItem.docs.first;
       final currentQuantity = doc.data()['quantity'] as int;
       await doc.reference.update({
         'quantity': currentQuantity + quantity,
       });
     } else {
+      // Add new item
       final docRef = cartRef.doc();
       final cartEntity = CartEntity(
         itemCartNo: docRef.id,
@@ -41,6 +45,7 @@ class CartRepository {
     }
   }
 
+  // Get user's cart items
   Stream<List<CartEntity>> getUserCartItems(String userUID) {
     return _firestore
         .collection('cart')
@@ -53,6 +58,7 @@ class CartRepository {
     });
   }
 
+  // Get medicine by ID
   Future<Medicine?> getMedicineById(String medicineID) async {
     try {
       final doc = await _firestore.collection('medicines').doc(medicineID).get();

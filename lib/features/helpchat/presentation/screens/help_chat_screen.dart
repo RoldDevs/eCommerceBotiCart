@@ -5,6 +5,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../domain/entities/help_chat_message.dart';
 import '../providers/help_chat_providers.dart';
 import '../widgets/chat_bubble.dart';
+import '../../data/repositories/report_repository.dart';
+import '../../../pharmacy/domain/entities/pharmacy.dart';
+import 'pharmacy_selection_screen.dart';
+import 'violation_selection_screen.dart';
+import 'additional_comments_screen.dart';
+import '../../../auth/presentation/providers/user_provider.dart';
 
 class HelpChatScreen extends ConsumerStatefulWidget {
   const HelpChatScreen({super.key});
@@ -23,6 +29,100 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _showReportFlow(BuildContext context) async {
+    try {
+      // Step 1: Select Pharmacy
+      final selectedPharmacy = await Navigator.push<Pharmacy>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PharmacySelectionScreen(),
+        ),
+      );
+
+      if (selectedPharmacy == null) return;
+
+      // Step 2: Select Violations
+      final selectedViolations = await Navigator.push<List<String>>(
+        context,
+        MaterialPageRoute(
+          builder: (context) =>
+              ViolationSelectionScreen(pharmacyName: selectedPharmacy.name),
+        ),
+      );
+
+      if (selectedViolations == null || selectedViolations.isEmpty) return;
+
+      // Step 3: Additional Comments
+      final additionalComments = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AdditionalCommentsScreen(
+            pharmacyName: selectedPharmacy.name,
+            violations: selectedViolations,
+          ),
+        ),
+      );
+
+      if (additionalComments == null) return;
+
+      // Step 4: Submit Report
+      final currentUser = ref.read(currentUserProvider).value;
+      if (currentUser == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Please login to submit a report',
+                style: GoogleFonts.poppins(),
+              ),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      final reportRepository = ReportRepository();
+      final violationText = selectedViolations.join(', ');
+
+      await reportRepository.createReport(
+        storeID: selectedPharmacy.storeID.toString(),
+        pharmacyID: selectedPharmacy.id,
+        reportedBy: currentUser.id,
+        violation: violationText,
+        additionalComments: additionalComments.isNotEmpty
+            ? additionalComments
+            : null,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Report submitted successfully',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: const Color(0xFF8ECAE6),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to submit report: $e',
+              style: GoogleFonts.poppins(),
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _sendMessage() async {
@@ -48,7 +148,7 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
       final repository = ref.read(helpChatRepositoryProvider);
       await repository.sendMessage(message);
       _messageController.clear();
-      
+
       // Scroll to bottom after sending
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
@@ -61,9 +161,9 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
       });
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send message: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -73,17 +173,22 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
     }
   }
 
-
   bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
-  
+
   Widget _buildDateHeader(DateTime timestamp) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
-    
+    final messageDate = DateTime(
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
+    );
+
     String dateText;
     if (messageDate == today) {
       dateText = 'Today';
@@ -92,7 +197,7 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
     } else {
       dateText = '${timestamp.day}/${timestamp.month}/${timestamp.year}';
     }
-    
+
     return Container(
       alignment: Alignment.center,
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -148,10 +253,10 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
               ),
               child: CircleAvatar(
                 radius: 18,
-                backgroundColor: const Color(0xFF8ECAE6),
+                backgroundColor: Colors.grey.shade200,
                 child: Icon(
                   Icons.support_agent,
-                  color: Colors.white,
+                  color: const Color(0xFF8ECAE6),
                   size: 20,
                 ),
               ),
@@ -176,6 +281,12 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.report_problem, color: Color(0xFF8ECAE6)),
+            onPressed: () => _showReportFlow(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -186,7 +297,9 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                   // Scroll to bottom when messages load
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (_scrollController.hasClients) {
-                      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                      _scrollController.jumpTo(
+                        _scrollController.position.maxScrollExtent,
+                      );
                     }
                   });
 
@@ -224,27 +337,39 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
 
                   return ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 20,
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
                       final isFromCurrentUser = message.isFromUser;
-                      
+
                       // Add date headers between messages from different days
                       Widget? dateHeader;
-                      if (index == 0 || !_isSameDay(messages[index].timestamp, messages[index - 1].timestamp)) {
+                      if (index == 0 ||
+                          !_isSameDay(
+                            messages[index].timestamp,
+                            messages[index - 1].timestamp,
+                          )) {
                         dateHeader = _buildDateHeader(message.timestamp);
                       }
-                      
+
                       return Column(
                         children: [
                           if (dateHeader != null) dateHeader,
                           ChatBubble(
                             message: message.content,
                             isUser: isFromCurrentUser,
-                            timestamp: '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
-                            senderName: message.isFromAdmin ? message.senderName : null,
-                            replies: message.replies.isNotEmpty ? message.replies : null,
+                            timestamp:
+                                '${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}',
+                            senderName: message.isFromAdmin
+                                ? message.senderName
+                                : null,
+                            replies: message.replies.isNotEmpty
+                                ? message.replies
+                                : null,
                           ),
                         ],
                       );
@@ -260,7 +385,11 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red.shade300,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Error loading messages',
@@ -283,7 +412,9 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                       ElevatedButton(
                         onPressed: () {
                           // ignore: unused_result
-                          ref.refresh(userChatMessagesProvider(currentUserUID!));
+                          ref.refresh(
+                            userChatMessagesProvider(currentUserUID!),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
@@ -309,7 +440,9 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
               margin: const EdgeInsets.only(bottom: 50),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withValues(alpha: 0.15),
@@ -342,7 +475,10 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                           ),
                           filled: true,
                           fillColor: Colors.grey.shade100,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
                             borderSide: BorderSide.none,
@@ -353,7 +489,10 @@ class _HelpChatScreenState extends ConsumerState<HelpChatScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(color: primaryColor, width: 1),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: 1,
+                            ),
                           ),
                         ),
                         textCapitalization: TextCapitalization.sentences,

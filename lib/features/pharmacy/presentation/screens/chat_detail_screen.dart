@@ -34,7 +34,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(chatRepositoryProvider).markConversationAsRead(widget.conversationId);
+      ref
+          .read(chatRepositoryProvider)
+          .markConversationAsRead(widget.conversationId);
     });
   }
 
@@ -53,16 +55,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     try {
       String currentConversationId = widget.conversationId;
-      
+
       // If no conversation exists, create one first
       if (currentConversationId.isEmpty) {
         final chatRepository = ref.read(chatRepositoryProvider);
-        
+
         // Create a pharmacy object for the conversation
         final pharmacy = Pharmacy(
           id: widget.pharmacyId,
           name: widget.pharmacyName,
-          location: '', 
+          location: '',
           rating: 0.0,
           reviewCount: 0,
           contact: '',
@@ -71,8 +73,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           description: '',
           storeID: 0,
         );
-        
-        currentConversationId = await chatRepository.createConversation(user.id, pharmacy);
+
+        currentConversationId = await chatRepository.createConversation(
+          user.id,
+          pharmacy,
+        );
       }
 
       final message = ChatMessage(
@@ -85,9 +90,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         senderType: 'customer',
       );
 
-      await ref.read(chatRepositoryProvider).sendMessage(currentConversationId, message);
+      await ref
+          .read(chatRepositoryProvider)
+          .sendMessage(currentConversationId, message);
       _messageController.clear();
-      
+
       // Scroll to bottom after sending message
       Future.delayed(const Duration(milliseconds: 100), () {
         if (_scrollController.hasClients) {
@@ -113,10 +120,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Handle empty conversationId by showing empty messages instead of trying to fetch
-    final messagesAsyncValue = widget.conversationId.isEmpty 
+    final messagesAsyncValue = widget.conversationId.isEmpty
         ? const AsyncValue.data(<ChatMessage>[])
         : ref.watch(conversationMessagesProvider(widget.conversationId));
-    
+
     final currentUser = ref.watch(currentUserProvider).value;
     final primaryColor = const Color(0xFF8ECAE6);
 
@@ -152,7 +159,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     : null,
                 child: widget.pharmacyImageUrl.isEmpty
                     ? Text(
-                        widget.pharmacyName.isNotEmpty ? widget.pharmacyName[0] : '?',
+                        widget.pharmacyName.isNotEmpty
+                            ? widget.pharmacyName[0]
+                            : '?',
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -192,7 +201,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   // Scroll to bottom when messages load
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     if (_scrollController.hasClients) {
-                      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                      _scrollController.jumpTo(
+                        _scrollController.position.maxScrollExtent,
+                      );
                     }
                   });
 
@@ -230,18 +241,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
                   return ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 20,
+                    ),
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final message = messages[index];
-                      final isFromCurrentUser = message.senderId == currentUser?.id;
-                      
+                      final isFromCurrentUser =
+                          message.senderId == currentUser?.id;
+
                       // Add date headers between messages from different days
                       Widget? dateHeader;
-                      if (index == 0 || !_isSameDay(messages[index].timestamp, messages[index - 1].timestamp)) {
+                      if (index == 0 ||
+                          !_isSameDay(
+                            messages[index].timestamp,
+                            messages[index - 1].timestamp,
+                          )) {
                         dateHeader = _buildDateHeader(message.timestamp);
                       }
-                      
+
                       return Column(
                         children: [
                           if (dateHeader != null) dateHeader,
@@ -249,29 +268,39 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             message: message,
                             isFromCurrentUser: isFromCurrentUser,
                             bubbleColor: Color(0xFF8ECAE6),
+                            showNestedReplies:
+                                false, // We display replies as separate messages below
                           ),
                           // Display admin replies as separate messages immediately after the user message
-                          if (message.replies.isNotEmpty && !isFromCurrentUser)
+                          if (message.replies.isNotEmpty && isFromCurrentUser)
                             ...message.replies.map((reply) {
                               final replyContent = reply['content'] ?? '';
                               final senderType = reply['senderType'] ?? 'admin';
-                              final senderName = reply['senderName'] ?? 'Admin';
-                              
+                              // Always use pharmacy name for admin/pharmacy replies
+                              final senderName =
+                                  (senderType == 'admin' ||
+                                      senderType == 'pharmacy')
+                                  ? widget.pharmacyName
+                                  : (reply['senderName'] ?? 'Admin');
+
                               // Create a ChatMessage object for the reply
                               final replyMessage = ChatMessage(
-                                id: reply['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                                id:
+                                    reply['id'] ??
+                                    DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
                                 senderId: reply['senderId'] ?? 'admin',
                                 receiverId: message.senderId,
                                 content: replyContent,
-                                timestamp: reply['timestamp'] is Timestamp 
+                                timestamp: reply['timestamp'] is Timestamp
                                     ? (reply['timestamp'] as Timestamp).toDate()
-                                    : reply['timestamp'] is DateTime 
-                                        ? reply['timestamp'] as DateTime
-                                        : DateTime.now(),
+                                    : reply['timestamp'] is DateTime
+                                    ? reply['timestamp'] as DateTime
+                                    : DateTime.now(),
                                 senderName: senderName,
                                 senderType: senderType,
                               );
-                              
+
                               return Padding(
                                 padding: const EdgeInsets.only(top: 8),
                                 child: ChatMessageBubble(
@@ -295,7 +324,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Colors.red.shade300,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'Error loading messages',
@@ -318,7 +351,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       ElevatedButton(
                         onPressed: () {
                           // ignore: unused_result
-                          ref.refresh(conversationMessagesProvider(widget.conversationId));
+                          ref.refresh(
+                            conversationMessagesProvider(widget.conversationId),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primaryColor,
@@ -344,7 +379,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               margin: const EdgeInsets.only(bottom: 50),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withValues(alpha: 0.15),
@@ -377,7 +414,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           ),
                           filled: true,
                           fillColor: Colors.grey.shade100,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
                             borderSide: BorderSide.none,
@@ -388,7 +428,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide(color: primaryColor, width: 1),
+                            borderSide: BorderSide(
+                              color: primaryColor,
+                              width: 1,
+                            ),
                           ),
                         ),
                         textCapitalization: TextCapitalization.sentences,
@@ -432,17 +475,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ),
     );
   }
-  
+
   bool _isSameDay(DateTime date1, DateTime date2) {
-    return date1.year == date2.year && date1.month == date2.month && date1.day == date2.day;
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
-  
+
   Widget _buildDateHeader(DateTime timestamp) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    final messageDate = DateTime(timestamp.year, timestamp.month, timestamp.day);
-    
+    final messageDate = DateTime(
+      timestamp.year,
+      timestamp.month,
+      timestamp.day,
+    );
+
     String dateText;
     if (messageDate == today) {
       dateText = 'Today';
@@ -451,7 +500,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } else {
       dateText = '${timestamp.day}/${timestamp.month}/${timestamp.year}';
     }
-    
+
     return Container(
       alignment: Alignment.center,
       margin: const EdgeInsets.symmetric(vertical: 16),

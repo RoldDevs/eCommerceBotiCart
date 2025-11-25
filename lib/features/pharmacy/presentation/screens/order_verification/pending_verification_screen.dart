@@ -97,99 +97,96 @@ class PendingVerificationScreen extends ConsumerWidget {
   }
 
   Widget _buildPendingContent(BuildContext context, OrderEntity order) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Status Icon
-            Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                color: const Color(0xFF8ECAE6).withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.hourglass_empty,
-                size: 40,
-                color: Color(0xFF8ECAE6),
-              ),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomPadding),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Status Icon
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(height: 32),
-
-            // Title
-            Text(
-              _getStatusTitle(order),
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF2D3748),
-              ),
-              textAlign: TextAlign.center,
+            child: const Icon(
+              Icons.hourglass_empty,
+              size: 60,
+              color: Color(0xFF8ECAE6),
             ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 32),
 
-            // Description
-            Text(
-              _getStatusDescription(order),
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: const Color(0xFF718096),
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
+          // Title
+          Text(
+            _getStatusTitle(order),
+            style: GoogleFonts.poppins(
+              fontSize: 24,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF2D3748),
             ),
-            const SizedBox(height: 32),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
 
-            // Order Info Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          // Description
+          Text(
+            _getStatusDescription(order),
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: const Color(0xFF718096),
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+
+          // Order Info Card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Order Details',
+                  style: GoogleFonts.poppins(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2D3748),
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Order Details',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFF2D3748),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDetailRow('Order ID', '#${order.orderID}'),
-                  _buildDetailRow(
-                    'Total Amount',
-                    '₱${order.totalPrice.toStringAsFixed(2)}',
-                  ),
-                  _buildDetailRow('Order Date', _formatDate(order.createdAt)),
-                  if (order.deliveryAddress != null)
-                    _buildDetailRow('Delivery Address', order.deliveryAddress!),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                _buildDetailRow('Order ID', '#${order.orderID}'),
+                _buildDetailRow(
+                  'Total Amount',
+                  '₱${order.totalPrice.toStringAsFixed(2)}',
+                ),
+                _buildDetailRow('Order Date', _formatDate(order.createdAt)),
+                if (order.deliveryAddress != null)
+                  _buildDetailRow('Delivery Address', order.deliveryAddress!),
+              ],
             ),
-            const SizedBox(height: 32),
+          ),
+          const SizedBox(height: 32),
 
-            // Status Indicators
-            _buildStatusIndicators(order),
-
-            // Bottom margin
-            const SizedBox(height: 50),
-          ],
-        ),
+          // Status Indicators
+          _buildStatusIndicators(order),
+        ],
       ),
     );
   }

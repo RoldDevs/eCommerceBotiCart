@@ -4,6 +4,7 @@ import '../../domain/entities/order.dart';
 class StockService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  /// Update stock for a medicine
   Future<void> updateMedicineStock(String medicineId, int newStock) async {
     try {
       await _firestore
@@ -15,9 +16,10 @@ class StockService {
     }
   }
 
+  /// Decrease stock when order is paid and verified
   Future<void> decreaseStockForOrder(OrderEntity order) async {
     if (!order.isPaid || !order.isCompletelyVerified) {
-      return; 
+      return; // Only decrease stock for paid and verified orders
     }
 
     try {
@@ -46,6 +48,7 @@ class StockService {
     }
   }
 
+  /// Decrease stock immediately during checkout (before payment verification)
   Future<void> decreaseStockForCheckout(String medicineId, int quantity) async {
     try {
       final medicineDoc = await _firestore
@@ -76,6 +79,7 @@ class StockService {
     }
   }
 
+  /// Check if medicine has sufficient stock
   Future<bool> hasInsufficientStock(String medicineId, int requestedQuantity) async {
     try {
       final medicineDoc = await _firestore
@@ -84,16 +88,17 @@ class StockService {
           .get();
 
       if (!medicineDoc.exists) {
-        return true; 
+        return true; // Consider as insufficient if medicine doesn't exist
       }
 
       final currentStock = medicineDoc.data()?['stock'] ?? 0;
       return currentStock < requestedQuantity;
     } catch (e) {
-      return true; 
+      return true; // Consider as insufficient on error
     }
   }
 
+  /// Get current stock for a medicine
   Future<int> getMedicineStock(String medicineId) async {
     try {
       final medicineDoc = await _firestore
@@ -111,6 +116,7 @@ class StockService {
     }
   }
 
+  /// Listen to stock changes for a medicine
   Stream<int> watchMedicineStock(String medicineId) {
     return _firestore
         .collection('medicines')

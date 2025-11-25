@@ -13,10 +13,7 @@ import 'pending_verification_screen.dart';
 class PaymentScreen extends ConsumerStatefulWidget {
   final String orderId;
 
-  const PaymentScreen({
-    super.key,
-    required this.orderId,
-  });
+  const PaymentScreen({super.key, required this.orderId});
 
   @override
   ConsumerState<PaymentScreen> createState() => _PaymentScreenState();
@@ -64,7 +61,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           final order = orderSnapshot.data!;
 
           return FutureBuilder<Pharmacy?>(
-            future: orderVerificationService.getPharmacyByStoreId(order.storeID),
+            future: orderVerificationService.getPharmacyByStoreId(
+              order.storeID,
+            ),
             builder: (context, pharmacySnapshot) {
               if (pharmacySnapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
@@ -84,9 +83,15 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     );
   }
 
-  Widget _buildPaymentContent(BuildContext context, OrderEntity order, Pharmacy pharmacy) {
+  Widget _buildPaymentContent(
+    BuildContext context,
+    OrderEntity order,
+    Pharmacy pharmacy,
+  ) {
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -122,7 +127,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -196,7 +201,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -233,9 +238,18 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           ),
           const SizedBox(height: 12),
           _buildInstructionStep('1', 'Scan the GCash QR code below'),
-          _buildInstructionStep('2', 'Pay the exact amount: ₱${order.totalPrice.toStringAsFixed(2)}'),
-          _buildInstructionStep('3', 'Take a screenshot of your payment confirmation'),
-          _buildInstructionStep('4', 'Upload the screenshot using the button below'),
+          _buildInstructionStep(
+            '2',
+            'Pay the exact amount: ₱${order.totalPrice.toStringAsFixed(2)}',
+          ),
+          _buildInstructionStep(
+            '3',
+            'Take a screenshot of your payment confirmation',
+          ),
+          _buildInstructionStep(
+            '4',
+            'Upload the screenshot using the button below',
+          ),
           _buildInstructionStep('5', 'Submit and wait for verification'),
         ],
       ),
@@ -248,11 +262,11 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        
+
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -270,7 +284,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
-          
+
           // QR Code Container
           Container(
             width: 250,
@@ -280,7 +294,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey[300]!),
             ),
-            child: pharmacy.gcashQrCodeUrl != null && pharmacy.gcashQrCodeUrl!.isNotEmpty
+            child:
+                pharmacy.gcashQrCodeUrl != null &&
+                    pharmacy.gcashQrCodeUrl!.isNotEmpty
                 ? ResponsiveImageWidget(
                     imageUrl: pharmacy.gcashQrCodeUrl!,
                     width: 250,
@@ -290,11 +306,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 : Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.qr_code,
-                        size: 80,
-                        color: Colors.grey[400],
-                      ),
+                      Icon(Icons.qr_code, size: 80, color: Colors.grey[400]),
                       const SizedBox(height: 12),
                       Text(
                         'QR Code not available',
@@ -337,7 +349,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -355,7 +367,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          
+
           if (_receiptImage != null) ...[
             // Show selected image
             Container(
@@ -367,10 +379,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  _receiptImage!,
-                  fit: BoxFit.cover,
-                ),
+                child: Image.file(_receiptImage!, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 12),
@@ -379,10 +388,15 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickImage,
-                    icon: const Icon(Icons.edit),
                     label: Text(
                       'Change Image',
-                      style: GoogleFonts.poppins(fontSize: 14),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Color(0xFF8ECAE6),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF8ECAE6)),
                     ),
                   ),
                 ),
@@ -394,7 +408,6 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                         _receiptImage = null;
                       });
                     },
-                    icon: const Icon(Icons.delete, color: Colors.red),
                     label: Text(
                       'Remove',
                       style: GoogleFonts.poppins(
@@ -417,7 +430,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
                 width: double.infinity,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8ECAE6).withOpacity(0.1),
+                  color: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
                     color: const Color(0xFF8ECAE6),
@@ -477,11 +490,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red[400],
-          ),
+          Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
           const SizedBox(height: 16),
           Text(
             'Error loading payment information',
@@ -494,10 +503,7 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
           const SizedBox(height: 8),
           Text(
             'Please try again later',
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -523,7 +529,10 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     }
   }
 
-  Future<void> _submitPaymentReceipt(OrderEntity order, Pharmacy pharmacy) async {
+  Future<void> _submitPaymentReceipt(
+    OrderEntity order,
+    Pharmacy pharmacy,
+  ) async {
     if (_receiptImage == null) return;
 
     setState(() {
@@ -531,7 +540,9 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
     });
 
     try {
-      final orderVerificationService = ref.read(orderVerificationServiceProvider);
+      final orderVerificationService = ref.read(
+        orderVerificationServiceProvider,
+      );
 
       // Upload receipt to Firebase Storage
       final receiptUrl = await orderVerificationService.uploadPaymentReceipt(
@@ -552,15 +563,16 @@ class _PaymentScreenState extends ConsumerState<PaymentScreen> {
 
       // Navigate back to pending screen with a delay to avoid Hero conflicts
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => 
+            pageBuilder: (context, animation, secondaryAnimation) =>
                 PendingVerificationScreen(orderId: widget.orderId),
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
             transitionDuration: const Duration(milliseconds: 300),
           ),
         );

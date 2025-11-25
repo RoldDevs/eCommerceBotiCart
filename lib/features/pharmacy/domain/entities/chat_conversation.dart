@@ -8,6 +8,7 @@ class ChatConversation {
   final int unreadCount;
   final String pharmacyName;
   final String pharmacyImageUrl;
+  final String lastMessageSenderType;
 
   ChatConversation({
     required this.id,
@@ -17,21 +18,24 @@ class ChatConversation {
     required this.lastMessageTime,
     this.hasUnreadMessages = false,
     this.unreadCount = 0,
-    required this.pharmacyName, 
+    required this.pharmacyName,
     required this.pharmacyImageUrl,
+    this.lastMessageSenderType = 'customer',
   });
 
   factory ChatConversation.fromFirestore(Map<String, dynamic> data, String id) {
     return ChatConversation(
       id: id,
-      userId: data['userId'] ?? '',
-      pharmacyId: data['pharmacyId'] ?? '',
-      lastMessage: data['lastMessage'] ?? '',
+      userId: (data['userId'] as String?) ?? '',
+      pharmacyId: (data['pharmacyId'] as String?) ?? '',
+      lastMessage: (data['lastMessage'] as String?) ?? '',
       lastMessageTime: data['lastMessageTime']?.toDate() ?? DateTime.now(),
-      hasUnreadMessages: data['hasUnreadMessages'] ?? false,
-      unreadCount: data['unreadCount'] ?? 0,
-      pharmacyName: data['pharmacyName'] ?? '',
-      pharmacyImageUrl: data['pharmacyImageUrl'] ?? '',
+      hasUnreadMessages: (data['hasUnreadMessages'] as bool?) ?? false,
+      unreadCount: (data['unreadCount'] as int?) ?? 0,
+      pharmacyName: (data['pharmacyName'] as String?) ?? '',
+      pharmacyImageUrl: (data['pharmacyImageUrl'] as String?) ?? '',
+      lastMessageSenderType:
+          (data['lastMessageSenderType'] as String?) ?? 'customer',
     );
   }
 
@@ -45,6 +49,7 @@ class ChatConversation {
       'unreadCount': unreadCount,
       'pharmacyName': pharmacyName,
       'pharmacyImageUrl': pharmacyImageUrl,
+      'lastMessageSenderType': lastMessageSenderType,
     };
   }
 }

@@ -1,15 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum MedicineMajorType {
-  generic,
-  branded
-}
+enum MedicineMajorType { generic, branded }
 
 enum MedicineProductType {
   prescriptionMedicines,
   overTheCounter,
   vitaminsSupplements,
-  healthEssentials
+  healthEssentials,
 }
 
 enum MedicineConditionType {
@@ -17,7 +14,7 @@ enum MedicineConditionType {
   coughCold,
   allergies,
   digestiveHealth,
-  other
+  other,
 }
 
 class Medicine {
@@ -107,6 +104,31 @@ class Medicine {
       }
     }
 
+    // Helper function to parse date from various formats
+    DateTime parseDate(dynamic dateValue) {
+      if (dateValue == null) {
+        return DateTime.now();
+      }
+
+      if (dateValue is Timestamp) {
+        return dateValue.toDate();
+      }
+
+      if (dateValue is DateTime) {
+        return dateValue;
+      }
+
+      if (dateValue is String) {
+        try {
+          return DateTime.parse(dateValue);
+        } catch (e) {
+          return DateTime.now();
+        }
+      }
+
+      return DateTime.now();
+    }
+
     return Medicine(
       id: id,
       medicineName: data['medicineName'] ?? '',
@@ -115,32 +137,28 @@ class Medicine {
       productDescription: data['productDescription'] ?? '',
       productOffering: offerings,
       storeID: data['storeID'] ?? 0,
-      createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] as Timestamp).toDate() 
-          : DateTime.now(),
-      updatedAt: data['updatedAt'] != null 
-          ? (data['updatedAt'] as Timestamp).toDate() 
-          : DateTime.now(),
+      createdAt: parseDate(data['createdAt']),
+      updatedAt: parseDate(data['updatedAt']),
       majorType: majorType,
       productType: productType,
       conditionType: conditionType,
       stock: data['stock'] ?? 0,
     );
   }
-  
+
   // Helper method to convert enum to string for Firestore
   static String majorTypeToString(MedicineMajorType type) {
     return type.toString().split('.').last;
   }
-  
+
   static String productTypeToString(MedicineProductType type) {
     return type.toString().split('.').last;
   }
-  
+
   static String conditionTypeToString(MedicineConditionType type) {
     return type.toString().split('.').last;
   }
-  
+
   // Convert Medicine object to a Map for Firestore
   Map<String, dynamic> toFirestore() {
     return {
@@ -158,7 +176,7 @@ class Medicine {
       'stock': stock,
     };
   }
-  
+
   // Add this method to the Medicine class
   Medicine copyWith({
     String? id,
@@ -193,7 +211,7 @@ class Medicine {
       stock: stock ?? this.stock,
     );
   }
-  
+
   // Helper method to get display name for product type
   String get productTypeDisplayName {
     switch (productType) {
@@ -207,7 +225,7 @@ class Medicine {
         return 'Health Essentials';
     }
   }
-  
+
   // Helper method to get display name for condition type
   String get conditionTypeDisplayName {
     switch (conditionType) {
@@ -223,24 +241,23 @@ class Medicine {
         return 'Other';
     }
   }
-  
+
   // Helper method to get display name for major type
   String get majorTypeDisplayName {
     return majorType == MedicineMajorType.branded ? 'Branded' : 'Generic';
   }
-  
+
   // Method to decrease stock for checkout
   Medicine decreaseStock(int quantity) {
     if (stock < quantity) {
-      throw Exception('Insufficient stock. Available: $stock, Requested: $quantity');
+      throw Exception(
+        'Insufficient stock. Available: $stock, Requested: $quantity',
+      );
     }
-    
-    return copyWith(
-      stock: stock - quantity,
-      updatedAt: DateTime.now(),
-    );
+
+    return copyWith(stock: stock - quantity, updatedAt: DateTime.now());
   }
-  
+
   // Method to check if there's sufficient stock
   bool hasSufficientStock(int requestedQuantity) {
     return stock >= requestedQuantity;

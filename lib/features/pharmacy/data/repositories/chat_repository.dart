@@ -9,6 +9,7 @@ class ChatRepository {
   ChatRepository({required FirebaseFirestore firestore})
     : _firestore = firestore;
 
+  // Get all conversations for a user
   Stream<List<ChatConversation>> getUserConversations(String userId) {
     try {
       return _firestore
@@ -24,15 +25,18 @@ class ChatRepository {
                 .toList();
           })
           .handleError((error) {
+            // Check if the error is due to missing index
             if (error is FirebaseException &&
                 error.code == 'failed-precondition' &&
                 error.message != null &&
                 error.message!.contains('index')) {
+              // Return empty list instead of throwing error
               return [];
             }
             throw error;
           });
     } catch (e) {
+      // Fallback to a simpler query without ordering if there's an issue
       return _firestore
           .collection('conversations')
           .where('userId', isEqualTo: userId)
@@ -44,6 +48,7 @@ class ChatRepository {
                 )
                 .toList();
 
+            // Sort locally instead of in the query
             conversations.sort(
               (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
             );
@@ -52,6 +57,7 @@ class ChatRepository {
     }
   }
 
+  // Get messages for a specific conversation
   Stream<List<ChatMessage>> getConversationMessages(String conversationId) {
     return _firestore
         .collection('conversations')
@@ -66,26 +72,53 @@ class ChatRepository {
         });
   }
 
+  // Send a new message
   Future<void> sendMessage(String conversationId, ChatMessage message) async {
     try {
+      // Validate conversationId
+      if (conversationId.isEmpty) {
+        throw Exception(
+          'Invalid conversation ID: A document path must be a non-empty string',
+        );
+      }
+
+      // Add message to the conversation's messages subcollection
       await _firestore
           .collection('conversations')
           .doc(conversationId)
           .collection('messages')
           .add(message.toFirestore());
 
-      await _firestore.collection('conversations').doc(conversationId).update({
+      // Update the conversation with the last message info
+      final updateData = <String, dynamic>{
         'lastMessage': message.content,
         'lastMessageTime': message.timestamp,
-        'hasUnreadMessages': true,
-      });
+        'lastMessageSenderType': message.senderType,
+      };
+
+      // Only mark as unread if pharmacy/admin sent it
+      if (message.senderType != 'customer') {
+        updateData['hasUnreadMessages'] = true;
+        updateData['unreadCount'] = FieldValue.increment(1);
+      } else {
+        // User sent message - don't mark as unread
+        updateData['hasUnreadMessages'] = false;
+        // Don't change unreadCount for user messages
+      }
+
+      await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .update(updateData);
     } catch (e) {
       throw Exception('Failed to send message: $e');
     }
   }
 
+  // Create a new conversation
   Future<String> createConversation(String userId, Pharmacy pharmacy) async {
     try {
+      // Check if conversation already exists
       final existingConversation = await _firestore
           .collection('conversations')
           .where('userId', isEqualTo: userId)
@@ -96,6 +129,7 @@ class ChatRepository {
         return existingConversation.docs.first.id;
       }
 
+      // Create new conversation
       final conversationData = ChatConversation(
         id: '',
         userId: userId,
@@ -116,16 +150,19 @@ class ChatRepository {
     }
   }
 
+  // Mark conversation messages as read
   Future<void> markConversationAsRead(String conversationId) async {
     try {
       await _firestore.collection('conversations').doc(conversationId).update({
         'hasUnreadMessages': false,
+        'unreadCount': 0,
       });
     } catch (e) {
       throw Exception('Failed to mark conversation as read: $e');
     }
   }
 
+  // Add this method after the existing sendMessage method
   Future<void> addReplyToMessage({
     required String conversationId,
     required String messageId,
@@ -154,10 +191,13 @@ class ChatRepository {
         'replies': FieldValue.arrayUnion([reply]),
       });
 
+      // Update conversation with latest reply
       await _firestore.collection('conversations').doc(conversationId).update({
         'lastMessage': replyContent,
         'lastMessageTime': DateTime.now(),
+        'lastMessageSenderType': replySenderType,
         'hasUnreadMessages': true,
+        'unreadCount': FieldValue.increment(1),
       });
     } catch (e) {
       throw Exception('Failed to add reply: $e');
