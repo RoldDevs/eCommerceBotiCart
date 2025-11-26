@@ -83,6 +83,16 @@ class OrderEntity {
   final bool isCompletelyVerified;
   final String? paymentReceiptUrl;
 
+  // Pickup-specific fields
+  final DateTime? scheduledPickupTime;
+  final DateTime? readyByTime;
+  final bool isCurbsidePickup;
+  final String? pickupInstructions;
+  final String? pickupStatus; // 'preparing', 'ready', 'picked_up'
+  final int? estimatedMinutesUntilReady;
+  final double? pickupDiscountAmount;
+  final String? expressPickupLane;
+
   OrderEntity({
     required this.orderID,
     required this.medicineID,
@@ -105,6 +115,14 @@ class OrderEntity {
     this.isPaid = false,
     this.isCompletelyVerified = false,
     this.paymentReceiptUrl,
+    this.scheduledPickupTime,
+    this.readyByTime,
+    this.isCurbsidePickup = false,
+    this.pickupInstructions,
+    this.pickupStatus,
+    this.estimatedMinutesUntilReady,
+    this.pickupDiscountAmount,
+    this.expressPickupLane,
   });
 
   // Convert OrderEntity to Map for Firestore
@@ -131,6 +149,18 @@ class OrderEntity {
       'isPaid': isPaid,
       'isCompletelyVerified': isCompletelyVerified,
       'paymentReceiptUrl': paymentReceiptUrl,
+      'scheduledPickupTime': scheduledPickupTime != null
+          ? Timestamp.fromDate(scheduledPickupTime!)
+          : null,
+      'readyByTime': readyByTime != null
+          ? Timestamp.fromDate(readyByTime!)
+          : null,
+      'isCurbsidePickup': isCurbsidePickup,
+      'pickupInstructions': pickupInstructions,
+      'pickupStatus': pickupStatus,
+      'estimatedMinutesUntilReady': estimatedMinutesUntilReady,
+      'pickupDiscountAmount': pickupDiscountAmount,
+      'expressPickupLane': expressPickupLane,
     };
   }
 
@@ -159,6 +189,18 @@ class OrderEntity {
       isPaid: data['isPaid'] ?? false,
       isCompletelyVerified: data['isCompletelyVerified'] ?? false,
       paymentReceiptUrl: data['paymentReceiptUrl'],
+      scheduledPickupTime: data['scheduledPickupTime'] != null
+          ? (data['scheduledPickupTime'] as Timestamp).toDate()
+          : null,
+      readyByTime: data['readyByTime'] != null
+          ? (data['readyByTime'] as Timestamp).toDate()
+          : null,
+      isCurbsidePickup: data['isCurbsidePickup'] ?? false,
+      pickupInstructions: data['pickupInstructions'],
+      pickupStatus: data['pickupStatus'],
+      estimatedMinutesUntilReady: data['estimatedMinutesUntilReady'],
+      pickupDiscountAmount: data['pickupDiscountAmount']?.toDouble(),
+      expressPickupLane: data['expressPickupLane'],
     );
   }
 
@@ -185,6 +227,14 @@ class OrderEntity {
     bool? isPaid,
     bool? isCompletelyVerified,
     String? paymentReceiptUrl,
+    DateTime? scheduledPickupTime,
+    DateTime? readyByTime,
+    bool? isCurbsidePickup,
+    String? pickupInstructions,
+    String? pickupStatus,
+    int? estimatedMinutesUntilReady,
+    double? pickupDiscountAmount,
+    String? expressPickupLane,
   }) {
     return OrderEntity(
       orderID: orderID ?? this.orderID,
@@ -208,6 +258,15 @@ class OrderEntity {
       isPaid: isPaid ?? this.isPaid,
       isCompletelyVerified: isCompletelyVerified ?? this.isCompletelyVerified,
       paymentReceiptUrl: paymentReceiptUrl ?? this.paymentReceiptUrl,
+      scheduledPickupTime: scheduledPickupTime ?? this.scheduledPickupTime,
+      readyByTime: readyByTime ?? this.readyByTime,
+      isCurbsidePickup: isCurbsidePickup ?? this.isCurbsidePickup,
+      pickupInstructions: pickupInstructions ?? this.pickupInstructions,
+      pickupStatus: pickupStatus ?? this.pickupStatus,
+      estimatedMinutesUntilReady:
+          estimatedMinutesUntilReady ?? this.estimatedMinutesUntilReady,
+      pickupDiscountAmount: pickupDiscountAmount ?? this.pickupDiscountAmount,
+      expressPickupLane: expressPickupLane ?? this.expressPickupLane,
     );
   }
 }

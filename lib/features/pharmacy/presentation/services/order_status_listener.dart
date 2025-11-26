@@ -36,13 +36,14 @@ class OrderStatusListener {
       // Get previous state from document metadata or cache
       // For now, we'll check the current state and create status change if needed
       await _trackVerificationFieldChanges(order, currentData);
+      await _trackPickupStatusChanges(order, currentData);
 
       // Check if order just became completely verified
       if (order.isCompletelyVerified && order.isPaid) {
         await _createInTransitMessage(order);
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Error handling order update: $e');
     }
   }
 
@@ -120,8 +121,64 @@ class OrderStatusListener {
           );
         }
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Error tracking verification field changes: $e');
+      }
+  }
+
+  // Track pickup status changes and create status change records
+  Future<void> _trackPickupStatusChanges(
+    OrderEntity order,
+    Map<String, dynamic> currentData,
+  ) async {
+    try {
+      // Only track for pickup orders
+      if (order.isHomeDelivery) return;
+
+      final statusChangeRepo = OrderStatusChangeRepository();
+      final pickupStatus = order.pickupStatus;
+
+      // Track when order becomes ready for pickup
+      if (pickupStatus == 'ready') {
+        final existingChanges = await _firestore
+            .collection('orderStatusChanges')
+            .where('orderId', isEqualTo: order.orderID)
+            .where('userId', isEqualTo: order.userUID)
+            .where('newStatus', isEqualTo: 'Ready for Pickup')
+            .get();
+
+        if (existingChanges.docs.isEmpty) {
+          await statusChangeRepo.createStatusChange(
+            orderId: order.orderID,
+            userId: order.userUID,
+            oldStatus: 'Preparing',
+            newStatus: 'Ready for Pickup',
+            timestamp: DateTime.now(),
+          );
+        }
+      }
+
+      // Track when order is picked up
+      if (pickupStatus == 'picked_up') {
+        final existingChanges = await _firestore
+            .collection('orderStatusChanges')
+            .where('orderId', isEqualTo: order.orderID)
+            .where('userId', isEqualTo: order.userUID)
+            .where('newStatus', isEqualTo: 'Picked Up')
+            .get();
+
+        if (existingChanges.docs.isEmpty) {
+          await statusChangeRepo.createStatusChange(
+            orderId: order.orderID,
+            userId: order.userUID,
+            oldStatus: 'Ready for Pickup',
+            newStatus: 'Picked Up',
+            timestamp: DateTime.now(),
+          );
+        }
+      }
+    // ignore: empty_catches
+    } catch (e) {
     }
   }
 
@@ -196,8 +253,8 @@ class OrderStatusListener {
           pharmacy: pharmacy,
         );
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Error creating in-transit message: $e');
     }
   }
 }

@@ -12,6 +12,9 @@ import '../providers/pharmacy_providers.dart';
 import '../providers/location_provider.dart';
 import 'order_message_service.dart';
 import '../../data/services/stock_service.dart';
+import '../services/pickup_service.dart';
+import '../models/pickup_time_slot.dart';
+import '../models/pickup_promotion.dart';
 
 class CheckoutService {
   final OrderRepository _orderRepository;
@@ -25,12 +28,14 @@ class CheckoutService {
     required String deliveryAddress,
     required bool isHomeDelivery,
     String? beneficiaryId,
+    PickupTimeSlot? pickupTimeSlot,
+    bool isCurbsidePickup = false,
+    String? pickupInstructions,
+    PickupPromotion? pickupPromotion,
   }) async {
     // Block delivery orders if feature is disabled
     if (isHomeDelivery && !AppConfig.isDeliveryEnabled) {
-      throw Exception(
-        'Home delivery is currently disabled. Please select pickup option.',
-      );
+      throw Exception('Delivery are not yet available at this moment');
     }
 
     final userAsyncValue = _ref.read(currentUserProvider);
@@ -111,10 +116,38 @@ class CheckoutService {
           discountAmount = orderSubtotal * 0.20; // 20% discount
         }
 
-        final orderTotalPrice = orderSubtotal - discountAmount;
+        // Apply pickup promotion discount if applicable
+        double pickupDiscountAmount = 0.0;
+        if (!isHomeDelivery && pickupPromotion != null) {
+          pickupDiscountAmount = pickupPromotion.calculateDiscount(
+            orderSubtotal - discountAmount,
+          );
+        }
+
+        final orderTotalPrice =
+            orderSubtotal - discountAmount - pickupDiscountAmount;
 
         // Use the first item's medicineID for backward compatibility
         final firstItem = storeItems.first;
+
+        // Calculate ready-by time for pickup orders
+        DateTime? readyByTime;
+        String? expressPickupLane;
+        if (!isHomeDelivery) {
+          final pickupService = PickupService();
+          readyByTime = await pickupService.calculateReadyByTime(
+            itemCount: storeItems.length,
+            totalQuantity: totalQuantity,
+            scheduledPickupTime: pickupTimeSlot?.startTime,
+          );
+          expressPickupLane = pickupTimeSlot?.expressLane;
+
+          // Reserve items for pickup
+          await pickupService.reserveItemsForPickup(
+            orderId: '', // Will be set after order creation
+            items: orderItemsData,
+          );
+        }
 
         final order = OrderEntity(
           orderID: '', // Will be set by repository
@@ -129,12 +162,35 @@ class CheckoutService {
           deliveryAddress: deliveryAddress,
           isHomeDelivery: isHomeDelivery,
           discountAmount: discountAmount,
+          scheduledPickupTime: pickupTimeSlot?.startTime,
+          readyByTime: readyByTime,
+          isCurbsidePickup: isCurbsidePickup,
+          pickupInstructions: pickupInstructions,
+          pickupStatus: !isHomeDelivery ? 'preparing' : null,
+          pickupDiscountAmount: pickupDiscountAmount > 0
+              ? pickupDiscountAmount
+              : null,
+          expressPickupLane: expressPickupLane,
         );
 
         final orderId = await _orderRepository.createOrder(order);
 
         // Create order items subcollection
         await _orderRepository.createOrderItems(orderId, orderItemsData);
+
+        // Update reserved items with actual order ID for pickup orders
+        if (!isHomeDelivery) {
+          final pickupService = PickupService();
+          // Release the temporary reservation and create proper one
+          await pickupService.releaseReservedItems(
+            orderId: '',
+            items: orderItemsData,
+          );
+          await pickupService.reserveItemsForPickup(
+            orderId: orderId,
+            items: orderItemsData,
+          );
+        }
 
         orderIds.add(orderId);
 
@@ -189,12 +245,14 @@ class CheckoutService {
     required String deliveryAddress,
     required bool isHomeDelivery,
     String? beneficiaryId,
+    PickupTimeSlot? pickupTimeSlot,
+    bool isCurbsidePickup = false,
+    String? pickupInstructions,
+    PickupPromotion? pickupPromotion,
   }) async {
     // Block delivery orders if feature is disabled
     if (isHomeDelivery && !AppConfig.isDeliveryEnabled) {
-      throw Exception(
-        'Home delivery is currently disabled. Please select pickup option.',
-      );
+      throw Exception('Delivery are not yet available at this moment');
     }
 
     final userAsyncValue = _ref.read(currentUserProvider);
@@ -225,7 +283,35 @@ class CheckoutService {
         discountAmount = basePrice * 0.20;
       }
 
-      final totalPrice = (medicine.price * quantity) - discountAmount;
+      // Apply pickup promotion discount if applicable
+      double pickupDiscountAmount = 0.0;
+      final basePrice = (medicine.price * quantity) - discountAmount;
+      if (!isHomeDelivery && pickupPromotion != null) {
+        pickupDiscountAmount = pickupPromotion.calculateDiscount(basePrice);
+      }
+
+      final totalPrice = basePrice - pickupDiscountAmount;
+
+      // Calculate ready-by time for pickup orders
+      DateTime? readyByTime;
+      String? expressPickupLane;
+      if (!isHomeDelivery) {
+        final pickupService = PickupService();
+        readyByTime = await pickupService.calculateReadyByTime(
+          itemCount: 1,
+          totalQuantity: quantity,
+          scheduledPickupTime: pickupTimeSlot?.startTime,
+        );
+        expressPickupLane = pickupTimeSlot?.expressLane;
+
+        // Reserve item for pickup
+        await pickupService.reserveItemsForPickup(
+          orderId: '', // Will be set after order creation
+          items: [
+            {'medicineID': medicine.id, 'quantity': quantity},
+          ],
+        );
+      }
 
       final order = OrderEntity(
         orderID: '',
@@ -240,9 +326,36 @@ class CheckoutService {
         deliveryAddress: deliveryAddress,
         isHomeDelivery: isHomeDelivery,
         discountAmount: discountAmount,
+        scheduledPickupTime: pickupTimeSlot?.startTime,
+        readyByTime: readyByTime,
+        isCurbsidePickup: isCurbsidePickup,
+        pickupInstructions: pickupInstructions,
+        pickupStatus: !isHomeDelivery ? 'preparing' : null,
+        pickupDiscountAmount: pickupDiscountAmount > 0
+            ? pickupDiscountAmount
+            : null,
+        expressPickupLane: expressPickupLane,
       );
 
       final orderId = await _orderRepository.createOrder(order);
+
+      // Update reserved items with actual order ID for pickup orders
+      if (!isHomeDelivery) {
+        final pickupService = PickupService();
+        // Release the temporary reservation and create proper one
+        await pickupService.releaseReservedItems(
+          orderId: '',
+          items: [
+            {'medicineID': medicine.id, 'quantity': quantity},
+          ],
+        );
+        await pickupService.reserveItemsForPickup(
+          orderId: orderId,
+          items: [
+            {'medicineID': medicine.id, 'quantity': quantity},
+          ],
+        );
+      }
 
       await _createOrderMessage(
         orderId: orderId,

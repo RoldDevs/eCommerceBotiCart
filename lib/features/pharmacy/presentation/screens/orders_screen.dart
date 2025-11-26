@@ -352,12 +352,17 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
                       '-₱${order.discountAmount!.toStringAsFixed(2)}',
                     ),
                   _buildDetailRow(
-                    'Delivery Type',
+                    'Order Type',
                     order.isHomeDelivery ? 'Home Delivery' : 'Pickup',
                   ),
                   if (order.deliveryAddress != null &&
                       order.deliveryAddress!.isNotEmpty)
-                    _buildDetailRow('Delivery Address', order.deliveryAddress!),
+                    _buildDetailRow(
+                      order.isHomeDelivery
+                          ? 'Delivery Address'
+                          : 'Pickup Address',
+                      order.deliveryAddress!,
+                    ),
                   _buildDetailRow('Order Date', _formatDate(order.createdAt)),
                   if (order.idDiscount != null)
                     _buildDetailRow('Beneficiary ID Applied', 'Yes'),
@@ -435,6 +440,39 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen>
                         ),
                         child: Text(
                           'Track Order',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ] else if (!order.isHomeDelivery) ...[
+                    // Add View Order Details button for pickup orders
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the bottom sheet
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  OrderTrackingScreen(orderId: order.orderID),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF8ECAE6),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          'View Order Details',
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,

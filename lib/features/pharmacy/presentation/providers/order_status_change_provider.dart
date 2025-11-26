@@ -128,13 +128,22 @@ final orderHasUnreadChangesProvider = StreamProvider.family<bool, String>((
           final isCompletelyVerified =
               orderData['isCompletelyVerified'] ?? false;
           final isHomeDelivery = orderData['isHomeDelivery'] ?? false;
+          final pickupStatus = orderData['pickupStatus'] as String?;
 
-          // Show indicator when: isInitiallyVerified: True, isPaid: False, isCompletelyVerified: False
-          lastVerificationState =
+          // Show indicator for delivery orders: isInitiallyVerified: True, isPaid: False, isCompletelyVerified: False
+          final deliveryVerificationState =
               isHomeDelivery &&
               isInitiallyVerified &&
               !isPaid &&
               !isCompletelyVerified;
+
+          // Show indicator for pickup orders when status changes to 'ready' or 'picked_up'
+          final pickupStatusState =
+              !isHomeDelivery &&
+              (pickupStatus == 'ready' || pickupStatus == 'picked_up');
+
+          lastVerificationState =
+              deliveryVerificationState || pickupStatusState;
 
           if (lastStatusChange != null) {
             controller.add(lastStatusChange! || lastVerificationState!);

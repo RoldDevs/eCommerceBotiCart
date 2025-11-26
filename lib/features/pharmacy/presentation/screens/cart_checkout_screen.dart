@@ -9,6 +9,11 @@ import '../providers/pharmacy_providers.dart';
 import '../../domain/entities/pharmacy.dart';
 import '../services/checkout_service.dart';
 import 'orders_screen.dart';
+import '../widgets/pickup/pickup_time_selector_widget.dart';
+import '../widgets/pickup/pickup_promotion_card.dart';
+import '../widgets/pickup/curbside_pickup_widget.dart';
+import '../widgets/pickup/inventory_availability_widget.dart';
+import '../providers/pickup_provider.dart';
 
 class CartCheckoutScreen extends ConsumerStatefulWidget {
   const CartCheckoutScreen({super.key});
@@ -146,11 +151,32 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
       );
       return;
+    }
+
+    // For pickup, validate pickup time is selected
+    if (!isHomeDelivery) {
+      final selectedPickupTime = ref.read(selectedPickupTimeSlotProvider);
+      if (selectedPickupTime == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Please select a pickup time',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+          ),
+        );
+        return;
+      }
     }
 
     // For pickup, use pharmacy location as address
@@ -170,8 +196,8 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
               fontWeight: FontWeight.w500,
             ),
           ),
-          backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
       );
       return;
@@ -184,18 +210,43 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
     try {
       final checkoutService = ref.read(checkoutServiceProvider);
 
+      // Get pickup-related data if it's a pickup order
+      final pickupTimeSlot = !isHomeDelivery
+          ? ref.read(selectedPickupTimeSlotProvider)
+          : null;
+      final isCurbside = !isHomeDelivery
+          ? ref.read(isCurbsidePickupProvider)
+          : false;
+      final pickupInstructions = !isHomeDelivery
+          ? ref.read(pickupInstructionsProvider)
+          : null;
+      final pickupPromotion = !isHomeDelivery
+          ? ref.read(selectedPickupPromotionProvider)
+          : null;
+
       final orderIds = await checkoutService.checkoutSelectedItems(
         deliveryAddress: deliveryAddress,
         isHomeDelivery: isHomeDelivery,
         beneficiaryId: null,
+        pickupTimeSlot: pickupTimeSlot,
+        isCurbsidePickup: isCurbside,
+        pickupInstructions: pickupInstructions,
+        pickupPromotion: pickupPromotion,
       );
 
       if (mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Successfully created ${orderIds.length} order(s)!'),
-            backgroundColor: Colors.green,
+            content: Text(
+              'Successfully created ${orderIds.length} order(s)!',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
           ),
         );
 
@@ -216,10 +267,25 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Check if it's a delivery error
+        final errorMessage = e.toString();
+        final isDeliveryError = errorMessage.contains(
+          'Delivery are not yet available',
+        );
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Checkout failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              isDeliveryError
+                  ? 'Delivery are not yet available at this moment'
+                  : 'Checkout failed: ${e.toString()}',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
           ),
         );
       }
@@ -248,6 +314,7 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
     final userAsync = ref.watch(currentUserProvider);
     final selectedAddress = ref.watch(selectedAddressProvider);
     final selectedLocation = ref.watch(selectedAddressLocationProvider);
+    final selectedPickupTimeSlot = ref.watch(selectedPickupTimeSlotProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -483,6 +550,60 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Pickup time selector
+                          const PickupTimeSelectorWidget(),
+                          const SizedBox(height: 16),
+                          // Curbside pickup option
+                          const CurbsidePickupWidget(),
+                          const SizedBox(height: 16),
+                          // Inventory availability
+                          InventoryAvailabilityWidget(
+                            medicines: itemsToCheckout
+                                .map((item) => item.medicine)
+                                .toList(),
+                          ),
+                          const SizedBox(height: 16),
+                          // Pickup promotions
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final promotionsAsync = ref.watch(
+                                pickupPromotionsProvider,
+                              );
+                              return promotionsAsync.when(
+                                data: (promotions) {
+                                  if (promotions.isEmpty)
+                                    return const SizedBox.shrink();
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'PICKUP EXCLUSIVE PROMOTIONS',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      ...promotions.map(
+                                        (promotion) => PickupPromotionCard(
+                                          promotion: promotion,
+                                          orderAmount: totalPrice,
+                                          onApply: () {
+                                            // Promotion applied via provider
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, __) => const SizedBox.shrink(),
+                              );
+                            },
                           ),
                         ],
                       ],
@@ -895,7 +1016,9 @@ class _CartCheckoutScreenState extends ConsumerState<CartCheckoutScreen> {
                 onPressed:
                     isProcessing ||
                         ((isHomeDelivery && selectedAddress == null) ||
-                            (!isHomeDelivery && pharmacy == null))
+                            (!isHomeDelivery &&
+                                (pharmacy == null ||
+                                    selectedPickupTimeSlot == null)))
                     ? null
                     : _processCheckout,
                 style: ElevatedButton.styleFrom(

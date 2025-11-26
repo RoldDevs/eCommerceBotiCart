@@ -6,17 +6,17 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/delivery_provider.dart';
 import '../providers/order_provider.dart';
+import '../widgets/pickup/im_here_button_widget.dart';
+import '../widgets/pickup/pickup_status_tracker_widget.dart';
 
 class OrderTrackingScreen extends ConsumerStatefulWidget {
   final String orderId;
 
-  const OrderTrackingScreen({
-    super.key,
-    required this.orderId,
-  });
+  const OrderTrackingScreen({super.key, required this.orderId});
 
   @override
-  ConsumerState<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
+  ConsumerState<OrderTrackingScreen> createState() =>
+      _OrderTrackingScreenState();
 }
 
 class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
@@ -32,7 +32,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     final orderAsync = ref.watch(orderByIdProvider(widget.orderId));
-    final deliveryStatusAsync = ref.watch(deliveryStatusProvider(widget.orderId));
+    final deliveryStatusAsync = ref.watch(
+      deliveryStatusProvider(widget.orderId),
+    );
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -58,8 +60,9 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
           if (order == null) {
             return const Center(child: Text('Order not found'));
           }
-          
+
           return SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 85),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -74,7 +77,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Delivery type toggle
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -84,8 +87,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                         child: ElevatedButton(
                           onPressed: order.isHomeDelivery ? () {} : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: order.isHomeDelivery 
-                                ? const Color(0xFF8ECAE6) 
+                            backgroundColor: order.isHomeDelivery
+                                ? const Color(0xFF8ECAE6)
                                 : Colors.grey[300],
                             foregroundColor: Colors.white,
                             elevation: 0,
@@ -107,8 +110,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                         child: ElevatedButton(
                           onPressed: !order.isHomeDelivery ? () {} : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: !order.isHomeDelivery 
-                                ? const Color(0xFF8ECAE6) 
+                            backgroundColor: !order.isHomeDelivery
+                                ? const Color(0xFF8ECAE6)
                                 : Colors.grey[300],
                             foregroundColor: Colors.white,
                             elevation: 0,
@@ -128,7 +131,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Map view
                 Container(
                   height: 200,
@@ -147,8 +150,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                       markers: _markers,
                       onMapCreated: (controller) {
                         _mapController = controller;
-                        setState(() {
-                        });
+                        setState(() {});
                       },
                       myLocationEnabled: false,
                       zoomControlsEnabled: false,
@@ -156,18 +158,20 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Track Order button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: deliveryStatusAsync.when(
                     data: (deliveryStatus) {
-                      final trackingUrl = deliveryStatus['trackingUrl'] as String?;
-                      
+                      final trackingUrl =
+                          deliveryStatus['trackingUrl'] as String?;
+
                       return SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: trackingUrl != null && trackingUrl.isNotEmpty
+                          onPressed:
+                              trackingUrl != null && trackingUrl.isNotEmpty
                               ? () => _launchTrackingUrl(trackingUrl)
                               : null,
                           style: ElevatedButton.styleFrom(
@@ -195,11 +199,12 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                         ),
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
                     error: (_, __) => const SizedBox(),
                   ),
                 ),
-                
+
                 // Order information
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -212,18 +217,19 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      
+
                       String medicineName = 'Product';
                       String medicineDetails = '';
                       String imageUrl = '';
-                      
+
                       if (snapshot.hasData && snapshot.data!.exists) {
-                        final data = snapshot.data!.data() as Map<String, dynamic>;
+                        final data =
+                            snapshot.data!.data() as Map<String, dynamic>;
                         medicineName = data['medicineName'] ?? 'Product';
                         medicineDetails = '${data['dosage'] ?? ''}';
                         imageUrl = data['imageURL'] ?? '';
                       }
-                      
+
                       return _buildOrderInfoCard(
                         medicineName: medicineName,
                         medicineDetails: medicineDetails,
@@ -234,34 +240,192 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                     },
                   ),
                 ),
-                
+
+                // Pickup information
+                if (!order.isHomeDelivery) ...[
+                  // Pickup status tracker
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: PickupStatusTrackerWidget(order: order),
+                  ),
+
+                  // "I'm here" button for curbside pickup
+                  // Show whenever curbside pickup is enabled (regardless of status)
+                  if (order.isCurbsidePickup) ...[
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: ImHereButtonWidget(
+                        orderId: order.orderID,
+                        pickupInstructions: order.pickupInstructions,
+                      ),
+                    ),
+                  ],
+
+                  // Pickup location information
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('pharmacy')
+                          .where('storeID', isEqualTo: order.storeID)
+                          .limit(1)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return _buildAddressSection(
+                            'Pickup Location',
+                            'Loading...',
+                            isLoading: true,
+                          );
+                        }
+
+                        if (snapshot.hasError ||
+                            !snapshot.hasData ||
+                            snapshot.data!.docs.isEmpty) {
+                          return FutureBuilder<DocumentSnapshot>(
+                            future: FirebaseFirestore.instance
+                                .collection('pharmacy')
+                                .doc(order.storeID.toString())
+                                .get(),
+                            builder: (context, docSnapshot) {
+                              if (docSnapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return _buildAddressSection(
+                                  'Pickup Location',
+                                  'Loading...',
+                                  isLoading: true,
+                                );
+                              }
+
+                              if (docSnapshot.hasData &&
+                                  docSnapshot.data!.exists) {
+                                final data =
+                                    docSnapshot.data!.data()
+                                        as Map<String, dynamic>?;
+                                final address =
+                                    data?['Location'] as String? ??
+                                    'Unknown Pharmacy';
+                                return _buildAddressSection(
+                                  'Pickup Location',
+                                  address,
+                                );
+                              }
+
+                              return _buildAddressSection(
+                                'Pickup Location',
+                                order.deliveryAddress ??
+                                    'Address not available',
+                              );
+                            },
+                          );
+                        }
+
+                        final pharmacyData =
+                            snapshot.data!.docs.first.data()
+                                as Map<String, dynamic>;
+                        final address =
+                            pharmacyData['Location'] as String? ??
+                            'Unknown Pharmacy';
+
+                        return _buildAddressSection('Pickup Location', address);
+                      },
+                    ),
+                  ),
+
+                  // Show scheduled pickup time if available
+                  if (order.scheduledPickupTime != null) ...[
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              color: const Color(0xFF8ECAE6),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Scheduled Pickup Time',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatDateTime(order.scheduledPickupTime!),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF8ECAE6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+
                 // Delivery information
                 if (order.isHomeDelivery) ...[
                   deliveryStatusAsync.when(
                     data: (deliveryStatus) {
-                      final driverName = deliveryStatus['driverName'] as String? ?? 'Not assigned';
-                      final driverPhone = deliveryStatus['driverPhone'] as String? ?? '';
-                      
+                      final driverName =
+                          deliveryStatus['driverName'] as String? ??
+                          'Not assigned';
+                      final driverPhone =
+                          deliveryStatus['driverPhone'] as String? ?? '';
+
                       return Column(
                         children: [
                           // Pharmacy and Customer addresses
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 StreamBuilder<QuerySnapshot>(
                                   stream: FirebaseFirestore.instance
                                       .collection('pharmacy')
-                                      .where('storeID', isEqualTo: order.storeID)
+                                      .where(
+                                        'storeID',
+                                        isEqualTo: order.storeID,
+                                      )
                                       .limit(1)
                                       .snapshots(),
                                   builder: (context, snapshot) {
-                                    if (snapshot.connectionState == ConnectionState.waiting) {
-                                      return _buildAddressSection('Pharmacy Address', 'Loading.', isLoading: true);
+                                    if (snapshot.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return _buildAddressSection(
+                                        'Pharmacy Address',
+                                        'Loading.',
+                                        isLoading: true,
+                                      );
                                     }
-                                    
-                                    if (snapshot.hasError || !snapshot.hasData || snapshot.data!.docs.isEmpty) {
+
+                                    if (snapshot.hasError ||
+                                        !snapshot.hasData ||
+                                        snapshot.data!.docs.isEmpty) {
                                       // Fallback to direct document fetch by ID
                                       return FutureBuilder<DocumentSnapshot>(
                                         future: FirebaseFirestore.instance
@@ -269,33 +433,60 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                                             .doc(order.storeID.toString())
                                             .get(),
                                         builder: (context, docSnapshot) {
-                                          if (docSnapshot.connectionState == ConnectionState.waiting) {
-                                            return _buildAddressSection('Pharmacy Address', 'Loading.', isLoading: true);
+                                          if (docSnapshot.connectionState ==
+                                              ConnectionState.waiting) {
+                                            return _buildAddressSection(
+                                              'Pharmacy Address',
+                                              'Loading.',
+                                              isLoading: true,
+                                            );
                                           }
-                                          
-                                          if (docSnapshot.hasData && docSnapshot.data!.exists) {
-                                            final data = docSnapshot.data!.data() as Map<String, dynamic>?;
-                                            final address = data?['Location'] as String? ?? 'Unknown Pharmacy';
-                                            return _buildAddressSection('Pharmacy Address', address);
+
+                                          if (docSnapshot.hasData &&
+                                              docSnapshot.data!.exists) {
+                                            final data =
+                                                docSnapshot.data!.data()
+                                                    as Map<String, dynamic>?;
+                                            final address =
+                                                data?['Location'] as String? ??
+                                                'Unknown Pharmacy';
+                                            return _buildAddressSection(
+                                              'Pharmacy Address',
+                                              address,
+                                            );
                                           }
-                                          
-                                          return _buildAddressSection('Pharmacy Address', 'Address not available');
+
+                                          return _buildAddressSection(
+                                            'Pharmacy Address',
+                                            'Address not available',
+                                          );
                                         },
                                       );
                                     }
-                                    
-                                    final pharmacyData = snapshot.data!.docs.first.data() as Map<String, dynamic>;
-                                    final address = pharmacyData['Location'] as String? ?? 'Unknown Pharmacy';
-                                    
-                                    return _buildAddressSection('Pharmacy Address', address);
+
+                                    final pharmacyData =
+                                        snapshot.data!.docs.first.data()
+                                            as Map<String, dynamic>;
+                                    final address =
+                                        pharmacyData['Location'] as String? ??
+                                        'Unknown Pharmacy';
+
+                                    return _buildAddressSection(
+                                      'Pharmacy Address',
+                                      address,
+                                    );
                                   },
                                 ),
                                 const SizedBox(height: 16),
-                                _buildAddressSection('Customer Address', order.deliveryAddress ?? 'No address provided'),
+                                _buildAddressSection(
+                                  'Customer Address',
+                                  order.deliveryAddress ??
+                                      'No address provided',
+                                ),
                               ],
                             ),
                           ),
-                          
+
                           // Rider information
                           if (driverName != 'Not assigned') ...[
                             const SizedBox(height: 16),
@@ -312,7 +503,8 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
                         ],
                       );
                     },
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
                     error: (_, __) => const SizedBox(),
                   ),
                 ],
@@ -321,35 +513,36 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('Failed to load order details')),
+        error: (_, __) =>
+            const Center(child: Text('Failed to load order details')),
       ),
     );
   }
-  
-  Widget _buildAddressSection(String title, String address, {bool isLoading = false}) {
+
+  Widget _buildAddressSection(
+    String title,
+    String address, {
+    bool isLoading = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
-        isLoading 
-          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-          : Text(
-              address,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-              ),
-            ),
+        isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Text(address, style: GoogleFonts.poppins(fontSize: 14)),
       ],
     );
   }
-  
+
   Widget _buildOrderInfoCard({
     required String medicineName,
     required String medicineDetails,
@@ -410,7 +603,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          
+
           // Product details
           Expanded(
             child: Column(
@@ -445,7 +638,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
               ],
             ),
           ),
-          
+
           // Price
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -472,7 +665,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildRiderInfoCard({
     required String riderName,
     required String riderPhone,
@@ -507,10 +700,7 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
           const SizedBox(height: 4),
           Text(
             riderName,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
           ),
           const SizedBox(height: 16),
           Text(
@@ -527,17 +717,11 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
             children: [
               Text(
                 riderPhone,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
               ),
               IconButton(
                 onPressed: onCallPressed,
-                icon: const Icon(
-                  Icons.phone,
-                  color: Color(0xFF8ECAE6),
-                ),
+                icon: const Icon(Icons.phone, color: Color(0xFF8ECAE6)),
               ),
             ],
           ),
@@ -545,28 +729,40 @@ class _OrderTrackingScreenState extends ConsumerState<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Future<void> _launchTrackingUrl(String url) async {
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not open tracking URL')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not open tracking URL')));
     }
   }
-  
+
   Future<void> _launchPhoneCall(String phoneNumber) async {
     final Uri uri = Uri.parse('tel:$phoneNumber');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not make phone call')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not make phone call')));
     }
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    final displayHour = hour > 12 ? hour - 12 : (hour == 0 ? 12 : hour);
+    final day = dateTime.day;
+    final month = dateTime.month;
+    final year = dateTime.year;
+
+    return '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/${year} • ${displayHour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
   }
 }

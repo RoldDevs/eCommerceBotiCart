@@ -24,7 +24,8 @@ class MessagesScreen extends ConsumerStatefulWidget {
   ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
 }
 
-class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTickerProviderStateMixin {
+class _MessagesScreenState extends ConsumerState<MessagesScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _filters = ['All', 'Orders', 'Chats', 'Announcements'];
   String _sortOrder = 'Newest';
@@ -36,8 +37,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
     super.initState();
     _tabController = TabController(length: _filters.length, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-      });
+      setState(() {});
     });
   }
 
@@ -49,9 +49,13 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    final conversationsAsyncValue = ref.watch(filteredUserConversationsProvider);
+    final conversationsAsyncValue = ref.watch(
+      filteredUserConversationsProvider,
+    );
     final pharmaciesAsyncValue = ref.watch(pharmaciesStreamProvider);
-    final orderMessagesAsyncValue = ref.watch(filteredUserOrderMessagesProvider);
+    final orderMessagesAsyncValue = ref.watch(
+      filteredUserOrderMessagesProvider,
+    );
     final announcementsAsyncValue = ref.watch(announcementsProvider);
     final currentUser = ref.watch(currentUserProvider).value;
     final unreadCount = ref.watch(unreadOrderMessageCountProvider);
@@ -86,22 +90,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                   onPressed: () {
                     _showDeleteConfirmationDialog();
                   },
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.red,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSelectionMode = false;
-                      _selectedItems.clear();
-                    });
-                  },
-                  icon: const Icon(
-                    Icons.close,
-                    color: Color(0xFF8ECAE6),
-                  ),
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
                 ),
               ]
             : null,
@@ -123,16 +112,21 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
               labelPadding: const EdgeInsets.symmetric(horizontal: 16),
               tabs: _filters.asMap().entries.map((entry) {
                 final filter = entry.value;
-                
+
                 return Tab(
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(filter),
-                      if (filter == 'Orders' && unreadCount.value != null && unreadCount.value! > 0) ...[
+                      if (filter == 'Orders' &&
+                          unreadCount.value != null &&
+                          unreadCount.value! > 0) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(10),
@@ -164,7 +158,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
               children: [
                 DropdownButton<String>(
                   value: _sortOrder,
-                  icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF8ECAE6)),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF8ECAE6),
+                  ),
                   underline: Container(),
                   style: GoogleFonts.poppins(
                     fontSize: 14,
@@ -215,14 +212,20 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
               controller: _tabController,
               children: [
                 // All Tab - Show both conversations, order messages, announcements, and all pharmacies
-                _buildAllTabContent(conversationsAsyncValue, pharmaciesAsyncValue, orderMessagesAsyncValue, announcementsAsyncValue, currentUser),
-                
+                _buildAllTabContent(
+                  conversationsAsyncValue,
+                  pharmaciesAsyncValue,
+                  orderMessagesAsyncValue,
+                  announcementsAsyncValue,
+                  currentUser,
+                ),
+
                 // Orders Tab - Show only order messages
                 _buildOrderMessagesTab(orderMessagesAsyncValue),
-                
+
                 // Chats Tab
                 _buildConversationsList(conversationsAsyncValue, currentUser),
-                
+
                 // Announcements Tab
                 _buildAnnouncementsTab(),
               ],
@@ -240,7 +243,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
       builder: (BuildContext context) {
         return CustomModal(
           title: 'Delete Messages',
-          content: 'Are you sure you want to delete ${_selectedItems.length} selected message${_selectedItems.length > 1 ? 's' : ''}? This action cannot be undone.',
+          content:
+              'Are you sure you want to delete ${_selectedItems.length} selected message${_selectedItems.length > 1 ? 's' : ''}? This action cannot be undone.',
           cancelText: 'No',
           confirmText: 'Yes',
           confirmButtonColor: Colors.red,
@@ -258,18 +262,18 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
     try {
       // Get the order message service
       final orderMessageService = ref.read(orderMessageServiceProvider);
-      
+
       // Delete each selected message
       final selectedIds = List<String>.from(_selectedItems);
       for (final messageId in selectedIds) {
         await orderMessageService.deleteOrderMessage(messageId);
       }
-      
+
       setState(() {
         _selectedItems.clear();
         _isSelectionMode = false;
       });
-      
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -283,10 +287,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
           ),
         );
       }
-      
+
       // Refresh the data by invalidating the provider
       ref.invalidate(userOrderMessagesProvider);
-      
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -308,7 +311,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
     AsyncValue<List<dynamic>> pharmaciesAsyncValue,
     AsyncValue<List<dynamic>> orderMessagesAsyncValue,
     AsyncValue<List<dynamic>> announcementsAsyncValue,
-    dynamic currentUser
+    dynamic currentUser,
   ) {
     return pharmaciesAsyncValue.when(
       data: (pharmacies) {
@@ -320,18 +323,23 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                   data: (announcements) {
                     final Map<String, dynamic> conversationsByPharmacyId = {};
                     for (final conversation in conversations) {
-                      conversationsByPharmacyId[conversation.pharmacyId] = conversation;
+                      conversationsByPharmacyId[conversation.pharmacyId] =
+                          conversation;
                     }
-                    
+
                     final List<Widget> items = [];
-                    
+
                     final sortedAnnouncements = List.from(announcements);
                     if (_sortOrder == 'Oldest') {
-                      sortedAnnouncements.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+                      sortedAnnouncements.sort(
+                        (a, b) => a.createdAt.compareTo(b.createdAt),
+                      );
                     } else {
-                      sortedAnnouncements.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                      sortedAnnouncements.sort(
+                        (a, b) => b.createdAt.compareTo(a.createdAt),
+                      );
                     }
-                    
+
                     for (final announcement in sortedAnnouncements) {
                       items.add(
                         AnnouncementListItem(
@@ -340,21 +348,27 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => AnnouncementDetailScreen(announcement: announcement),
+                                builder: (context) => AnnouncementDetailScreen(
+                                  announcement: announcement,
+                                ),
                               ),
                             );
                           },
                         ),
                       );
                     }
-                    
+
                     final sortedOrderMessages = List.from(orderMessages);
                     if (_sortOrder == 'Oldest') {
-                      sortedOrderMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+                      sortedOrderMessages.sort(
+                        (a, b) => a.createdAt.compareTo(b.createdAt),
+                      );
                     } else {
-                      sortedOrderMessages.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                      sortedOrderMessages.sort(
+                        (a, b) => b.createdAt.compareTo(a.createdAt),
+                      );
                     }
-                    
+
                     for (final message in sortedOrderMessages) {
                       items.add(
                         OrderMessageItem(
@@ -374,26 +388,36 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => OrderMessageDetailScreen(message: message),
+                                builder: (context) =>
+                                    OrderMessageDetailScreen(message: message),
                               ),
                             );
                           },
                         ),
                       );
                     }
-                    
+
                     // Add conversations
                     final sortedConversations = List.from(conversations);
                     if (_sortOrder == 'Oldest') {
-                      sortedConversations.sort((a, b) => a.lastMessageTime.compareTo(b.lastMessageTime));
+                      sortedConversations.sort(
+                        (a, b) =>
+                            a.lastMessageTime.compareTo(b.lastMessageTime),
+                      );
                     } else {
-                      sortedConversations.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+                      sortedConversations.sort(
+                        (a, b) =>
+                            b.lastMessageTime.compareTo(a.lastMessageTime),
+                      );
                     }
-                    
+
                     for (final conversation in sortedConversations) {
                       items.add(
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
                           child: ChatListItem(
                             conversation: conversation,
                             onTap: () {
@@ -403,7 +427,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                                   builder: (context) => ChatDetailScreen(
                                     conversationId: conversation.id,
                                     pharmacyName: conversation.pharmacyName,
-                                    pharmacyImageUrl: conversation.pharmacyImageUrl,
+                                    pharmacyImageUrl:
+                                        conversation.pharmacyImageUrl,
                                     pharmacyId: conversation.pharmacyId,
                                   ),
                                 ),
@@ -413,48 +438,66 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                         ),
                       );
                     }
-                    
+
                     // Add pharmacies without conversations
-                    final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
-                    final selectedPharmacy = selectedStoreId != null 
+                    final selectedStoreId = ref.watch(
+                      selectedPharmacyStoreIdProvider,
+                    );
+                    final selectedPharmacy = selectedStoreId != null
                         ? pharmacies.firstWhere(
                             (p) => p.storeID == selectedStoreId,
                             orElse: () => throw Exception('Pharmacy not found'),
                           )
                         : null;
-                    
+
                     if (selectedPharmacy != null) {
-                      final hasConversation = conversationsByPharmacyId.containsKey(selectedPharmacy.id);
-                      
+                      final hasConversation = conversationsByPharmacyId
+                          .containsKey(selectedPharmacy.id);
+
                       if (!hasConversation) {
                         items.add(
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
                             child: ChatListItem.fromPharmacy(
                               pharmacy: selectedPharmacy,
                               onTap: () async {
                                 // Automatically create conversation with welcome message
-                                final user = ref.read(currentUserProvider).value;
+                                final user = ref
+                                    .read(currentUserProvider)
+                                    .value;
                                 if (user != null) {
-                                  final chatRepository = ref.read(chatRepositoryProvider);
-                                  
+                                  final chatRepository = ref.read(
+                                    chatRepositoryProvider,
+                                  );
+
                                   try {
                                     // Create conversation
-                                    final conversationId = await chatRepository.createConversation(user.id, selectedPharmacy);
-                                    
+                                    final conversationId = await chatRepository
+                                        .createConversation(
+                                          user.id,
+                                          selectedPharmacy,
+                                        );
+
                                     // Send welcome message from pharmacy
                                     final welcomeMessage = ChatMessage(
                                       id: '',
                                       senderId: selectedPharmacy.id,
                                       receiverId: user.id,
-                                      content: 'Hello! Welcome to ${selectedPharmacy.name}. How can we help you today?',
+                                      content:
+                                          'Hello! Welcome to ${selectedPharmacy.name}. How can we help you today?',
                                       timestamp: DateTime.now(),
                                       senderName: selectedPharmacy.name,
                                       senderType: 'pharmacy',
                                     );
-                                    
-                                    await chatRepository.sendMessage(conversationId, welcomeMessage);
-                                    
+
+                                    await chatRepository.sendMessage(
+                                      conversationId,
+                                      welcomeMessage,
+                                    );
+
                                     // Navigate to chat with the new conversation
                                     Navigator.push(
                                       // ignore: use_build_context_synchronously
@@ -463,7 +506,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                                         builder: (context) => ChatDetailScreen(
                                           conversationId: conversationId,
                                           pharmacyName: selectedPharmacy.name,
-                                          pharmacyImageUrl: selectedPharmacy.imageUrl,
+                                          pharmacyImageUrl:
+                                              selectedPharmacy.imageUrl,
                                           pharmacyId: selectedPharmacy.id,
                                         ),
                                       ),
@@ -477,7 +521,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                                         builder: (context) => ChatDetailScreen(
                                           conversationId: '',
                                           pharmacyName: selectedPharmacy.name,
-                                          pharmacyImageUrl: selectedPharmacy.imageUrl,
+                                          pharmacyImageUrl:
+                                              selectedPharmacy.imageUrl,
                                           pharmacyId: selectedPharmacy.id,
                                         ),
                                       ),
@@ -490,7 +535,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                         );
                       }
                     }
-                    
+
                     if (items.isEmpty) {
                       return Center(
                         child: Column(
@@ -513,14 +558,15 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                         ),
                       );
                     }
-                    
+
                     return ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 100), 
+                      padding: const EdgeInsets.only(bottom: 100),
                       itemCount: items.length,
                       itemBuilder: (context, index) => items[index],
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
                     child: Text(
                       'Error loading announcements',
@@ -559,7 +605,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
 
   Widget _buildAnnouncementsTab() {
     final announcementsAsyncValue = ref.watch(announcementsProvider);
-    
+
     return announcementsAsyncValue.when(
       data: (announcements) {
         if (announcements.isEmpty) {
@@ -596,13 +642,17 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         // Sort announcements
         final sortedAnnouncements = List.from(announcements);
         if (_sortOrder == 'Newest') {
-          sortedAnnouncements.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          sortedAnnouncements.sort(
+            (a, b) => b.createdAt.compareTo(a.createdAt),
+          );
         } else {
-          sortedAnnouncements.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          sortedAnnouncements.sort(
+            (a, b) => a.createdAt.compareTo(b.createdAt),
+          );
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 100), 
+          padding: const EdgeInsets.only(bottom: 100),
           itemCount: sortedAnnouncements.length,
           itemBuilder: (context, index) {
             final announcement = sortedAnnouncements[index];
@@ -612,9 +662,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AnnouncementDetailScreen(
-                      announcement: announcement,
-                    ),
+                    builder: (context) =>
+                        AnnouncementDetailScreen(announcement: announcement),
                   ),
                 );
               },
@@ -627,11 +676,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Color(0xFF8ECAE6),
-            ),
+            Icon(Icons.error_outline, size: 60, color: Color(0xFF8ECAE6)),
             const SizedBox(height: 16),
             Text(
               'Unable to load announcements',
@@ -659,7 +704,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
     );
   }
 
-  Widget _buildOrderMessagesTab(AsyncValue<List<dynamic>> orderMessagesAsyncValue) {
+  Widget _buildOrderMessagesTab(
+    AsyncValue<List<dynamic>> orderMessagesAsyncValue,
+  ) {
     return orderMessagesAsyncValue.when(
       data: (orderMessages) {
         if (orderMessages.isEmpty) {
@@ -723,7 +770,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => OrderMessageDetailScreen(message: message),
+                    builder: (context) =>
+                        OrderMessageDetailScreen(message: message),
                   ),
                 );
               },
@@ -736,11 +784,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Color(0xFF8ECAE6),
-            ),
+            Icon(Icons.error_outline, size: 60, color: Color(0xFF8ECAE6)),
             const SizedBox(height: 16),
             Text(
               'Unable to load order messages',
@@ -768,7 +812,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
     );
   }
 
-  Widget _buildConversationsList(AsyncValue<List<dynamic>> conversationsAsyncValue, dynamic currentUser) {
+  Widget _buildConversationsList(
+    AsyncValue<List<dynamic>> conversationsAsyncValue,
+    dynamic currentUser,
+  ) {
     return conversationsAsyncValue.when(
       data: (conversations) {
         if (conversations.isEmpty) {
@@ -796,13 +843,17 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
 
         final sortedConversations = List.from(conversations);
         if (_sortOrder == 'Oldest') {
-          sortedConversations.sort((a, b) => a.lastMessageTime.compareTo(b.lastMessageTime));
+          sortedConversations.sort(
+            (a, b) => a.lastMessageTime.compareTo(b.lastMessageTime),
+          );
         } else {
-          sortedConversations.sort((a, b) => b.lastMessageTime.compareTo(a.lastMessageTime));
+          sortedConversations.sort(
+            (a, b) => b.lastMessageTime.compareTo(a.lastMessageTime),
+          );
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.only(bottom: 100), 
+          padding: const EdgeInsets.only(bottom: 100),
           itemCount: sortedConversations.length,
           itemBuilder: (context, index) {
             final conversation = sortedConversations[index];
@@ -830,11 +881,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with SingleTick
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 60,
-              color: Color(0xFF8ECAE6),
-            ),
+            Icon(Icons.error_outline, size: 60, color: Color(0xFF8ECAE6)),
             const SizedBox(height: 16),
             Text(
               'Unable to load conversations',
