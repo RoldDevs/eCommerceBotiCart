@@ -6,10 +6,9 @@ class AnnouncementRepository {
   final FirebaseFirestore _firestore;
 
   AnnouncementRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   Stream<List<Announcement>> getAnnouncementsForStoreAndGlobal(int storeID) {
-    
     return _firestore
         .collection('announcements')
         .where('isActive', isEqualTo: true)
@@ -17,13 +16,13 @@ class AnnouncementRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      final announcements = snapshot.docs
-          .map((doc) => Announcement.fromFirestore(doc))
-          .where((announcement) => announcement.isVisible)
-          .toList();
-      
-      return announcements;
-    });
+          final announcements = snapshot.docs
+              .map((doc) => Announcement.fromFirestore(doc))
+              .where((announcement) => announcement.isVisible)
+              .toList();
+
+          return announcements;
+        });
   }
 
   Stream<List<Announcement>> getAnnouncementsForStore(int storeID) {
@@ -34,11 +33,11 @@ class AnnouncementRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Announcement.fromFirestore(doc))
-          .where((announcement) => announcement.isVisible)
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => Announcement.fromFirestore(doc))
+              .where((announcement) => announcement.isVisible)
+              .toList();
+        });
   }
 
   Stream<List<Announcement>> getGlobalAnnouncements() {
@@ -50,12 +49,12 @@ class AnnouncementRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      final announcements = snapshot.docs
-          .map((doc) => Announcement.fromFirestore(doc))
-          .where((announcement) => announcement.isVisible)
-          .toList();  
-      return announcements;
-    });
+          final announcements = snapshot.docs
+              .map((doc) => Announcement.fromFirestore(doc))
+              .where((announcement) => announcement.isVisible)
+              .toList();
+          return announcements;
+        });
   }
 
   Future<Announcement?> getAnnouncementById(String id) async {
@@ -70,22 +69,28 @@ class AnnouncementRepository {
     }
   }
 
-  Future<void> markAnnouncementAsRead(String announcementId, String userId) async {
+  Future<void> markAnnouncementAsRead(
+    String announcementId,
+    String userId,
+  ) async {
     try {
       await _firestore
           .collection('announcement_reads')
           .doc('${announcementId}_$userId')
           .set({
-        'announcementId': announcementId,
-        'userId': userId,
-        'readAt': DateTime.now(),
-      });
+            'announcementId': announcementId,
+            'userId': userId,
+            'readAt': DateTime.now(),
+          });
     } catch (e) {
       throw Exception('Failed to mark announcement as read: $e');
     }
   }
 
-  Future<bool> hasUserReadAnnouncement(String announcementId, String userId) async {
+  Future<bool> hasUserReadAnnouncement(
+    String announcementId,
+    String userId,
+  ) async {
     try {
       final doc = await _firestore
           .collection('announcement_reads')

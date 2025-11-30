@@ -19,19 +19,20 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const LoginScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(0.0, 0.0);
             const end = Offset.zero;
             const curve = Curves.ease;
 
-            var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+            var tween = Tween(
+              begin: begin,
+              end: end,
+            ).chain(CurveTween(curve: curve));
             var _ = animation.drive(tween);
 
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
+            return FadeTransition(opacity: animation, child: child);
           },
           transitionDuration: const Duration(milliseconds: 500),
         ),
@@ -50,10 +51,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo
-              const AppLogo(
-                width: 250.0,
-                height: 70.0,
-              ),
+              const AppLogo(width: 250.0, height: 70.0),
               AutoSizeText(
                 'Empowering Pharmacies. Simplifying Care.',
                 maxLines: 1,
@@ -94,18 +92,15 @@ class AutoSizeText extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final textSpan = TextSpan(
-          text: text,
-          style: style,
-        );
-        
+        final textSpan = TextSpan(text: text, style: style);
+
         final textPainter = TextPainter(
           text: textSpan,
           textDirection: TextDirection.ltr,
           maxLines: maxLines,
           textAlign: textAlign ?? TextAlign.start,
         );
-        
+
         double fontSize = style?.fontSize ?? 14;
 
         do {
@@ -114,13 +109,14 @@ class AutoSizeText extends StatelessWidget {
           );
           textPainter.layout(maxWidth: constraints.maxWidth);
 
-          if (textPainter.didExceedMaxLines || textPainter.width > constraints.maxWidth) {
+          if (textPainter.didExceedMaxLines ||
+              textPainter.width > constraints.maxWidth) {
             fontSize -= 0.5;
           } else {
             break;
           }
         } while (fontSize >= minFontSize);
-        
+
         return Text(
           text,
           style: style?.copyWith(fontSize: fontSize),

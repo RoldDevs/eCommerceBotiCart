@@ -52,12 +52,12 @@ class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
         throw Exception('User not found');
       }
 
-      final userRef = FirebaseFirestore.instance.collection('users').doc(user.id);
-      
-      await userRef.update({
-        'contact': _phoneController.text.trim(),
-      });
-      
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.id);
+
+      await userRef.update({'contact': _phoneController.text.trim()});
+
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -68,10 +68,10 @@ class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
           backgroundColor: const Color(0xFF8ECAE6),
         ),
       );
-      
+
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
-      
+
       // ignore: unused_result
       ref.refresh(currentUserProvider);
     } catch (e) {
@@ -122,9 +122,7 @@ class _ChangePhoneScreenState extends ConsumerState<ChangePhoneScreen> {
               controller: _phoneController,
               decoration: InputDecoration(
                 hintText: 'Change phone number.',
-                hintStyle: GoogleFonts.poppins(
-                  color: Colors.grey,
-                ),
+                hintStyle: GoogleFonts.poppins(color: Colors.grey),
                 prefixIcon: const Icon(Icons.phone, color: Colors.grey),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),

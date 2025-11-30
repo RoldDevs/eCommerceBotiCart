@@ -83,19 +83,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     fillColor: const Color(0xFFE6F2FF),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
@@ -114,22 +114,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     hintText: 'Password',
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     filled: true,
-                    fillColor: const Color(0xFFE6F2FF), 
+                    fillColor: const Color(0xFFE6F2FF),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
-                      borderSide: _hasError 
+                      borderSide: _hasError
                           ? const BorderSide(color: Colors.red, width: 1.0)
                           : BorderSide.none,
                     ),
@@ -139,7 +139,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() {
@@ -149,20 +151,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Error message
                 if (_hasError)
                   Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Text(
                       'Incorrect username or password',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.red, fontSize: 14),
                     ),
                   ),
-                
+
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -184,52 +183,57 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 // Login Button
                 ElevatedButton(
                   onPressed: () async {
-                    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+                    if (_emailController.text.isEmpty ||
+                        _passwordController.text.isEmpty) {
                       setState(() {
                         _hasError = true;
                       });
                       return;
                     }
-                
+
                     setState(() {
                       _hasError = false;
                     });
-                    
+
                     // Attempt to login
                     final loginUseCase = ref.read(loginUseCaseProvider);
                     final user = await loginUseCase(
                       email: _emailController.text.trim(),
                       password: _passwordController.text,
                     );
-                    
-                    setState(() {
-                    });
-                    
+
+                    setState(() {});
+
                     if (user != null) {
                       // Check if email is verified
-                      final isEmailVerifiedUseCase = ref.read(isEmailVerifiedUseCaseProvider);
+                      final isEmailVerifiedUseCase = ref.read(
+                        isEmailVerifiedUseCaseProvider,
+                      );
                       final isVerified = await isEmailVerifiedUseCase();
-                      
+
                       if (isVerified) {
-                      // ignore: use_build_context_synchronously
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const MainScreen()),
-                        (route) => false,
-                      );
-                      } else {
-                      if (mounted) {
-                        Navigator.pushReplacement(
                         // ignore: use_build_context_synchronously
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EmailVerificationScreen(email: user.email),
-                        ),
-                      );
-                      }
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => const MainScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      } else {
+                        if (mounted) {
+                          Navigator.pushReplacement(
+                            // ignore: use_build_context_synchronously
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  EmailVerificationScreen(email: user.email),
+                            ),
+                          );
+                        }
                       }
                     } else {
                       setState(() {
@@ -247,10 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   child: const Text(
                     'Login',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -270,7 +271,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const SignupScreen()),
+                          MaterialPageRoute(
+                            builder: (context) => const SignupScreen(),
+                          ),
                         );
                       },
                       child: Text(
@@ -304,16 +307,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         setState(() {
                           _hasError = false;
                         });
-                        
+
                         try {
-                          final googleSignInUseCase = ref.read(googleSignInUseCaseProvider);
+                          final googleSignInUseCase = ref.read(
+                            googleSignInUseCaseProvider,
+                          );
                           final user = await googleSignInUseCase();
-                          
+
                           if (user != null) {
                             if (mounted) {
                               // ignore: use_build_context_synchronously
                               Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(builder: (context) => const MainScreen()),
+                                MaterialPageRoute(
+                                  builder: (context) => const MainScreen(),
+                                ),
                                 (route) => false,
                               );
                             }

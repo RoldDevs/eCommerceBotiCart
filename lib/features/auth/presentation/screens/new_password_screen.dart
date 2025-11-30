@@ -26,14 +26,15 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
-    if (_passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+    if (_passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       setState(() {
         _hasError = true;
         _errorMessage = 'Please enter both password fields';
       });
       return;
     }
-    
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _hasError = true;
@@ -41,7 +42,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
       });
       return;
     }
-    
+
     if (_passwordController.text.length < 6) {
       setState(() {
         _hasError = true;
@@ -57,16 +58,18 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 1)); 
-      
+      await Future.delayed(const Duration(seconds: 1));
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Password reset successful! You can now login with your new password.'),
+            content: Text(
+              'Password reset successful! You can now login with your new password.',
+            ),
             backgroundColor: Color(0xFF8ECAE6),
           ),
         );
-        
+
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
@@ -108,9 +111,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               const Text(
                 'Please enter your new password',
                 style: TextStyle(
@@ -119,9 +122,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   color: Colors.black87,
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -157,7 +160,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -168,9 +173,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
@@ -206,7 +211,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -217,22 +224,19 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                   ),
                 ),
               ),
-              
+
               // Error message
               if (_hasError)
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
                     _errorMessage,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                    ),
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
                   ),
                 ),
-              
+
               const Spacer(),
-              
+
               // Reset Password button
               SizedBox(
                 width: double.infinity,
@@ -245,7 +249,9 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    disabledBackgroundColor: const Color(0xFF8ECAE6).withValues(alpha: 0.7),
+                    disabledBackgroundColor: const Color(
+                      0xFF8ECAE6,
+                    ).withValues(alpha: 0.7),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -265,7 +271,7 @@ class _NewPasswordScreenState extends ConsumerState<NewPasswordScreen> {
                         ),
                 ),
               ),
-              
+
               const SizedBox(height: 24),
             ],
           ),

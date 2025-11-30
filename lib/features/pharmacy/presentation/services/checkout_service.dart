@@ -35,7 +35,7 @@ class CheckoutService {
   }) async {
     // Block delivery orders if feature is disabled
     if (isHomeDelivery && !AppConfig.isDeliveryEnabled) {
-      throw Exception('Delivery are not yet available at this moment');
+      throw Exception('This feature is not yet available at this moment');
     }
 
     final userAsyncValue = _ref.read(currentUserProvider);
@@ -252,7 +252,7 @@ class CheckoutService {
   }) async {
     // Block delivery orders if feature is disabled
     if (isHomeDelivery && !AppConfig.isDeliveryEnabled) {
-      throw Exception('Delivery are not yet available at this moment');
+      throw Exception('This feature is not yet available at this moment');
     }
 
     final userAsyncValue = _ref.read(currentUserProvider);

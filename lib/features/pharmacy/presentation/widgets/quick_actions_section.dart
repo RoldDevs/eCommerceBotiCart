@@ -58,7 +58,7 @@ class QuickActionsSection extends ConsumerWidget {
                 },
               ),
               QuickActionCard(
-                title: 'Wishlist',
+                title: 'Favorites',
                 icon: Icons.favorite_border,
                 onTap: () {
                   // Clear product type filters and set favorites filter

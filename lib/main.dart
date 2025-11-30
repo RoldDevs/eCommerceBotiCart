@@ -13,20 +13,20 @@ import 'package:boticart/features/pharmacy/presentation/providers/order_status_p
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.white,
-    statusBarIconBrightness: Brightness.dark,
-    statusBarBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.white,
-    systemNavigationBarDividerColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.dark,
-  ));
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.white,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarDividerColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
 
   // Check if user is already logged in
   final isLoggedIn = await PersistentAuthService.getLoginState();
@@ -62,7 +62,7 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Initialize the order status listener
     ref.watch(orderStatusInitializerProvider);
-    
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.white,
@@ -92,9 +92,7 @@ class MyApp extends ConsumerWidget {
           ),
         ),
         home: const SplashScreen(),
-        routes: {
-          '/orders': (context) => const OrdersScreen(),
-        },
+        routes: {'/orders': (context) => const OrdersScreen()},
         onGenerateRoute: (settings) {
           if (settings.name == '/orders') {
             return MaterialPageRoute(

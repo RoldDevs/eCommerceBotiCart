@@ -6,15 +6,14 @@ import '../../domain/entities/help_chat_message.dart';
 import '../../domain/repositories/help_chat_repository.dart';
 
 final helpChatRepositoryProvider = Provider<HelpChatRepository>((ref) {
-  return HelpChatRepositoryImpl(
-    firestore: FirebaseFirestore.instance,
-  );
+  return HelpChatRepositoryImpl(firestore: FirebaseFirestore.instance);
 });
 
-final userChatMessagesProvider = StreamProvider.family<List<HelpChatMessage>, String>((ref, userUID) {
-  final repository = ref.watch(helpChatRepositoryProvider);
-  return repository.getUserChatMessages(userUID);
-});
+final userChatMessagesProvider =
+    StreamProvider.family<List<HelpChatMessage>, String>((ref, userUID) {
+      final repository = ref.watch(helpChatRepositoryProvider);
+      return repository.getUserChatMessages(userUID);
+    });
 
 final currentUserUIDProvider = Provider<String?>((ref) {
   return FirebaseAuth.instance.currentUser?.uid;

@@ -33,7 +33,10 @@ class AccountSettingsScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 16),
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -64,7 +67,10 @@ class AccountSettingsScreen extends StatelessWidget {
               ),
             ),
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),

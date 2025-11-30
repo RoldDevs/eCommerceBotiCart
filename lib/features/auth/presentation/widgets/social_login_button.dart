@@ -22,11 +22,7 @@ class SocialLoginButton extends StatelessWidget {
           color: const Color(0xFFF5F9FC),
           borderRadius: BorderRadius.circular(25),
         ),
-        child: Icon(
-          icon,
-          size: 30,
-          color: Colors.black87,
-        ),
+        child: Icon(icon, size: 30, color: Colors.black87),
       ),
     );
   }

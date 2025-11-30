@@ -111,37 +111,6 @@ class PickupTimeSelectorWidget extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            if (slot.expressLane != null)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'EXPRESS',
-                                  style: GoogleFonts.poppins(
-                                    fontSize:
-                                        ResponsiveUtils.getResponsiveFontSize(
-                                          context,
-                                          8,
-                                        ),
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            if (slot.expressLane != null)
-                              SizedBox(
-                                height:
-                                    ResponsiveUtils.getResponsiveSpacing(
-                                      context,
-                                    ) *
-                                    0.5,
-                              ),
                             Text(
                               slot.displayTime,
                               style: GoogleFonts.poppins(

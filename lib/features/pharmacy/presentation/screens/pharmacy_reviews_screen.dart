@@ -12,13 +12,11 @@ import 'add_review_screen.dart';
 class PharmacyReviewsScreen extends ConsumerStatefulWidget {
   final Pharmacy pharmacy;
 
-  const PharmacyReviewsScreen({
-    super.key,
-    required this.pharmacy,
-  });
+  const PharmacyReviewsScreen({super.key, required this.pharmacy});
 
   @override
-  ConsumerState<PharmacyReviewsScreen> createState() => _PharmacyReviewsScreenState();
+  ConsumerState<PharmacyReviewsScreen> createState() =>
+      _PharmacyReviewsScreenState();
 }
 
 class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
@@ -33,7 +31,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this, initialIndex: 2);
     _tabController.addListener(() {
-      setState(() {}); 
+      setState(() {});
     });
     _getPharmacyLocation();
   }
@@ -47,10 +45,15 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
 
   Future<void> _getPharmacyLocation() async {
     try {
-      List<Location> locations = await locationFromAddress(widget.pharmacy.location);
+      List<Location> locations = await locationFromAddress(
+        widget.pharmacy.location,
+      );
       if (locations.isNotEmpty) {
         setState(() {
-          _pharmacyLocation = LatLng(locations.first.latitude, locations.first.longitude);
+          _pharmacyLocation = LatLng(
+            locations.first.latitude,
+            locations.first.longitude,
+          );
           _markers = {
             Marker(
               markerId: const MarkerId('pharmacy_location'),
@@ -103,13 +106,14 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
           ],
         ),
       ),
-      floatingActionButton: _tabController.index == 2 
+      floatingActionButton: _tabController.index == 2
           ? FloatingActionButton.extended(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AddReviewScreen(pharmacy: widget.pharmacy),
+                    builder: (context) =>
+                        AddReviewScreen(pharmacy: widget.pharmacy),
                   ),
                 );
               },
@@ -262,8 +266,8 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
                               index < widget.pharmacy.rating.floor()
                                   ? Icons.star
                                   : index < widget.pharmacy.rating
-                                      ? Icons.star_half
-                                      : Icons.star_border,
+                                  ? Icons.star_half
+                                  : Icons.star_border,
                               color: Colors.amber,
                               size: 14,
                             );
@@ -298,10 +302,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(
-            color: Color(0xFF8ECAE6),
-            width: 1.0,
-          ),
+          bottom: BorderSide(color: Color(0xFF8ECAE6), width: 1.0),
         ),
       ),
       child: TabBar(
@@ -344,8 +345,9 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            widget.pharmacy.description.isNotEmpty 
-                ? widget.pharmacy.description: '',
+            widget.pharmacy.description.isNotEmpty
+                ? widget.pharmacy.description
+                : '',
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: Colors.grey[700],
@@ -399,10 +401,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
           const SizedBox(height: 8),
           Text(
             widget.pharmacy.location,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -443,11 +442,7 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
               color: Color(0xFF8ECAE6),
             ),
           ),
-          Icon(
-            icon,
-            color: Colors.grey[600],
-            size: 16,
-          ),
+          Icon(icon, color: Colors.grey[600], size: 16),
         ],
       ),
     );
@@ -456,24 +451,20 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
   Widget _buildUserReviewsTab() {
     return Consumer(
       builder: (context, ref, child) {
-        final reviewsAsyncValue = ref.watch(pharmacyReviewsProvider(widget.pharmacy.id));
-        
+        final reviewsAsyncValue = ref.watch(
+          pharmacyReviewsProvider(widget.pharmacy.id),
+        );
+
         return reviewsAsyncValue.when(
           data: (reviews) => _buildReviewsList(reviews),
           loading: () => const Center(
-            child: CircularProgressIndicator(
-              color: Color(0xFF8ECAE6),
-            ),
+            child: CircularProgressIndicator(color: Color(0xFF8ECAE6)),
           ),
           error: (error, stack) => Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: Colors.grey[400],
-                ),
+                Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
                 const SizedBox(height: 16),
                 Text(
                   'Failed to load reviews',

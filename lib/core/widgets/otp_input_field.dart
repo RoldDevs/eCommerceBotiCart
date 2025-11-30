@@ -1,4 +1,3 @@
-
 // FOR RENDERING THE OTP INPUT FIELD
 
 import 'package:flutter/material.dart';
@@ -14,7 +13,8 @@ class OtpInputField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.onChanged,
-    this.autoFocus = false, required bool nextFocus,
+    this.autoFocus = false,
+    required bool nextFocus,
   });
 
   @override
@@ -50,9 +50,7 @@ class OtpInputField extends StatelessWidget {
             borderSide: BorderSide.none,
           ),
         ),
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-        ],
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         onChanged: (value) {
           if (value.length == 1) {
             FocusScope.of(context).nextFocus();

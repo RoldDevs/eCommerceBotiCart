@@ -23,7 +23,7 @@ class RiderInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 1),
@@ -44,10 +44,7 @@ class RiderInfoCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             riderName,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.black54,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
           ),
           const SizedBox(height: 16),
           Text(
@@ -64,17 +61,11 @@ class RiderInfoCard extends StatelessWidget {
             children: [
               Text(
                 riderPhone,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.black54,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
               ),
               IconButton(
                 onPressed: onCallPressed,
-                icon: const Icon(
-                  Icons.phone,
-                  color: Color(0xFF8ECAE6),
-                ),
+                icon: const Icon(Icons.phone, color: Color(0xFF8ECAE6)),
               ),
             ],
           ),

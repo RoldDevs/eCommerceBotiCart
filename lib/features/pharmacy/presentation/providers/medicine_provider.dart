@@ -7,12 +7,13 @@ import '../../domain/repositories/medicine_repository.dart';
 import 'pharmacy_providers.dart';
 
 final medicineRepositoryProvider = Provider<MedicineRepository>((ref) {
-  return MedicineRepositoryImpl(
-    firestore: FirebaseFirestore.instance,
-  );
+  return MedicineRepositoryImpl(firestore: FirebaseFirestore.instance);
 });
 
-final medicineSearchProvider = FutureProvider.family<List<Medicine>, String>((ref, query) {
+final medicineSearchProvider = FutureProvider.family<List<Medicine>, String>((
+  ref,
+  query,
+) {
   final repository = ref.watch(medicineRepositoryProvider);
   final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
   return repository.searchMedicines(query, storeId: selectedStoreId);
@@ -28,17 +29,13 @@ final allMedicinesProvider = FutureProvider<List<Medicine>>((ref) {
 });
 
 // Provider to store favorite medicine IDs
-final favoriteMedicinesProvider = StateNotifierProvider<FavoriteMedicinesNotifier, Set<String>>((ref) {
-  return FavoriteMedicinesNotifier();
-});
+final favoriteMedicinesProvider =
+    StateNotifierProvider<FavoriteMedicinesNotifier, Set<String>>((ref) {
+      return FavoriteMedicinesNotifier();
+    });
 
 // Filter type enum
-enum MedicineFilterType {
-  relevance,
-  latest,
-  price,
-  favorites
-}
+enum MedicineFilterType { relevance, latest, price, favorites }
 
 // Selected filter provider
 final selectedFilterProvider = StateProvider<MedicineFilterType>((ref) {
@@ -50,15 +47,13 @@ final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
   final allMedicinesAsyncValue = ref.watch(allMedicinesProvider);
   final filterType = ref.watch(selectedFilterProvider);
   final favorites = ref.watch(favoriteMedicinesProvider);
-  
+
   return allMedicinesAsyncValue.when(
     data: (medicines) {
       List<Medicine> filteredList = medicines.map((medicine) {
-        return medicine.copyWith(
-          isFavorite: favorites.contains(medicine.id)
-        );
+        return medicine.copyWith(isFavorite: favorites.contains(medicine.id));
       }).toList();
-      
+
       switch (filterType) {
         case MedicineFilterType.relevance:
           filteredList.sort((a, b) => a.medicineName.compareTo(b.medicineName));
@@ -70,10 +65,12 @@ final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
           filteredList.sort((a, b) => b.price.compareTo(a.price));
           break;
         case MedicineFilterType.favorites:
-          filteredList = filteredList.where((medicine) => favorites.contains(medicine.id)).toList();
+          filteredList = filteredList
+              .where((medicine) => favorites.contains(medicine.id))
+              .toList();
           break;
       }
-      
+
       return filteredList;
     },
     loading: () => [],
@@ -83,7 +80,7 @@ final filteredMedicinesProvider = Provider<List<Medicine>>((ref) {
 
 class FavoriteMedicinesNotifier extends StateNotifier<Set<String>> {
   FavoriteMedicinesNotifier() : super({});
-  
+
   void toggleFavorite(String medicineId) {
     if (state.contains(medicineId)) {
       state = {...state}..remove(medicineId);
@@ -91,7 +88,7 @@ class FavoriteMedicinesNotifier extends StateNotifier<Set<String>> {
       state = {...state, medicineId};
     }
   }
-  
+
   bool isFavorite(String medicineId) {
     return state.contains(medicineId);
   }

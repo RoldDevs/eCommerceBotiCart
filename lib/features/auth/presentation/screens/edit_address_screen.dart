@@ -29,7 +29,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   late TextEditingController _detailsController;
   bool _isLoading = false;
   GoogleMapController? _mapController;
-  LatLng _selectedLocation = const LatLng(14.5995, 120.9842); 
+  LatLng _selectedLocation = const LatLng(14.5995, 120.9842);
   Set<Marker> _markers = {};
   bool _isMapReady = false;
   bool _isDefaultAddress = false;
@@ -52,25 +52,25 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
             .collection('users')
             .doc(user.id)
             .get();
-        
+
         final addressesData = userDoc.data()?['addressesData'];
-        if (addressesData != null && 
-            addressesData is List && 
+        if (addressesData != null &&
+            addressesData is List &&
             widget.index! < addressesData.length) {
-          
           final addressData = addressesData[widget.index!];
           if (addressData != null && addressData is Map<String, dynamic>) {
             // Load the details
             if (mounted) {
               setState(() {
                 _detailsController.text = addressData['details'] ?? '';
-                
+
                 if (addressData['coordinates'] != null) {
                   final coordinates = addressData['coordinates'];
-                  if (coordinates['latitude'] != null && coordinates['longitude'] != null) {
+                  if (coordinates['latitude'] != null &&
+                      coordinates['longitude'] != null) {
                     _selectedLocation = LatLng(
                       coordinates['latitude'],
-                      coordinates['longitude']
+                      coordinates['longitude'],
                     );
                     _updateMarker();
                   }
@@ -90,7 +90,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
           .collection('users')
           .doc(user.id)
           .get();
-      
+
       if (userDoc.data()?.containsKey('defaultAddress') ?? false) {
         String defaultAddr = userDoc.data()?['defaultAddress'];
         if (widget.address == defaultAddr) {
@@ -105,7 +105,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
   @override
   void dispose() {
     _addressController.dispose();
-    _detailsController.dispose();  
+    _detailsController.dispose();
     _mapController?.dispose();
     super.dispose();
   }
@@ -115,12 +115,15 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       try {
         List<Location> locations = await locationFromAddress(widget.address!)
             .catchError((e) {
-          return <Location>[];
-        });
-        
+              return <Location>[];
+            });
+
         if (locations.isNotEmpty) {
           setState(() {
-            _selectedLocation = LatLng(locations.first.latitude, locations.first.longitude);
+            _selectedLocation = LatLng(
+              locations.first.latitude,
+              locations.first.longitude,
+            );
             _updateMarker();
           });
           _getAddressFromLatLng();
@@ -161,9 +164,9 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       setState(() {
         _isLoading = true;
       });
-      
+
       locationData = await location.getLocation();
-      
+
       setState(() {
         _selectedLocation = LatLng(
           locationData.latitude ?? _selectedLocation.latitude,
@@ -172,7 +175,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
         _updateMarker();
         _isLoading = false;
       });
-      
+
       _getAddressFromLatLng();
     } catch (e) {
       setState(() {
@@ -210,37 +213,46 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       setState(() {
         _isLoading = true;
       });
-      
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        _selectedLocation.latitude,
-        _selectedLocation.longitude,
-      ).catchError((e) {
-        return <Placemark>[];
-      });
+
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(
+            _selectedLocation.latitude,
+            _selectedLocation.longitude,
+          ).catchError((e) {
+            return <Placemark>[];
+          });
 
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
-        
+
         List<String> addressParts = [];
-        if (place.street != null && place.street!.isNotEmpty) addressParts.add(place.street!);
-        if (place.subLocality != null && place.subLocality!.isNotEmpty) addressParts.add(place.subLocality!);
-        if (place.locality != null && place.locality!.isNotEmpty) addressParts.add(place.locality!);
-        if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) addressParts.add(place.administrativeArea!);
-        if (place.country != null && place.country!.isNotEmpty) addressParts.add(place.country!);
-        
+        if (place.street != null && place.street!.isNotEmpty)
+          addressParts.add(place.street!);
+        if (place.subLocality != null && place.subLocality!.isNotEmpty)
+          addressParts.add(place.subLocality!);
+        if (place.locality != null && place.locality!.isNotEmpty)
+          addressParts.add(place.locality!);
+        if (place.administrativeArea != null &&
+            place.administrativeArea!.isNotEmpty)
+          addressParts.add(place.administrativeArea!);
+        if (place.country != null && place.country!.isNotEmpty)
+          addressParts.add(place.country!);
+
         String address = addressParts.join(', ');
-                    
+
         setState(() {
           _addressController.text = address;
         });
       } else {
         setState(() {
-          _addressController.text = 'Location selected (${_selectedLocation.latitude.toStringAsFixed(4)}, ${_selectedLocation.longitude.toStringAsFixed(4)})';
+          _addressController.text =
+              'Location selected (${_selectedLocation.latitude.toStringAsFixed(4)}, ${_selectedLocation.longitude.toStringAsFixed(4)})';
         });
       }
     } catch (e) {
       setState(() {
-        _addressController.text = 'Location selected (${_selectedLocation.latitude.toStringAsFixed(4)}, ${_selectedLocation.longitude.toStringAsFixed(4)})';
+        _addressController.text =
+            'Location selected (${_selectedLocation.latitude.toStringAsFixed(4)}, ${_selectedLocation.longitude.toStringAsFixed(4)})';
       });
     } finally {
       setState(() {
@@ -248,23 +260,27 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       });
     }
   }
-  
+
   Future<void> _searchAddressAndUpdateMap(String address) async {
     if (address.isEmpty) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
-      List<Location> locations = await locationFromAddress(address)
-          .catchError((e) {
+      List<Location> locations = await locationFromAddress(address).catchError((
+        e,
+      ) {
         return <Location>[];
       });
-      
+
       if (locations.isNotEmpty) {
         setState(() {
-          _selectedLocation = LatLng(locations.first.latitude, locations.first.longitude);
+          _selectedLocation = LatLng(
+            locations.first.latitude,
+            locations.first.longitude,
+          );
           _updateMarker();
         });
         _getAddressFromLatLng();
@@ -299,7 +315,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       });
     }
   }
-  
+
   Future<void> _saveAddress() async {
     if (_addressController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -313,19 +329,21 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
       );
       return;
     }
-  
+
     setState(() {
       _isLoading = true;
     });
-  
+
     try {
       final user = ref.read(currentUserProvider).value;
       if (user == null) {
         throw Exception('User not found');
       }
-  
-      final userRef = FirebaseFirestore.instance.collection('users').doc(user.id);
-      
+
+      final userRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.id);
+
       // Create address object with main address and additional details
       Map<String, dynamic> addressData = {
         'mainAddress': _addressController.text.trim(),
@@ -333,13 +351,13 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
         'coordinates': {
           'latitude': _selectedLocation.latitude,
           'longitude': _selectedLocation.longitude,
-        }
+        },
       };
-      
+
       // Get current addresses collection
       final userDoc = await userRef.get();
       List<dynamic> currentAddresses = userDoc.data()?['addressesData'] ?? [];
-      
+
       if (widget.index != null) {
         // Update existing address
         if (currentAddresses.length > widget.index!) {
@@ -351,41 +369,37 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
         // Add new address
         currentAddresses.add(addressData);
       }
-      
+
       // Update the addressesData field
-      await userRef.update({
-        'addressesData': currentAddresses,
-      });
-      
+      await userRef.update({'addressesData': currentAddresses});
+
       // For backward compatibility, also update the addresses array with just the main address
       List<String> updatedAddresses = currentAddresses
           .map<String>((addr) => addr['mainAddress'] as String)
           .toList();
-      
-      await userRef.update({
-        'addresses': updatedAddresses,
-      });
-      
+
+      await userRef.update({'addresses': updatedAddresses});
+
       // Handle default address
       if (_isDefaultAddress) {
         // Store the current address as default in the user document
         await userRef.update({
           'defaultAddress': _addressController.text.trim(),
-          'defaultAddressData': addressData
+          'defaultAddressData': addressData,
         });
       } else if (widget.address != null) {
         // Check if this was previously the default address
         final currentDefault = userDoc.data()?['defaultAddress'];
-        
+
         // If this was the default address but is no longer, remove the default setting
         if (currentDefault == widget.address) {
           await userRef.update({
             'defaultAddress': FieldValue.delete(),
-            'defaultAddressData': FieldValue.delete()
+            'defaultAddressData': FieldValue.delete(),
           });
         }
       }
-      
+
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -396,7 +410,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
           backgroundColor: const Color(0xFF8ECAE6),
         ),
       );
-      
+
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
     } catch (e) {
@@ -493,7 +507,10 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Icon(Icons.my_location, color: Color(0xFF8ECAE6)),
+                              : const Icon(
+                                  Icons.my_location,
+                                  color: Color(0xFF8ECAE6),
+                                ),
                         ),
                       ),
                       Positioned(
@@ -503,7 +520,10 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                         child: Container(
                           width: double.infinity,
                           color: const Color(0xFF8ECAE6),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 12,
+                            horizontal: 16,
+                          ),
                           alignment: Alignment.centerLeft,
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -513,7 +533,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                                 color: Colors.white,
                                 size: 24,
                               ),
-                              const SizedBox(width: 8), 
+                              const SizedBox(width: 8),
                               Text(
                                 'Confirm your map location',
                                 style: GoogleFonts.poppins(
@@ -528,7 +548,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                       ),
                     ],
                   ),
-                  
+
                   // Address section
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -564,10 +584,13 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _addressController.text.isEmpty ? 'Select address' : _addressController.text,
+                                        _addressController.text.isEmpty
+                                            ? 'Select address'
+                                            : _addressController.text,
                                         style: GoogleFonts.poppins(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
@@ -577,12 +600,15 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right, color: Colors.grey),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.grey,
+                                ),
                               ],
                             ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 24),
                         Text(
                           'Address Details',
@@ -597,16 +623,16 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                           controller: _detailsController,
                           decoration: InputDecoration(
                             hintText: 'Enter other details (optional)',
-                            hintStyle: GoogleFonts.poppins(
-                              color: Colors.grey,
-                            ),
+                            hintStyle: GoogleFonts.poppins(color: Colors.grey),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
                               borderSide: BorderSide(color: Colors.grey[300]!),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF8ECAE6)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF8ECAE6),
+                              ),
                             ),
                           ),
                           onSubmitted: (value) {
@@ -615,7 +641,7 @@ class _EditAddressScreenState extends ConsumerState<EditAddressScreen> {
                             }
                           },
                         ),
-                        
+
                         const SizedBox(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,

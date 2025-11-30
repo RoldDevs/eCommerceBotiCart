@@ -6,10 +6,10 @@ import '../services/order_stock_handler.dart';
 final orderStatusInitializerProvider = Provider<void>((ref) {
   final listener = ref.watch(orderStatusListenerProvider);
   listener.startListening();
-  
+
   // Initialize the order stock handler to listen for stock decreases
   final stockHandler = ref.watch(orderStockHandlerProvider);
   stockHandler.initializeOrderListener();
-  
+
   return;
 });

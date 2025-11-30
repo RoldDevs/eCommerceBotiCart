@@ -33,11 +33,11 @@ class Review {
       comment: data['comment'] ?? '',
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       videoUrls: List<String>.from(data['videoUrls'] ?? []),
-      createdAt: data['createdAt'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(data['createdAt']) 
+      createdAt: data['createdAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(data['createdAt'])
           : DateTime.now(),
-      updatedAt: data['updatedAt'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(data['updatedAt']) 
+      updatedAt: data['updatedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(data['updatedAt'])
           : null,
     );
   }

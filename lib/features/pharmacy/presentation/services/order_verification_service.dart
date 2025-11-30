@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/pharmacy.dart';
 
-final orderVerificationServiceProvider = Provider<OrderVerificationService>((ref) {
+final orderVerificationServiceProvider = Provider<OrderVerificationService>((
+  ref,
+) {
   return OrderVerificationService();
 });
 
@@ -34,7 +36,7 @@ class OrderVerificationService {
           .where('storeID', isEqualTo: storeId)
           .limit(1)
           .get();
-      
+
       if (querySnapshot.docs.isNotEmpty) {
         final doc = querySnapshot.docs.first;
         return Pharmacy.fromFirestore(doc.data(), doc.id);
@@ -54,19 +56,21 @@ class OrderVerificationService {
   }) async {
     try {
       // Clean pharmacy name for folder structure
-      final cleanPharmacyName = pharmacyName.replaceAll(RegExp(r'[^\w\s-]'), '').trim();
-      
+      final cleanPharmacyName = pharmacyName
+          .replaceAll(RegExp(r'[^\w\s-]'), '')
+          .trim();
+
       // Create storage path
       final storageRef = _storage.ref().child(
-        '$cleanPharmacyName-receipts/$userUID/${orderId}_${DateTime.now().millisecondsSinceEpoch}.jpg'
+        '$cleanPharmacyName-receipts/$userUID/${orderId}_${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
-      
+
       // Upload file
       final uploadTask = await storageRef.putFile(receiptFile);
-      
+
       // Get download URL
       final downloadUrl = await uploadTask.ref.getDownloadURL();
-      
+
       return downloadUrl;
     } catch (e) {
       throw Exception('Failed to upload receipt: $e');
@@ -103,6 +107,7 @@ class OrderVerificationService {
     if (!order.isHomeDelivery) {
       return true; // Show pickup orders immediately
     }
-    return order.isCompletelyVerified; // Only show verified home delivery orders
+    return order
+        .isCompletelyVerified; // Only show verified home delivery orders
   }
 }

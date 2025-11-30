@@ -94,10 +94,7 @@ class CustomButton extends StatelessWidget {
 
     return Text(
       text,
-      style: GoogleFonts.poppins(
-        fontSize: fontSize,
-        fontWeight: fontWeight,
-      ),
+      style: GoogleFonts.poppins(fontSize: fontSize, fontWeight: fontWeight),
     );
   }
 }

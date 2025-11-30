@@ -10,10 +10,7 @@ import '../../../auth/presentation/providers/user_provider.dart';
 class AddReviewScreen extends ConsumerStatefulWidget {
   final Pharmacy pharmacy;
 
-  const AddReviewScreen({
-    super.key,
-    required this.pharmacy,
-  });
+  const AddReviewScreen({super.key, required this.pharmacy});
 
   @override
   ConsumerState<AddReviewScreen> createState() => _AddReviewScreenState();
@@ -176,7 +173,9 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
           children: List.generate(5, (index) {
             return GestureDetector(
               onTap: () {
-                ref.read(reviewFormProvider.notifier).updateRating((index + 1).toDouble());
+                ref
+                    .read(reviewFormProvider.notifier)
+                    .updateRating((index + 1).toDouble());
               },
               child: Container(
                 padding: const EdgeInsets.all(4),
@@ -219,7 +218,8 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
               ref.read(reviewFormProvider.notifier).updateComment(value);
             },
             decoration: InputDecoration(
-              hintText: 'Write 150 characters\nDescribe your experience to help others',
+              hintText:
+                  'Write 150 characters\nDescribe your experience to help others',
               hintStyle: GoogleFonts.poppins(
                 color: Colors.grey[500],
                 fontSize: 14,
@@ -274,24 +274,20 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
       child: Container(
         height: 100,
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+          border: Border.all(
+            color: Colors.grey[300]!,
+            style: BorderStyle.solid,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 32,
-              color: Colors.grey[600],
-            ),
+            Icon(icon, size: 32, color: Colors.grey[600]),
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -319,10 +315,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
       height: 80,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        image: DecorationImage(
-          image: FileImage(File(path)),
-          fit: BoxFit.cover,
-        ),
+        image: DecorationImage(image: FileImage(File(path)), fit: BoxFit.cover),
       ),
       child: Stack(
         children: [
@@ -339,11 +332,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 16),
               ),
             ),
           ),
@@ -383,11 +372,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 16),
               ),
             ),
           ),
@@ -406,7 +391,9 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                 final user = userAsyncValue.value;
                 if (user == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Please log in to submit a review')),
+                    const SnackBar(
+                      content: Text('Please log in to submit a review'),
+                    ),
                   );
                   return;
                 }
@@ -419,11 +406,13 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
                 }
 
                 try {
-                  await ref.read(reviewFormProvider.notifier).submitReview(
-                    pharmacyId: widget.pharmacy.id,
-                    userId: user.id,
-                    userName: '${user.firstName} ${user.lastName}',
-                  );
+                  await ref
+                      .read(reviewFormProvider.notifier)
+                      .submitReview(
+                        pharmacyId: widget.pharmacy.id,
+                        userId: user.id,
+                        userName: '${user.firstName} ${user.lastName}',
+                      );
 
                   // Check if submission was successful
                   final updatedState = ref.read(reviewFormProvider);
@@ -450,9 +439,7 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF8ECAE6),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         child: state.isLoading
             ? const SizedBox(
@@ -483,9 +470,9 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
     }
   }
 
@@ -497,9 +484,9 @@ class _AddReviewScreenState extends ConsumerState<AddReviewScreen> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking video: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking video: $e')));
     }
   }
 }

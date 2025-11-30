@@ -5,10 +5,7 @@ import '../../domain/entities/pharmacy.dart';
 class PharmacyInfoHeader extends StatelessWidget {
   final Pharmacy pharmacy;
 
-  const PharmacyInfoHeader({
-    super.key,
-    required this.pharmacy,
-  });
+  const PharmacyInfoHeader({super.key, required this.pharmacy});
 
   @override
   Widget build(BuildContext context) {

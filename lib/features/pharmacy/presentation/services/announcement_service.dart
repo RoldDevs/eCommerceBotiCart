@@ -28,7 +28,7 @@ class AnnouncementService {
     DateTime? expiresAt,
     String? imageUrl,
     Map<String, dynamic>? metadata,
-    int? storeID, 
+    int? storeID,
   }) {
     final announcement = Announcement(
       id: '',
@@ -39,7 +39,7 @@ class AnnouncementService {
       expiresAt: expiresAt,
       imageUrl: imageUrl,
       metadata: metadata,
-      storeID: storeID, 
+      storeID: storeID,
     );
 
     return _repository.createAnnouncement(announcement);

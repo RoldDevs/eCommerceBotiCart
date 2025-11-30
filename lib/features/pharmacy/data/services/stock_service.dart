@@ -7,10 +7,9 @@ class StockService {
   /// Update stock for a medicine
   Future<void> updateMedicineStock(String medicineId, int newStock) async {
     try {
-      await _firestore
-          .collection('medicines')
-          .doc(medicineId)
-          .update({'stock': newStock});
+      await _firestore.collection('medicines').doc(medicineId).update({
+        'stock': newStock,
+      });
     } catch (e) {
       throw Exception('Failed to update stock: $e');
     }
@@ -39,10 +38,9 @@ class StockService {
         throw Exception('Insufficient stock');
       }
 
-      await _firestore
-          .collection('medicines')
-          .doc(order.medicineID)
-          .update({'stock': newStock});
+      await _firestore.collection('medicines').doc(order.medicineID).update({
+        'stock': newStock,
+      });
     } catch (e) {
       throw Exception('Failed to decrease stock: $e');
     }
@@ -64,23 +62,25 @@ class StockService {
       final newStock = currentStock - quantity;
 
       if (newStock < 0) {
-        throw Exception('Insufficient stock. Available: $currentStock, Requested: $quantity');
+        throw Exception(
+          'Insufficient stock. Available: $currentStock, Requested: $quantity',
+        );
       }
 
-      await _firestore
-          .collection('medicines')
-          .doc(medicineId)
-          .update({
-            'stock': newStock,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
+      await _firestore.collection('medicines').doc(medicineId).update({
+        'stock': newStock,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
       throw Exception('Failed to decrease stock during checkout: $e');
     }
   }
 
   /// Check if medicine has sufficient stock
-  Future<bool> hasInsufficientStock(String medicineId, int requestedQuantity) async {
+  Future<bool> hasInsufficientStock(
+    String medicineId,
+    int requestedQuantity,
+  ) async {
     try {
       final medicineDoc = await _firestore
           .collection('medicines')

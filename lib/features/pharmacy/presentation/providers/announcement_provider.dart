@@ -11,8 +11,7 @@ final announcementRepositoryProvider = Provider<AnnouncementRepository>((ref) {
 final announcementsProvider = StreamProvider<List<Announcement>>((ref) {
   final repository = ref.watch(announcementRepositoryProvider);
   final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
-  
-  
+
   if (selectedStoreId != null) {
     return repository.getAnnouncementsForStoreAndGlobal(selectedStoreId);
   } else {
@@ -20,7 +19,10 @@ final announcementsProvider = StreamProvider<List<Announcement>>((ref) {
   }
 });
 
-final announcementProvider = FutureProvider.family<Announcement?, String>((ref, announcementId) {
+final announcementProvider = FutureProvider.family<Announcement?, String>((
+  ref,
+  announcementId,
+) {
   final repository = ref.watch(announcementRepositoryProvider);
   return repository.getAnnouncementById(announcementId);
 });

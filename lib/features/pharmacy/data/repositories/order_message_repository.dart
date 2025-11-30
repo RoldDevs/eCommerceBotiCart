@@ -5,14 +5,14 @@ class OrderMessageRepository {
   final FirebaseFirestore _firestore;
 
   OrderMessageRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   // Create a new order message
   Future<String> createOrderMessage(OrderMessage message) async {
     try {
       final docRef = _firestore.collection('order_messages').doc();
       final messageWithId = message.copyWith(id: docRef.id);
-      
+
       await docRef.set(messageWithId.toFirestore());
       return docRef.id;
     } catch (e) {
@@ -27,9 +27,11 @@ class OrderMessageRepository {
         .where('userId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderMessage.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => OrderMessage.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   // Get order messages for a specific order
@@ -39,18 +41,19 @@ class OrderMessageRepository {
         .where('orderId', isEqualTo: orderId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => OrderMessage.fromFirestore(doc))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => OrderMessage.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   // Mark message as read
   Future<void> markMessageAsRead(String messageId) async {
     try {
-      await _firestore
-          .collection('order_messages')
-          .doc(messageId)
-          .update({'isRead': true});
+      await _firestore.collection('order_messages').doc(messageId).update({
+        'isRead': true,
+      });
     } catch (e) {
       throw Exception('Failed to mark message as read: $e');
     }

@@ -5,7 +5,8 @@ import '../../domain/entities/medicine.dart';
 class CartRepository {
   final FirebaseFirestore _firestore;
 
-  CartRepository({required FirebaseFirestore firestore}) : _firestore = firestore;
+  CartRepository({required FirebaseFirestore firestore})
+    : _firestore = firestore;
 
   // Add item to cart
   Future<void> addToCart({
@@ -14,7 +15,7 @@ class CartRepository {
     required int quantity,
   }) async {
     final cartRef = _firestore.collection('cart');
-    
+
     // Check if item already exists in cart
     final existingItem = await cartRef
         .where('userUID', isEqualTo: userUID)
@@ -26,9 +27,7 @@ class CartRepository {
       // Update existing item quantity
       final doc = existingItem.docs.first;
       final currentQuantity = doc.data()['quantity'] as int;
-      await doc.reference.update({
-        'quantity': currentQuantity + quantity,
-      });
+      await doc.reference.update({'quantity': currentQuantity + quantity});
     } else {
       // Add new item
       final docRef = cartRef.doc();
@@ -40,7 +39,7 @@ class CartRepository {
         createdAt: DateTime.now(),
         quantity: quantity,
       );
-      
+
       await docRef.set(cartEntity.toFirestore());
     }
   }
@@ -54,14 +53,19 @@ class CartRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => CartEntity.fromFirestore(doc)).toList();
-    });
+          return snapshot.docs
+              .map((doc) => CartEntity.fromFirestore(doc))
+              .toList();
+        });
   }
 
   // Get medicine by ID
   Future<Medicine?> getMedicineById(String medicineID) async {
     try {
-      final doc = await _firestore.collection('medicines').doc(medicineID).get();
+      final doc = await _firestore
+          .collection('medicines')
+          .doc(medicineID)
+          .get();
       if (doc.exists) {
         return Medicine.fromFirestore(doc.data()!, doc.id);
       }
@@ -88,14 +92,17 @@ class CartRepository {
   }
 
   // Remove selected items
-  Future<void> removeSelectedItems(String userUID, List<String> itemCartNos) async {
+  Future<void> removeSelectedItems(
+    String userUID,
+    List<String> itemCartNos,
+  ) async {
     final batch = _firestore.batch();
-    
+
     for (final itemCartNo in itemCartNos) {
       final docRef = _firestore.collection('cart').doc(itemCartNo);
       batch.delete(docRef);
     }
-    
+
     await batch.commit();
   }
 
@@ -111,7 +118,7 @@ class CartRepository {
     for (final doc in cartItems.docs) {
       batch.delete(doc.reference);
     }
-    
+
     await batch.commit();
   }
 

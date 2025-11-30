@@ -1,12 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum AnnouncementType {
-  general,
-  maintenance,
-  promotion,
-  update,
-  emergency
-}
+enum AnnouncementType { general, maintenance, promotion, update, emergency }
 
 class Announcement {
   final String id;
@@ -18,7 +12,7 @@ class Announcement {
   final bool isActive;
   final String? imageUrl;
   final Map<String, dynamic>? metadata;
-  final int? storeID; 
+  final int? storeID;
 
   Announcement({
     required this.id,
@@ -30,7 +24,7 @@ class Announcement {
     this.isActive = true,
     this.imageUrl,
     this.metadata,
-    this.storeID, 
+    this.storeID,
   });
 
   factory Announcement.fromFirestore(DocumentSnapshot doc) {
@@ -44,13 +38,13 @@ class Announcement {
         orElse: () => AnnouncementType.general,
       ),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
-      expiresAt: data['expiresAt'] != null 
-          ? (data['expiresAt'] as Timestamp).toDate() 
+      expiresAt: data['expiresAt'] != null
+          ? (data['expiresAt'] as Timestamp).toDate()
           : null,
       isActive: data['isActive'] ?? true,
       imageUrl: data['imageUrl'],
       metadata: data['metadata'],
-      storeID: data['storeID'], 
+      storeID: data['storeID'],
     );
   }
 
@@ -64,7 +58,7 @@ class Announcement {
       'isActive': isActive,
       'imageUrl': imageUrl,
       'metadata': metadata,
-      'storeID': storeID, 
+      'storeID': storeID,
     };
   }
 
@@ -78,7 +72,7 @@ class Announcement {
     bool? isActive,
     String? imageUrl,
     Map<String, dynamic>? metadata,
-    int? storeID, 
+    int? storeID,
   }) {
     return Announcement(
       id: id ?? this.id,
@@ -90,7 +84,7 @@ class Announcement {
       isActive: isActive ?? this.isActive,
       imageUrl: imageUrl ?? this.imageUrl,
       metadata: metadata ?? this.metadata,
-      storeID: storeID ?? this.storeID, 
+      storeID: storeID ?? this.storeID,
     );
   }
 

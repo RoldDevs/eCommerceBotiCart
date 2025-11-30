@@ -25,18 +25,9 @@ class AppTheme {
       fontWeight: FontWeight.bold,
       color: textColor,
     ),
-    bodyLarge: GoogleFonts.poppins(
-      fontSize: 16,
-      color: textColor,
-    ),
-    bodyMedium: GoogleFonts.poppins(
-      fontSize: 14,
-      color: textColor,
-    ),
-    bodySmall: GoogleFonts.poppins(
-      fontSize: 12,
-      color: textColor,
-    ),
+    bodyLarge: GoogleFonts.poppins(fontSize: 16, color: textColor),
+    bodyMedium: GoogleFonts.poppins(fontSize: 14, color: textColor),
+    bodySmall: GoogleFonts.poppins(fontSize: 12, color: textColor),
   );
 
   // Light theme

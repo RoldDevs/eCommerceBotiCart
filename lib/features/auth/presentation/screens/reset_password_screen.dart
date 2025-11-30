@@ -6,14 +6,12 @@ import 'package:boticart/features/auth/presentation/widgets/back_button.dart';
 
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   final String email;
-  
-  const ResetPasswordScreen({
-    super.key,
-    required this.email,
-  });
+
+  const ResetPasswordScreen({super.key, required this.email});
 
   @override
-  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
@@ -33,14 +31,15 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
-    if (_passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+    if (_passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       setState(() {
         _hasError = true;
         _errorMessage = 'Please enter both password fields';
       });
       return;
     }
-    
+
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _hasError = true;
@@ -48,7 +47,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       });
       return;
     }
-    
+
     if (_passwordController.text.length < 6) {
       setState(() {
         _hasError = true;
@@ -65,20 +64,18 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
     try {
       await Future.delayed(const Duration(seconds: 1));
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               'Password reset successful! You can now login with your new password.',
-              style: TextStyle(
-                fontFamily: GoogleFonts.poppins().fontFamily,
-              ),
+              style: TextStyle(fontFamily: GoogleFonts.poppins().fontFamily),
             ),
             backgroundColor: AppTheme.primaryColor,
           ),
         );
-        
+
         // Navigate back to login screen
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -107,7 +104,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 16),
-              
+
               Row(
                 children: [
                   const AuthBackButton(),
@@ -123,9 +120,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               Text(
                 'Please enter your new password',
                 style: TextStyle(
@@ -135,9 +132,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   fontFamily: GoogleFonts.poppins().fontFamily,
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               TextField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
@@ -151,16 +148,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   fillColor: const Color(0xFFF5F9FC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: _hasError ? const BorderSide(color: Colors.red, width: 1.0) : BorderSide.none,
+                    borderSide: _hasError
+                        ? const BorderSide(color: Colors.red, width: 1.0)
+                        : BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: _hasError ? const BorderSide(color: Colors.red, width: 1.0) : BorderSide.none,
+                    borderSide: _hasError
+                        ? const BorderSide(color: Colors.red, width: 1.0)
+                        : BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: _hasError ? Colors.red : AppTheme.primaryColor.withValues(alpha: 0.5),
+                      color: _hasError
+                          ? Colors.red
+                          : AppTheme.primaryColor.withValues(alpha: 0.5),
                       width: 1.0,
                     ),
                   ),
@@ -182,13 +185,11 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     },
                   ),
                 ),
-                style: TextStyle(
-                  fontFamily: GoogleFonts.poppins().fontFamily,
-                ),
+                style: TextStyle(fontFamily: GoogleFonts.poppins().fontFamily),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               TextField(
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
@@ -202,16 +203,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   fillColor: const Color(0xFFF5F9FC),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: _hasError ? const BorderSide(color: Colors.red, width: 1.0) : BorderSide.none,
+                    borderSide: _hasError
+                        ? const BorderSide(color: Colors.red, width: 1.0)
+                        : BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: _hasError ? const BorderSide(color: Colors.red, width: 1.0) : BorderSide.none,
+                    borderSide: _hasError
+                        ? const BorderSide(color: Colors.red, width: 1.0)
+                        : BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
-                      color: _hasError ? Colors.red : AppTheme.primaryColor.withValues(alpha: 0.5),
+                      color: _hasError
+                          ? Colors.red
+                          : AppTheme.primaryColor.withValues(alpha: 0.5),
                       width: 1.0,
                     ),
                   ),
@@ -233,11 +240,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     },
                   ),
                 ),
-                style: TextStyle(
-                  fontFamily: GoogleFonts.poppins().fontFamily,
-                ),
+                style: TextStyle(fontFamily: GoogleFonts.poppins().fontFamily),
               ),
-              
+
               if (_hasError)
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
@@ -250,9 +255,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     ),
                   ),
                 ),
-              
+
               const Spacer(),
-              
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -264,7 +269,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    disabledBackgroundColor: const Color(0xFF8ECAE6).withAlpha(128),
+                    disabledBackgroundColor: const Color(
+                      0xFF8ECAE6,
+                    ).withAlpha(128),
                   ),
                   child: _isLoading
                       ? const SizedBox(

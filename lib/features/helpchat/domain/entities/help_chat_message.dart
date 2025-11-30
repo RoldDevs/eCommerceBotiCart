@@ -31,14 +31,16 @@ class HelpChatMessage {
           // Convert timestamp if it's a Timestamp object
           final replyMap = Map<String, dynamic>.from(reply);
           if (replyMap['timestamp'] is Timestamp) {
-            replyMap['timestamp'] = (replyMap['timestamp'] as Timestamp).toDate();
+            replyMap['timestamp'] = (replyMap['timestamp'] as Timestamp)
+                .toDate();
           }
           return replyMap;
         } else if (reply is Map) {
           // Convert Map<String, Object?> to Map<String, dynamic>
           final replyMap = Map<String, dynamic>.from(reply);
           if (replyMap['timestamp'] is Timestamp) {
-            replyMap['timestamp'] = (replyMap['timestamp'] as Timestamp).toDate();
+            replyMap['timestamp'] = (replyMap['timestamp'] as Timestamp)
+                .toDate();
           }
           return replyMap;
         } else if (reply is String) {

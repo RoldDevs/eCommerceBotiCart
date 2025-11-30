@@ -8,7 +8,8 @@ class SearchFiltersScreen extends ConsumerStatefulWidget {
   const SearchFiltersScreen({super.key});
 
   @override
-  ConsumerState<SearchFiltersScreen> createState() => _SearchFiltersScreenState();
+  ConsumerState<SearchFiltersScreen> createState() =>
+      _SearchFiltersScreenState();
 }
 
 class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
@@ -27,11 +28,14 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
-    
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.1), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
+
     _animationController.forward();
   }
 
@@ -45,7 +49,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
   Widget build(BuildContext context) {
     final selectedProductTypes = ref.watch(selectedProductTypesProvider);
     final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFB),
       appBar: AppBar(
@@ -56,10 +60,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF8ECAE6),
-                Color(0xFF8ECAE6),
-              ],
+              colors: [Color(0xFF8ECAE6), Color(0xFF8ECAE6)],
             ),
           ),
         ),
@@ -70,7 +71,11 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+            icon: const Icon(
+              Icons.arrow_back_ios,
+              color: Colors.white,
+              size: 20,
+            ),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
@@ -98,10 +103,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFFFFFF),
-                      Color(0xFFF0F9FF),
-                    ],
+                    colors: [Color(0xFFFFFFFF), Color(0xFFF0F9FF)],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
@@ -153,7 +155,10 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF8ECAE6),
                         borderRadius: BorderRadius.circular(20),
@@ -170,7 +175,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                   ],
                 ),
               ),
-              
+
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -178,17 +183,23 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Product Type Section
-                      _buildSectionTitle('Product Type', Icons.medical_services),
+                      _buildSectionTitle(
+                        'Product Type',
+                        Icons.medical_services,
+                      ),
                       const SizedBox(height: 16),
                       _buildProductTypeFilters(selectedProductTypes),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Condition / Use Case Section
-                      _buildSectionTitle('Condition / Use Case', Icons.health_and_safety),
+                      _buildSectionTitle(
+                        'Condition / Use Case',
+                        Icons.health_and_safety,
+                      ),
                       const SizedBox(height: 16),
                       _buildConditionTypeFilters(selectedConditionTypes),
-                      
+
                       const SizedBox(height: 100), // Space for floating button
                     ],
                   ),
@@ -215,11 +226,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.search,
-                  color: Colors.white,
-                  size: 20,
-                ),
+                const Icon(Icons.search, color: Colors.white, size: 20),
                 const SizedBox(width: 8),
                 Text(
                   'Apply & Search',
@@ -249,11 +256,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
               color: const Color(0xFF3BBFB2).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              icon,
-              color: const Color(0xFF8ECAE6),
-              size: 18,
-            ),
+            child: Icon(icon, color: const Color(0xFF8ECAE6), size: 18),
           ),
           const SizedBox(width: 12),
           Text(
@@ -284,7 +287,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
         final isSelected = selectedTypes.contains(type);
         final displayName = _getProductTypeDisplayName(type);
         final icon = _getProductTypeIcon(type);
-        
+
         return AnimatedContainer(
           duration: Duration(milliseconds: 200 + (index * 50)),
           curve: Curves.easeOutCubic,
@@ -304,31 +307,25 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF8ECAE6),
-                            Color(0xFF8ECAE6),
-                          ],
+                          colors: [Color(0xFF8ECAE6), Color(0xFF8ECAE6)],
                         )
                       : const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white,
-                            Color(0xFFF8F9FA),
-                          ],
+                          colors: [Colors.white, Color(0xFFF8F9FA)],
                         ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected 
-                        ? Colors.transparent 
+                    color: isSelected
+                        ? Colors.transparent
                         : const Color(0xFF8ECAE6).withValues(alpha: 0.2),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: isSelected 
+                      color: isSelected
                           ? const Color(0xFF8ECAE6).withValues(alpha: 0.3)
-                          : const Color(0xFF64748B).withValues(alpha: 0.05),  
+                          : const Color(0xFF64748B).withValues(alpha: 0.05),
                       spreadRadius: 0,
                       blurRadius: isSelected ? 12 : 8,
                       offset: const Offset(0, 4),
@@ -342,12 +339,10 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? Colors.white 
-                            : Colors.transparent,
+                        color: isSelected ? Colors.white : Colors.transparent,
                         border: Border.all(
-                          color: isSelected 
-                              ? Colors.white 
+                          color: isSelected
+                              ? Colors.white
                               : const Color(0xFFCBD5E0),
                           width: 2,
                         ),
@@ -365,7 +360,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected 
+                        color: isSelected
                             ? Colors.white.withValues(alpha: 0.2)
                             : const Color(0xFF8ECAE6).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -373,8 +368,8 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       child: Icon(
                         icon,
                         size: 20,
-                        color: isSelected 
-                            ? Colors.white 
+                        color: isSelected
+                            ? Colors.white
                             : const Color(0xFF8ECAE6),
                       ),
                     ),
@@ -385,8 +380,8 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isSelected 
-                              ? Colors.white 
+                          color: isSelected
+                              ? Colors.white
                               : const Color(0xFF1A202C),
                         ),
                       ),
@@ -416,7 +411,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
         final isSelected = selectedTypes.contains(type);
         final displayName = _getConditionTypeDisplayName(type);
         final icon = _getConditionTypeIcon(type);
-        
+
         return AnimatedContainer(
           duration: Duration(milliseconds: 200 + (index * 50)),
           curve: Curves.easeOutCubic,
@@ -436,29 +431,23 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       ? const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF8ECAE6),
-                            Color(0xFF8ECAE6),
-                          ],
+                          colors: [Color(0xFF8ECAE6), Color(0xFF8ECAE6)],
                         )
                       : const LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
-                          colors: [
-                            Colors.white,
-                            Color(0xFFF8F9FA),
-                          ],
+                          colors: [Colors.white, Color(0xFFF8F9FA)],
                         ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isSelected 
-                        ? Colors.transparent 
+                    color: isSelected
+                        ? Colors.transparent
                         : const Color(0xFF8ECAE6).withValues(alpha: 0.2),
                     width: 1.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: isSelected 
+                      color: isSelected
                           ? const Color(0xFF8ECAE6).withValues(alpha: 0.3)
                           : const Color(0xFF64748B).withValues(alpha: 0.05),
                       spreadRadius: 0,
@@ -474,12 +463,10 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: isSelected 
-                            ? Colors.white 
-                            : Colors.transparent,
+                        color: isSelected ? Colors.white : Colors.transparent,
                         border: Border.all(
-                          color: isSelected 
-                              ? Colors.white 
+                          color: isSelected
+                              ? Colors.white
                               : const Color(0xFFCBD5E0),
                           width: 2,
                         ),
@@ -497,7 +484,7 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: isSelected 
+                        color: isSelected
                             ? Colors.white.withValues(alpha: 0.2)
                             : const Color(0xFF3BBFB2).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
@@ -505,8 +492,8 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                       child: Icon(
                         icon,
                         size: 20,
-                        color: isSelected 
-                            ? Colors.white 
+                        color: isSelected
+                            ? Colors.white
                             : const Color(0xFF8ECAE6),
                       ),
                     ),
@@ -517,8 +504,8 @@ class _SearchFiltersScreenState extends ConsumerState<SearchFiltersScreen>
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: isSelected 
-                              ? Colors.white 
+                          color: isSelected
+                              ? Colors.white
                               : const Color(0xFF1A202C),
                         ),
                       ),

@@ -6,9 +6,7 @@ import '../../domain/entities/pharmacy.dart';
 import '../../domain/repositories/pharmacy_repository.dart';
 
 final pharmacyRepositoryProvider = Provider<PharmacyRepository>((ref) {
-  return PharmacyRepositoryImpl(
-    firestore: FirebaseFirestore.instance,
-  );
+  return PharmacyRepositoryImpl(firestore: FirebaseFirestore.instance);
 });
 
 final pharmaciesStreamProvider = StreamProvider<List<Pharmacy>>((ref) {
@@ -16,7 +14,10 @@ final pharmaciesStreamProvider = StreamProvider<List<Pharmacy>>((ref) {
   return repository.getPharmacies();
 });
 
-final pharmacyByIdProvider = StreamProvider.family<Pharmacy?, String>((ref, id) {
+final pharmacyByIdProvider = StreamProvider.family<Pharmacy?, String>((
+  ref,
+  id,
+) {
   final repository = ref.watch(pharmacyRepositoryProvider);
   return repository.getPharmacyById(id);
 });
@@ -33,10 +34,10 @@ final pharmacySearchQueryProvider = StateProvider<String>((ref) => '');
 final pharmacySearchResultsProvider = StreamProvider<List<Pharmacy>>((ref) {
   final repository = ref.watch(pharmacyRepositoryProvider);
   final searchQuery = ref.watch(pharmacySearchQueryProvider);
-  
+
   if (searchQuery.isEmpty) {
     return repository.getPharmacies();
   }
-  
+
   return repository.searchPharmacies(searchQuery);
 });

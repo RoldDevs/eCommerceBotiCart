@@ -6,7 +6,7 @@ enum OrderMessageType {
   delivered,
   cancelled,
   paymentReceived,
-  verificationComplete
+  verificationComplete,
 }
 
 class OrderMessage {

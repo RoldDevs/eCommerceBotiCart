@@ -25,10 +25,14 @@ class OrderMessageItem extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
-        color: message.isRead ? Colors.white : const Color(0xFF8ECAE6).withValues(alpha: 0.05),
+        color: message.isRead
+            ? Colors.white
+            : const Color(0xFF8ECAE6).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: message.isRead ? Colors.grey.shade200 : const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+          color: message.isRead
+              ? Colors.grey.shade200
+              : const Color(0xFF8ECAE6).withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
@@ -45,7 +49,9 @@ class OrderMessageItem extends ConsumerWidget {
             onSelectionToggle?.call();
           } else {
             if (!message.isRead) {
-              await ref.read(orderMessageServiceProvider).markMessageAsRead(message.id);
+              await ref
+                  .read(orderMessageServiceProvider)
+                  .markMessageAsRead(message.id);
             }
             onTap?.call();
           }
@@ -65,17 +71,17 @@ class OrderMessageItem extends ConsumerWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSelected ? const Color(0xFF8ECAE6) : Colors.grey.shade400,
+                      color: isSelected
+                          ? const Color(0xFF8ECAE6)
+                          : Colors.grey.shade400,
                       width: 2,
                     ),
-                    color: isSelected ? const Color(0xFF8ECAE6) : Colors.transparent,
+                    color: isSelected
+                        ? const Color(0xFF8ECAE6)
+                        : Colors.transparent,
                   ),
                   child: isSelected
-                      ? const Icon(
-                          Icons.check,
-                          color: Colors.white,
-                          size: 16,
-                        )
+                      ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : null,
                 ),
               ],
@@ -109,7 +115,7 @@ class OrderMessageItem extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Message Content
               Expanded(
                 child: Column(
@@ -123,7 +129,9 @@ class OrderMessageItem extends ConsumerWidget {
                             message.title,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
-                              fontWeight: message.isRead ? FontWeight.w500 : FontWeight.w600,
+                              fontWeight: message.isRead
+                                  ? FontWeight.w500
+                                  : FontWeight.w600,
                               color: const Color(0xFF2D3748),
                             ),
                             maxLines: 1,
@@ -142,7 +150,7 @@ class OrderMessageItem extends ConsumerWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Pharmacy Name
                     Text(
                       message.pharmacyName,
@@ -153,7 +161,7 @@ class OrderMessageItem extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    
+
                     // Message Preview
                     Text(
                       message.message,
@@ -166,7 +174,7 @@ class OrderMessageItem extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    
+
                     // Time and Type
                     Row(
                       children: [

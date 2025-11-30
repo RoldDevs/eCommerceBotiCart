@@ -16,7 +16,10 @@ class QuickActionCard extends StatelessWidget {
     this.svgPath,
     required this.onTap,
     this.iconColor = const Color(0xFF8ECAE6),
-  }) : assert(icon != null || svgPath != null, 'Either icon or svgPath must be provided');
+  }) : assert(
+         icon != null || svgPath != null,
+         'Either icon or svgPath must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -38,20 +41,13 @@ class QuickActionCard extends StatelessWidget {
           children: [
             const SizedBox(width: 12),
             if (icon != null)
-              Icon(
-                icon,
-                color: iconColor,
-                size: 24,
-              )
+              Icon(icon, color: iconColor, size: 24)
             else if (svgPath != null)
               SvgPicture.asset(
                 svgPath!,
                 height: 24,
                 width: 24,
-                colorFilter: ColorFilter.mode(
-                  iconColor,
-                  BlendMode.srcIn,
-                ),
+                colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
               ),
             const SizedBox(width: 8),
             Expanded(

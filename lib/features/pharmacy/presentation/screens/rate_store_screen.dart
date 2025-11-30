@@ -10,10 +10,7 @@ import '../../../auth/presentation/providers/user_provider.dart';
 class RateStoreScreen extends ConsumerStatefulWidget {
   final Pharmacy pharmacy;
 
-  const RateStoreScreen({
-    super.key,
-    required this.pharmacy,
-  });
+  const RateStoreScreen({super.key, required this.pharmacy});
 
   @override
   ConsumerState<RateStoreScreen> createState() => _RateStoreScreenState();
@@ -84,10 +81,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Color(0xFF8ECAE6),
-            ),
+            icon: const Icon(Icons.arrow_back, color: Color(0xFF8ECAE6)),
           ),
           Expanded(
             child: Text(
@@ -193,7 +187,9 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
           children: List.generate(5, (index) {
             return GestureDetector(
               onTap: () {
-                ref.read(reviewFormProvider.notifier).updateRating((index + 1).toDouble());
+                ref
+                    .read(reviewFormProvider.notifier)
+                    .updateRating((index + 1).toDouble());
               },
               child: Container(
                 padding: const EdgeInsets.all(8),
@@ -212,10 +208,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
           Center(
             child: Text(
               '${reviewFormState.rating.toInt()} star${reviewFormState.rating > 1 ? 's' : ''}',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
             ),
           ),
       ],
@@ -228,10 +221,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
       children: [
         Text(
           'Write 150 characters',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
         ),
         const SizedBox(height: 8),
         Container(
@@ -247,7 +237,8 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
               ref.read(reviewFormProvider.notifier).updateComment(value);
             },
             decoration: InputDecoration(
-              hintText: 'Tell us about your experience to assist fellow shoppers.',
+              hintText:
+                  'Tell us about your experience to assist fellow shoppers.',
               hintStyle: GoogleFonts.poppins(
                 fontSize: 14,
                 color: Colors.grey[500],
@@ -255,10 +246,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
               border: InputBorder.none,
               contentPadding: const EdgeInsets.all(16),
             ),
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.black87,
-            ),
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black87),
           ),
         ),
       ],
@@ -324,18 +312,11 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 32,
-              color: Colors.grey[600],
-            ),
+            Icon(icon, size: 32, color: Colors.grey[600]),
             const SizedBox(height: 8),
             Text(
               label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -475,9 +456,7 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
           backgroundColor: const Color(0xFF8ECAE6),
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
         child: reviewFormState.isLoading
@@ -510,9 +489,9 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
     }
   }
 
@@ -526,9 +505,9 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
       }
     } catch (e) {
       // ignore: use_build_context_synchronously
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick video: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to pick video: $e')));
     }
   }
 
@@ -543,25 +522,29 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
     try {
       // Upload media files first
       final reviewId = DateTime.now().millisecondsSinceEpoch.toString();
-      
+
       for (final image in _selectedImages) {
-        final url = await ref.read(reviewFormProvider.notifier)
+        final url = await ref
+            .read(reviewFormProvider.notifier)
             .uploadMedia(image.path, user.id, reviewId, false);
         ref.read(reviewFormProvider.notifier).addImageUrl(url);
       }
 
       for (final video in _selectedVideos) {
-        final url = await ref.read(reviewFormProvider.notifier)
+        final url = await ref
+            .read(reviewFormProvider.notifier)
             .uploadMedia(video.path, user.id, reviewId, true);
         ref.read(reviewFormProvider.notifier).addVideoUrl(url);
       }
 
       // Submit the review
-      await ref.read(reviewFormProvider.notifier).submitReview(
-        pharmacyId: widget.pharmacy.id,
-        userId: user.id,
-        userName: user.firstName ?? 'Anonymous',
-      );
+      await ref
+          .read(reviewFormProvider.notifier)
+          .submitReview(
+            pharmacyId: widget.pharmacy.id,
+            userId: user.id,
+            userName: user.firstName ?? 'Anonymous',
+          );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -571,9 +554,9 @@ class _RateStoreScreenState extends ConsumerState<RateStoreScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to submit review: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to submit review: $e')));
       }
     }
   }

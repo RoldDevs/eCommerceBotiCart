@@ -14,8 +14,12 @@ import 'package:boticart/features/auth/domain/usecases/google_signin_usecase.dar
 import 'package:boticart/features/auth/domain/usecases/check_email_exists_usecase.dart';
 
 // Firebase providers
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
-final firestoreProvider = Provider<FirebaseFirestore>((ref) => FirebaseFirestore.instance);
+final firebaseAuthProvider = Provider<FirebaseAuth>(
+  (ref) => FirebaseAuth.instance,
+);
+final firestoreProvider = Provider<FirebaseFirestore>(
+  (ref) => FirebaseFirestore.instance,
+);
 
 // Repository providers
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -34,18 +38,22 @@ final loginUseCaseProvider = Provider<LoginUseCase>((ref) {
   return LoginUseCase(ref.watch(authRepositoryProvider));
 });
 
-final updateUserVerificationStatusUseCaseProvider = Provider<UpdateUserVerificationStatusUseCase>((ref) {
-  return UpdateUserVerificationStatusUseCase(ref.watch(authRepositoryProvider));
-});
+final updateUserVerificationStatusUseCaseProvider =
+    Provider<UpdateUserVerificationStatusUseCase>((ref) {
+      return UpdateUserVerificationStatusUseCase(
+        ref.watch(authRepositoryProvider),
+      );
+    });
 
 final resetPasswordUseCaseProvider = Provider<ResetPasswordUseCase>((ref) {
   return ResetPasswordUseCase(ref.watch(authRepositoryProvider));
 });
 
 // Email verification providers
-final sendEmailVerificationUseCaseProvider = Provider<SendEmailVerificationUseCase>((ref) {
-  return SendEmailVerificationUseCase(ref.watch(authRepositoryProvider));
-});
+final sendEmailVerificationUseCaseProvider =
+    Provider<SendEmailVerificationUseCase>((ref) {
+      return SendEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+    });
 
 final isEmailVerifiedUseCaseProvider = Provider<IsEmailVerifiedUseCase>((ref) {
   return IsEmailVerifiedUseCase(ref.watch(authRepositoryProvider));
@@ -65,6 +73,8 @@ final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(firebaseAuthProvider).authStateChanges();
 });
 
-final checkEmailExistsUseCaseProvider = Provider<CheckEmailExistsUseCase>((ref) {
+final checkEmailExistsUseCaseProvider = Provider<CheckEmailExistsUseCase>((
+  ref,
+) {
   return CheckEmailExistsUseCase(ref.watch(authRepositoryProvider));
 });

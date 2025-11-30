@@ -160,9 +160,10 @@ class _OrderInformationScreenState
             'Please select a delivery address',
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
             ),
           ),
+          backgroundColor: const Color(0xFF8ECAE6),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
@@ -180,9 +181,10 @@ class _OrderInformationScreenState
               'Please select a pickup time',
               style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w400,
               ),
             ),
+            backgroundColor: const Color(0xFF8ECAE6),
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
           ),
@@ -205,9 +207,10 @@ class _OrderInformationScreenState
                 : 'Pharmacy location not available',
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
             ),
           ),
+          backgroundColor: const Color(0xFF8ECAE6),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
@@ -260,10 +263,10 @@ class _OrderInformationScreenState
             'Order placed successfully!',
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
             ),
           ),
-          // Use app's theme snackbar design
+          backgroundColor: const Color(0xFF8ECAE6),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -283,23 +286,32 @@ class _OrderInformationScreenState
         );
       }
     } catch (e) {
-      // Check if it's a delivery error
-      final errorMessage = e.toString();
-      final isDeliveryError = errorMessage.contains(
-        'Delivery are not yet available',
-      );
+      // Extract clean error message
+      String errorMessage = e.toString();
+
+      // Remove "Exception: " prefix if present
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+
+      // Check if it's a delivery/feature error
+      final isFeatureError =
+          errorMessage.contains('This feature is not yet available') ||
+          errorMessage.contains('Delivery are not yet available') ||
+          errorMessage.contains('Delivery is not yet available');
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isDeliveryError
-                ? 'Delivery are not yet available at this moment'
-                : 'Error placing order: ${e.toString()}',
+            isFeatureError
+                ? 'This feature is not yet available at this moment'
+                : errorMessage,
             style: GoogleFonts.poppins(
               color: Colors.white,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
             ),
           ),
+          backgroundColor: const Color(0xFF8ECAE6),
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
@@ -448,54 +460,6 @@ class _OrderInformationScreenState
                           ],
                         ),
 
-                        // Lalamove delivery info section
-                        if (isHomeDelivery) ...[
-                          const SizedBox(height: 16),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFF8ECAE6),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.local_shipping_outlined,
-                                  color: const Color(0xFF8ECAE6),
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Lalamove Delivery',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF8ECAE6),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Your order will be delivered via Lalamove. You can track your delivery once the order is confirmed.',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
                         // Pickup benefits section
                         if (!isHomeDelivery) ...[
                           const SizedBox(height: 16),
@@ -905,14 +869,20 @@ class _OrderInformationScreenState
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '${widget.medicine.medicineName} x${widget.quantity}',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
+                            Expanded(
+                              child: Text(
+                                '${widget.medicine.medicineName} x${widget.quantity}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               '₱${totalPrice.toStringAsFixed(2)}',
                               style: GoogleFonts.poppins(

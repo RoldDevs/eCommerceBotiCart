@@ -6,10 +6,7 @@ import '../../domain/entities/announcement.dart';
 class AnnouncementDetailScreen extends StatelessWidget {
   final Announcement announcement;
 
-  const AnnouncementDetailScreen({
-    super.key,
-    required this.announcement,
-  });
+  const AnnouncementDetailScreen({super.key, required this.announcement});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +28,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                 color: const Color(0xFF8ECAE6),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Icon(
-                Icons.campaign,
-                color: Colors.white,
-                size: 18,
-              ),
+              child: const Icon(Icons.campaign, color: Colors.white, size: 18),
             ),
             const SizedBox(width: 12),
             Text(
@@ -50,7 +43,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 32), 
+        padding: const EdgeInsets.only(bottom: 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -91,7 +84,9 @@ class AnnouncementDetailScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        DateFormat('MMM d, yyyy • h:mm a').format(announcement.createdAt),
+                        DateFormat(
+                          'MMM d, yyyy • h:mm a',
+                        ).format(announcement.createdAt),
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: Colors.grey[500],
@@ -99,9 +94,14 @@ class AnnouncementDetailScreen extends StatelessWidget {
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _getTypeColor(announcement.type).withValues(alpha: 0.1),
+                          color: _getTypeColor(
+                            announcement.type,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -117,10 +117,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   // Divider
-                  Container(
-                    height: 1,
-                    color: Colors.grey[200],
-                  ),
+                  Container(height: 1, color: Colors.grey[200]),
                   const SizedBox(height: 16),
                   // Message content
                   Text(
@@ -212,7 +209,7 @@ class AnnouncementDetailScreen extends StatelessWidget {
       case AnnouncementType.update:
         return Colors.blue;
       case AnnouncementType.general:
-      return const Color(0xFF8ECAE6);
+        return const Color(0xFF8ECAE6);
     }
   }
 

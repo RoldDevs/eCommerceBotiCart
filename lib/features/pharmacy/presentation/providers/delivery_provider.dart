@@ -7,15 +7,16 @@ final lalamoveServiceProvider = Provider<LalamoveService>((ref) {
 });
 
 // Provider to track delivery status updates
-final deliveryStatusProvider = FutureProvider.family<Map<String, dynamic>, String>((ref, orderId) async {
-  final orderRepository = ref.watch(orderRepositoryProvider);
-  await orderRepository.updateLalamoveDeliveryStatus(orderId);
-  final order = await orderRepository.getOrderById(orderId);
-  
-  return {
-    'status': order?.lalamoveStatus ?? 'Unknown',
-    'driverName': order?.lalamoveDriverName,
-    'driverPhone': order?.lalamoveDriverPhone,
-    'trackingUrl': order?.lalamoveTrackingUrl,
-  };
-});
+final deliveryStatusProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, orderId) async {
+      final orderRepository = ref.watch(orderRepositoryProvider);
+      await orderRepository.updateLalamoveDeliveryStatus(orderId);
+      final order = await orderRepository.getOrderById(orderId);
+
+      return {
+        'status': order?.lalamoveStatus ?? 'Unknown',
+        'driverName': order?.lalamoveDriverName,
+        'driverPhone': order?.lalamoveDriverPhone,
+        'trackingUrl': order?.lalamoveTrackingUrl,
+      };
+    });

@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class FileItem {
   final String url;
   final String fileName;
-  final String fileType; 
+  final String fileType;
   final DateTime? createdAt;
 
   FileItem({
@@ -18,8 +18,8 @@ class FileItem {
       url: map['url'] as String,
       fileName: map['fileName'] as String,
       fileType: map['fileType'] as String,
-      createdAt: map['createdAt'] != null 
-          ? (map['createdAt'] as Timestamp).toDate() 
+      createdAt: map['createdAt'] != null
+          ? (map['createdAt'] as Timestamp).toDate()
           : null,
     );
   }

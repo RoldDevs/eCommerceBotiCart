@@ -6,7 +6,7 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
   final FirebaseFirestore _firestore;
 
   HelpChatRepositoryImpl({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Stream<List<HelpChatMessage>> getUserChatMessages(String userUID) {
@@ -17,10 +17,10 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
           .orderBy('timestamp', descending: false)
           .snapshots()
           .map((snapshot) {
-        return snapshot.docs.map((doc) {
-          return HelpChatMessage.fromFirestore(doc.data(), doc.id);
-        }).toList();
-      });
+            return snapshot.docs.map((doc) {
+              return HelpChatMessage.fromFirestore(doc.data(), doc.id);
+            }).toList();
+          });
     } catch (e) {
       // Fallback query without orderBy if index doesn't exist
       return _firestore
@@ -28,14 +28,14 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
           .where('participants', arrayContains: userUID)
           .snapshots()
           .map((snapshot) {
-        final messages = snapshot.docs.map((doc) {
-          return HelpChatMessage.fromFirestore(doc.data(), doc.id);
-        }).toList();
-        
-        // Sort locally
-        messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        return messages;
-      });
+            final messages = snapshot.docs.map((doc) {
+              return HelpChatMessage.fromFirestore(doc.data(), doc.id);
+            }).toList();
+
+            // Sort locally
+            messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+            return messages;
+          });
     }
   }
 
@@ -45,10 +45,12 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
     final conversationData = {
       ...message.toMap(),
       'participants': [message.senderUID, 'admin'], // Include admin for queries
-      'conversationId': message.senderUID, // Use userUID as conversation identifier
+      'conversationId':
+          message.senderUID, // Use userUID as conversation identifier
       'lastMessage': message.content,
       'lastMessageTime': message.timestamp,
-      'hasUnreadMessages': message.senderType == 'user', // Mark as unread if from user
+      'hasUnreadMessages':
+          message.senderType == 'user', // Mark as unread if from user
     };
 
     await _firestore.collection('helpchat').add(conversationData);
@@ -61,11 +63,11 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
         .collection('helpchat')
         .where('participants', arrayContains: userUID)
         .get();
-    
+
     for (var message in messages.docs) {
       batch.delete(message.reference);
     }
-    
+
     await batch.commit();
   }
 
@@ -77,7 +79,7 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
     required String replyContent,
   }) async {
     final messageRef = _firestore.collection('helpchat').doc(messageId);
-    
+
     final replyData = {
       'content': replyContent,
       'senderType': 'admin',
@@ -132,26 +134,24 @@ class HelpChatRepositoryImpl implements HelpChatRepository {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .map((snapshot) {
-      // Group messages by conversationId (userUID)
-      Map<String, Map<String, dynamic>> conversations = {};
-      
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
-        final conversationId = data['conversationId'] ?? data['senderUID'];
-        
-        if (!conversations.containsKey(conversationId) || 
-            (data['timestamp'] as Timestamp).toDate().isAfter(
-              (conversations[conversationId]!['timestamp'] as Timestamp).toDate()
-            )) {
-          conversations[conversationId] = {
-            ...data,
-            'id': doc.id,
-          };
-        }
-      }
-      
-      return conversations.values.toList();
-    });
+          // Group messages by conversationId (userUID)
+          Map<String, Map<String, dynamic>> conversations = {};
+
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final conversationId = data['conversationId'] ?? data['senderUID'];
+
+            if (!conversations.containsKey(conversationId) ||
+                (data['timestamp'] as Timestamp).toDate().isAfter(
+                  (conversations[conversationId]!['timestamp'] as Timestamp)
+                      .toDate(),
+                )) {
+              conversations[conversationId] = {...data, 'id': doc.id};
+            }
+          }
+
+          return conversations.values.toList();
+        });
   }
 
   // Get specific message by ID for admin to reply to

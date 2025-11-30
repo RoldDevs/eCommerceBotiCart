@@ -65,6 +65,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +187,9 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
             Expanded(
               child: _searchQuery.isEmpty
                   ? _buildRecentSearches()
-                  : _buildSearchResults(medicinesAsyncValue),
+                  : SingleChildScrollView(
+                      child: _buildSearchResults(medicinesAsyncValue),
+                    ),
             ),
           ],
         ),
@@ -255,180 +258,188 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
         break;
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Recent Searches header with Clear button
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Searches',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black,
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  ref.read(searchHistoryProvider.notifier).clearHistory();
-                },
-                child: Text(
-                  'Clear',
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Recent Searches header with Clear button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 16, 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Recent Searches',
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF8ECAE6),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
                   ),
                 ),
-              ),
-            ],
+                TextButton(
+                  onPressed: () {
+                    ref.read(searchHistoryProvider.notifier).clearHistory();
+                  },
+                  child: Text(
+                    'Clear',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF8ECAE6),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
 
-        // Recent searches list
-        searchHistory.isEmpty
-            ? Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 8,
+          // Recent searches list
+          searchHistory.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    'No recent searches',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: searchHistory.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text(
+                        searchHistory[index],
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      trailing: const Icon(
+                        Icons.north_west,
+                        size: 20,
+                        color: Colors.grey,
+                      ),
+                      onTap: () {
+                        _searchController.text = searchHistory[index];
+                        setState(() {
+                          _searchQuery = searchHistory[index];
+                        });
+                        widget.onSearchTap(searchHistory[index]);
+                      },
+                    );
+                  },
                 ),
-                child: Text(
-                  'No recent searches',
-                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey),
-                ),
-              )
-            : ListView.builder(
-                itemCount: searchHistory.length,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      searchHistory[index],
+
+          // Recommended Products Section (only if user has purchased from target categories)
+          Consumer(
+            builder: (context, ref, child) {
+              final hasPurchased = ref.watch(
+                hasPurchasedFromTargetCategoriesProvider,
+              );
+              final recommendedMedicinesAsync = ref.watch(
+                recommendedMedicinesProvider,
+              );
+
+              if (!hasPurchased) {
+                return const SizedBox.shrink();
+              }
+
+              return recommendedMedicinesAsync.when(
+                data: (recommendedMedicines) {
+                  if (recommendedMedicines.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Recommended Products header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+                        child: Text(
+                          'Recommended Products',
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                      // Recommended medicines grid
+                      SizedBox(
+                        height: 200,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: recommendedMedicines.length,
+                          itemBuilder: (context, index) {
+                            final medicine = recommendedMedicines[index];
+                            return Container(
+                              width: 180,
+                              margin: const EdgeInsets.only(right: 16),
+                              child: _buildRecommendedProductCard(medicine),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const SizedBox.shrink(),
+                error: (_, __) => const SizedBox.shrink(),
+              );
+            },
+          ),
+
+          // All Medicines Section
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Text(
+              ref.watch(selectedFilterProvider) == MedicineFilterType.favorites
+                  ? 'Favorite Medicines'
+                  : 'All Medicines',
+              style: GoogleFonts.poppins(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
+            ),
+          ),
+
+          // Filtered medicines grid
+          finalFilteredMedicines.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      _getEmptyStateMessage(
+                        filterType,
+                        selectedProductTypes,
+                        selectedConditionTypes,
+                      ),
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: Colors.black87,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    trailing: const Icon(
-                      Icons.north_west,
-                      size: 20,
-                      color: Colors.grey,
-                    ),
-                    onTap: () {
-                      _searchController.text = searchHistory[index];
-                      setState(() {
-                        _searchQuery = searchHistory[index];
-                      });
-                      widget.onSearchTap(searchHistory[index]);
-                    },
-                  );
-                },
-              ),
-
-        // Recommended Products Section (only if user has purchased from target categories)
-        Consumer(
-          builder: (context, ref, child) {
-            final hasPurchased = ref.watch(
-              hasPurchasedFromTargetCategoriesProvider,
-            );
-            final recommendedMedicinesAsync = ref.watch(
-              recommendedMedicinesProvider,
-            );
-
-            if (!hasPurchased) {
-              return const SizedBox.shrink();
-            }
-
-            return recommendedMedicinesAsync.when(
-              data: (recommendedMedicines) {
-                if (recommendedMedicines.isEmpty) {
-                  return const SizedBox.shrink();
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Recommended Products header
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-                      child: Text(
-                        'Recommended Products',
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
-                    // Recommended medicines grid
-                    SizedBox(
-                      height: 280,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: recommendedMedicines.length,
-                        itemBuilder: (context, index) {
-                          final medicine = recommendedMedicines[index];
-                          return Container(
-                            width: 180,
-                            margin: const EdgeInsets.only(right: 16),
-                            child: _buildMedicineCard(medicine),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                );
-              },
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-            );
-          },
-        ),
-
-        // All Medicines Section
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
-          child: Text(
-            ref.watch(selectedFilterProvider) == MedicineFilterType.favorites
-                ? 'Favorite Medicines'
-                : 'All Medicines',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.black,
-            ),
-          ),
-        ),
-
-        // Filtered medicines grid
-        Expanded(
-          child: finalFilteredMedicines.isEmpty
-              ? Center(
-                  child: Text(
-                    _getEmptyStateMessage(
-                      filterType,
-                      selectedProductTypes,
-                      selectedConditionTypes,
-                    ),
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
                 )
               : GridView.builder(
                   padding: const EdgeInsets.all(16),
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.75,
+                    childAspectRatio: 0.72,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -438,8 +449,8 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                     return _buildMedicineCard(medicine);
                   },
                 ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -468,10 +479,13 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
     return medicinesAsyncValue.when(
       data: (medicines) {
         if (medicines.isEmpty) {
-          return Center(
-            child: Text(
-              'No medicines found',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Center(
+              child: Text(
+                'No medicines found',
+                style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87),
+              ),
             ),
           );
         }
@@ -519,9 +533,11 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
 
         return GridView.builder(
           padding: const EdgeInsets.all(16),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75,
+            childAspectRatio: 0.72,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
           ),
@@ -532,11 +548,17 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, stackTrace) => Center(
-        child: Text(
-          'Error loading medicines: $error',
-          style: GoogleFonts.poppins(fontSize: 16, color: Colors.red),
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Text(
+            'Error loading medicines: $error',
+            style: GoogleFonts.poppins(fontSize: 16, color: Colors.red),
+          ),
         ),
       ),
     );
@@ -601,12 +623,12 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                 children: [
                   Image.network(
                     medicine.imageURL,
-                    height: 105, // Reduced from 110 to 105
+                    height: 110,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
-                        height: 105, // Reduced from 120 to 105
+                        height: 100,
                         color: Colors.grey.shade200,
                         child: const Center(
                           child: Icon(
@@ -628,21 +650,22 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
             ),
             // Medicine details
             Padding(
-              padding: const EdgeInsets.all(6.0), // Reduced from 8.0 to 6.0
+              padding: const EdgeInsets.all(6.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     medicine.medicineName,
                     style: GoogleFonts.poppins(
-                      fontSize: 13, // Reduced from 14 to 13
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 1), // Reduced from 2 to 1
+                  const SizedBox(height: 2),
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 4,
@@ -655,41 +678,45 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                     child: Text(
                       medicine.majorTypeDisplayName,
                       style: GoogleFonts.poppins(
-                        fontSize: 9, // Reduced from 10 to 9
+                        fontSize: 8,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF2A4B8D),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 1), // Reduced from 2 to 1
+                  const SizedBox(height: 2),
                   Text(
                     medicine.productTypeDisplayName,
                     style: GoogleFonts.poppins(
-                      fontSize: 10, // Reduced from 11 to 10
+                      fontSize: 9,
                       color: Colors.grey.shade600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2), // Reduced from 4 to 2
+                  const SizedBox(height: 2),
                   Text(
                     ' ${medicine.productOffering.join(", ")}',
                     style: GoogleFonts.poppins(
-                      fontSize: 10, // Reduced from 11 to 10
+                      fontSize: 9,
                       color: Colors.grey.shade600,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '₱ ${medicine.price.toStringAsFixed(2)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12, // Reduced from 13 to 12
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                      Flexible(
+                        child: Text(
+                          '₱ ${medicine.price.toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
@@ -698,7 +725,7 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                           color: isFavorite
                               ? Colors.red
                               : const Color(0xFF8ECAE6),
-                          size: 40, // Reduced from 40 to 32
+                          size: 28,
                         ),
                         onPressed: () {
                           ref
@@ -707,9 +734,203 @@ class _RecentSearchesScreenState extends ConsumerState<RecentSearchesScreen> {
                         },
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(
-                          minWidth: 32,
-                          minHeight: 32,
-                        ), // Added constraints
+                          minWidth: 28,
+                          minHeight: 28,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecommendedProductCard(Medicine medicine) {
+    final favorites = ref.watch(favoriteMedicinesProvider);
+    final isFavorite = favorites.contains(medicine.id);
+
+    return Consumer(
+      builder: (context, ref, child) {
+        final stockAsyncValue = ref.watch(stockStreamProvider(medicine.id));
+
+        return stockAsyncValue.when(
+          data: (currentStock) => _buildRecommendedCardWithStock(
+            medicine,
+            isFavorite,
+            currentStock,
+          ),
+          loading: () => _buildRecommendedCardWithStock(
+            medicine,
+            isFavorite,
+            medicine.stock,
+          ),
+          error: (_, __) => _buildRecommendedCardWithStock(
+            medicine,
+            isFavorite,
+            medicine.stock,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRecommendedCardWithStock(
+    Medicine medicine,
+    bool isFavorite,
+    int currentStock,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => MedicineDetailScreen(medicine: medicine),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              spreadRadius: 1,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Medicine image with stock badge overlay
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+              child: Stack(
+                children: [
+                  Image.network(
+                    medicine.imageURL,
+                    height: 80,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 80,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Stock badge overlay
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: StockBadge(stock: currentStock),
+                  ),
+                ],
+              ),
+            ),
+            // Medicine details
+            Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    medicine.medicineName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      medicine.majorTypeDisplayName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 7,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF2A4B8D),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    medicine.productTypeDisplayName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 8,
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    ' ${medicine.productOffering.join(", ")}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 8,
+                      color: Colors.grey.shade600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          '₱ ${medicine.price.toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite
+                              ? Colors.red
+                              : const Color(0xFF8ECAE6),
+                          size: 24,
+                        ),
+                        onPressed: () {
+                          ref
+                              .read(favoriteMedicinesProvider.notifier)
+                              .toggleFavorite(medicine.id);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 24,
+                          minHeight: 24,
+                        ),
                       ),
                     ],
                   ),

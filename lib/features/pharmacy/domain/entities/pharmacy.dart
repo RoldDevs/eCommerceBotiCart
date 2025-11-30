@@ -42,8 +42,9 @@ class Pharmacy {
   });
 
   factory Pharmacy.fromFirestore(Map<String, dynamic> data, String id) {
-    int storeID = data['storeID'] ?? int.parse(id.substring(0, 8), radix: 16) % 100000;
-    
+    int storeID =
+        data['storeID'] ?? int.parse(id.substring(0, 8), radix: 16) % 100000;
+
     return Pharmacy(
       id: id,
       name: data['pharmacyName'] ?? '',
@@ -61,11 +62,11 @@ class Pharmacy {
       invoiceId: data['invoiceId'],
       remittanceId: data['remittanceId'],
       receiptImageURL: data['receiptImageURL'],
-      billingStart: data['billingStart'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(data['billingStart']) 
+      billingStart: data['billingStart'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(data['billingStart'])
           : null,
-      billingEnd: data['billingEnd'] != null 
-          ? DateTime.fromMillisecondsSinceEpoch(data['billingEnd']) 
+      billingEnd: data['billingEnd'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(data['billingEnd'])
           : null,
     );
   }

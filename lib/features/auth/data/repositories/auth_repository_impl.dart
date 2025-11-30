@@ -13,8 +13,8 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({
     required FirebaseAuth firebaseAuth,
     required FirebaseFirestore firestore,
-  })  : _firebaseAuth = firebaseAuth,
-        _firestore = firestore;
+  }) : _firebaseAuth = firebaseAuth,
+       _firestore = firestore;
 
   @override
   Future<UserEntity> signUp({
@@ -31,13 +31,13 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
-      
+
       // Get the user ID
       final userId = userCredential.user!.uid;
-      
+
       // Create timestamp for createdAt
       final now = DateTime.now();
-      
+
       // Create user document in Firestore
       await _firestore.collection('users').doc(userId).set({
         'firstName': firstName,
@@ -50,13 +50,13 @@ class AuthRepositoryImpl implements AuthRepository {
         'status': 'inactive',
         'updatedAt': now,
       });
-      
+
       // Send verification email
       await sendEmailVerification();
-      
+
       // Save login state
       await PersistentAuthService.saveLoginState(true);
-      
+
       // Return user entity
       return UserEntity(
         id: userId,
@@ -86,22 +86,22 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
-      
+
       // Get the user ID
       final userId = userCredential.user!.uid;
-      
+
       // Get user data from Firestore
       final userDoc = await _firestore.collection('users').doc(userId).get();
-      
+
       if (!userDoc.exists) {
         return null;
       }
-      
+
       final userData = userDoc.data()!;
-      
+
       // Save login state
       await PersistentAuthService.saveLoginState(true);
-      
+
       // Return user entity
       return UserEntity(
         id: userId,
@@ -119,7 +119,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
   }
-  
+
   @override
   Future<void> sendEmailVerification() async {
     try {
@@ -131,7 +131,7 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
-  
+
   @override
   Future<bool> isEmailVerified() async {
     try {
@@ -142,7 +142,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return false;
     }
   }
-  
+
   @override
   Future<void> reloadUser() async {
     try {
@@ -154,18 +154,16 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
-  
+
   @override
-  Future<void> updateUserVerificationStatus({
-    required String userId,
-  }) async {
+  Future<void> updateUserVerificationStatus({required String userId}) async {
     await _firestore.collection('users').doc(userId).update({
       'is_verified': true,
       'status': 'active',
       'updatedAt': DateTime.now(),
     });
   }
-  
+
   @override
   Future<void> updateUserStatus({
     required String userId,
@@ -176,7 +174,7 @@ class AuthRepositoryImpl implements AuthRepository {
       'updatedAt': DateTime.now(),
     });
   }
-  
+
   @override
   Future<void> resetPassword({required String email}) async {
     try {
@@ -186,78 +184,83 @@ class AuthRepositoryImpl implements AuthRepository {
           .where('email', isEqualTo: email)
           .limit(1)
           .get();
-      
+
       if (querySnapshot.docs.isEmpty) {
         throw FirebaseAuthException(
           code: 'user-not-found',
           message: 'No user found with this email address',
         );
       }
-      
+
       // If user exists, send password reset email
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } catch (e) {
       rethrow;
     }
   }
-  
+
   @override
   Future<UserEntity?> signInWithGoogle() async {
     try {
       debugPrint('Starting Google Sign-In process');
-      
+
       // Create a new instance of GoogleSignIn
       final GoogleSignIn googleSignIn = GoogleSignIn();
-      
+
       // Check if a user is already signed in and disconnect if needed
       final currentUser = await googleSignIn.signInSilently();
       if (currentUser != null) {
         await googleSignIn.disconnect();
       }
-      
+
       // Begin interactive sign-in process
       debugPrint('Requesting Google Sign-In');
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      
-      debugPrint('Google Sign-In result: ${googleUser != null ? 'Success' : 'Cancelled'}');
-      
+
+      debugPrint(
+        'Google Sign-In result: ${googleUser != null ? 'Success' : 'Cancelled'}',
+      );
+
       if (googleUser == null) {
         // User canceled the sign-in flow
         return null;
       }
-      
+
       // Obtain auth details from request
       debugPrint('Getting authentication details');
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
       // Create new credential for Firebase
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      
+
       debugPrint('Signing in to Firebase with Google credential');
       // Sign in to Firebase with the Google credential
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final userCredential = await _firebaseAuth.signInWithCredential(
+        credential,
+      );
       final user = userCredential.user;
-      
+
       if (user == null) {
         debugPrint('Firebase user is null after sign-in');
         return null;
       }
-      
+
       debugPrint('Successfully signed in with Google: ${user.email}');
-      
+
       // Check if user exists in Firestore
       final userDoc = await _firestore.collection('users').doc(user.uid).get();
       final now = DateTime.now();
-      
+
       if (!userDoc.exists) {
         debugPrint('Creating new user document in Firestore');
         // Create new user document if it doesn't exist
         String firstName = '';
         String lastName = '';
-        
+
         if (user.displayName != null) {
           final nameParts = user.displayName!.split(' ');
           firstName = nameParts.first;
@@ -265,7 +268,7 @@ class AuthRepositoryImpl implements AuthRepository {
             lastName = nameParts.last;
           }
         }
-        
+
         final userData = {
           'firstName': firstName,
           'lastName': lastName,
@@ -277,9 +280,9 @@ class AuthRepositoryImpl implements AuthRepository {
           'status': 'active',
           'updatedAt': now,
         };
-        
+
         await _firestore.collection('users').doc(user.uid).set(userData);
-        
+
         return UserEntity(
           id: user.uid,
           firstName: firstName,
@@ -296,7 +299,7 @@ class AuthRepositoryImpl implements AuthRepository {
         debugPrint('User already exists in Firestore');
         // User exists, return user data
         final userData = userDoc.data()!;
-        
+
         return UserEntity(
           id: user.uid,
           firstName: userData['firstName'] as String,
@@ -315,7 +318,7 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     }
   }
-  
+
   @override
   Future<bool> checkEmailExists({required String email}) async {
     try {
@@ -324,13 +327,13 @@ class AuthRepositoryImpl implements AuthRepository {
           .where('email', isEqualTo: email)
           .limit(1)
           .get();
-      
+
       return querySnapshot.docs.isNotEmpty;
     } catch (e) {
       rethrow;
     }
   }
-  
+
   // Add a logout method that clears the persistent login state
   Future<void> logout() async {
     await _firebaseAuth.signOut();

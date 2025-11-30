@@ -8,14 +8,18 @@ final reviewRepositoryProvider = Provider<ReviewRepository>((ref) {
   return ReviewRepositoryImpl();
 });
 
-final pharmacyReviewsProvider = StreamProvider.family<List<Review>, String>((ref, pharmacyId) {
+final pharmacyReviewsProvider = StreamProvider.family<List<Review>, String>((
+  ref,
+  pharmacyId,
+) {
   final repository = ref.watch(reviewRepositoryProvider);
   return repository.getPharmacyReviews(pharmacyId);
 });
 
-final reviewFormProvider = StateNotifierProvider<ReviewFormNotifier, ReviewFormState>((ref) {
-  return ReviewFormNotifier(ref.watch(reviewRepositoryProvider));
-});
+final reviewFormProvider =
+    StateNotifierProvider<ReviewFormNotifier, ReviewFormState>((ref) {
+      return ReviewFormNotifier(ref.watch(reviewRepositoryProvider));
+    });
 
 class ReviewFormState {
   final double rating;
@@ -95,22 +99,30 @@ class ReviewFormNotifier extends StateNotifier<ReviewFormState> {
   }
 
   void removeImageUrl(String url) {
-    final updatedImages = state.imageUrls.where((image) => image != url).toList();
+    final updatedImages = state.imageUrls
+        .where((image) => image != url)
+        .toList();
     state = state.copyWith(imageUrls: updatedImages);
   }
 
   void removeVideoUrl(String url) {
-    final updatedVideos = state.videoUrls.where((video) => video != url).toList();
+    final updatedVideos = state.videoUrls
+        .where((video) => video != url)
+        .toList();
     state = state.copyWith(videoUrls: updatedVideos);
   }
 
   void removeImage(String path) {
-    final updatedPaths = state.imagePaths.where((image) => image != path).toList();
+    final updatedPaths = state.imagePaths
+        .where((image) => image != path)
+        .toList();
     state = state.copyWith(imagePaths: updatedPaths);
   }
 
   void removeVideo(String path) {
-    final updatedPaths = state.videoPaths.where((video) => video != path).toList();
+    final updatedPaths = state.videoPaths
+        .where((video) => video != path)
+        .toList();
     state = state.copyWith(videoPaths: updatedPaths);
   }
 
@@ -136,13 +148,23 @@ class ReviewFormNotifier extends StateNotifier<ReviewFormState> {
 
       // Upload images
       for (String imagePath in state.imagePaths) {
-        final url = await _repository.uploadReviewMedia(imagePath, userId, tempReviewId, false);
+        final url = await _repository.uploadReviewMedia(
+          imagePath,
+          userId,
+          tempReviewId,
+          false,
+        );
         uploadedImageUrls.add(url);
       }
 
       // Upload videos
       for (String videoPath in state.videoPaths) {
-        final url = await _repository.uploadReviewMedia(videoPath, userId, tempReviewId, true);
+        final url = await _repository.uploadReviewMedia(
+          videoPath,
+          userId,
+          tempReviewId,
+          true,
+        );
         uploadedVideoUrls.add(url);
       }
 
@@ -160,7 +182,7 @@ class ReviewFormNotifier extends StateNotifier<ReviewFormState> {
       );
 
       await _repository.addReview(review);
-      
+
       // Successfully submitted - reset form and clear loading state
       state = ReviewFormState();
     } catch (e) {
@@ -168,13 +190,23 @@ class ReviewFormNotifier extends StateNotifier<ReviewFormState> {
         isLoading: false,
         error: 'Failed to submit review: ${e.toString()}',
       );
-      rethrow; 
+      rethrow;
     }
   }
 
-  Future<String> uploadMedia(String filePath, String userId, String reviewId, bool isVideo) async {
+  Future<String> uploadMedia(
+    String filePath,
+    String userId,
+    String reviewId,
+    bool isVideo,
+  ) async {
     try {
-      return await _repository.uploadReviewMedia(filePath, userId, reviewId, isVideo);
+      return await _repository.uploadReviewMedia(
+        filePath,
+        userId,
+        reviewId,
+        isVideo,
+      );
     } catch (e) {
       state = state.copyWith(error: 'Failed to upload media: ${e.toString()}');
       rethrow;

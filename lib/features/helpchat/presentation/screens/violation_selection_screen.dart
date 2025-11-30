@@ -92,7 +92,9 @@ class _ViolationSelectionScreenState extends State<ViolationSelectionScreen> {
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
+                                color: const Color(
+                                  0xFF8ECAE6,
+                                ).withValues(alpha: 0.2),
                                 spreadRadius: 0,
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),

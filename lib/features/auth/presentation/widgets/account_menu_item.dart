@@ -23,19 +23,19 @@ class AccountMenuItem extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey[200]!),
-          ),
+          border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               title,
-              style: titleStyle ?? GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style:
+                  titleStyle ??
+                  GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
             ),
             Icon(
               icon ?? Icons.keyboard_arrow_right,

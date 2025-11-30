@@ -7,11 +7,7 @@ class ReviewItemWidget extends StatelessWidget {
   final Review review;
   final EdgeInsetsGeometry? margin;
 
-  const ReviewItemWidget({
-    super.key,
-    required this.review,
-    this.margin,
-  });
+  const ReviewItemWidget({super.key, required this.review, this.margin});
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +57,7 @@ class ReviewItemWidget extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              review.userName.isNotEmpty 
+              review.userName.isNotEmpty
                   ? review.userName[0].toUpperCase()
                   : 'U',
               style: GoogleFonts.poppins(
@@ -103,8 +99,8 @@ class ReviewItemWidget extends StatelessWidget {
           index < review.rating.floor()
               ? Icons.star
               : index < review.rating
-                  ? Icons.star_half
-                  : Icons.star_border,
+              ? Icons.star_half
+              : Icons.star_border,
           color: Colors.amber,
           size: 20,
         );
@@ -125,7 +121,7 @@ class ReviewItemWidget extends StatelessWidget {
 
   Widget _buildMedia(BuildContext context) {
     List<Widget> mediaWidgets = [];
-    
+
     // Add images
     for (int i = 0; i < review.imageUrls.length; i++) {
       String imageUrl = review.imageUrls[i];
@@ -147,7 +143,7 @@ class ReviewItemWidget extends StatelessWidget {
         ),
       );
     }
-    
+
     // Add videos
     for (String videoUrl in review.videoUrls) {
       mediaWidgets.add(
@@ -175,13 +171,16 @@ class ReviewItemWidget extends StatelessWidget {
         ),
       );
     }
-    
-    return Wrap(
-      children: mediaWidgets,
-    );
+
+    return Wrap(children: mediaWidgets);
   }
 
-  void _showImageModal(BuildContext context, String initialImageUrl, List<String> imageUrls, int initialIndex) {
+  void _showImageModal(
+    BuildContext context,
+    String initialImageUrl,
+    List<String> imageUrls,
+    int initialIndex,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -207,34 +206,45 @@ class ReviewItemWidget extends StatelessWidget {
   Widget _buildDate() {
     final now = DateTime.now();
     final difference = now.difference(review.createdAt);
-    
+
     // ignore: unused_local_variable
     String timeAgo;
     if (difference.inDays > 0) {
-      timeAgo = '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+      timeAgo =
+          '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
     } else if (difference.inHours > 0) {
-      timeAgo = '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+      timeAgo =
+          '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
     } else if (difference.inMinutes > 0) {
-      timeAgo = '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+      timeAgo =
+          '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
     } else {
       timeAgo = 'Just now';
     }
 
-    final formattedDate = '${_getMonthName(review.createdAt.month)} ${review.createdAt.day.toString().padLeft(2, '0')} ${review.createdAt.year}';
+    final formattedDate =
+        '${_getMonthName(review.createdAt.month)} ${review.createdAt.day.toString().padLeft(2, '0')} ${review.createdAt.year}';
 
     return Text(
       formattedDate,
-      style: GoogleFonts.poppins(
-        fontSize: 12,
-        color: Colors.grey[500],
-      ),
+      style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey[500]),
     );
   }
 
   String _getMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[month - 1];
   }
@@ -304,7 +314,7 @@ class _ImageViewerModalState extends State<ImageViewerModal> {
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
                                 ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
+                                      loadingProgress.expectedTotalBytes!
                                 : null,
                             color: const Color(0xFF8ECAE6),
                           ),
@@ -336,11 +346,7 @@ class _ImageViewerModalState extends State<ImageViewerModal> {
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 24),
                 ),
               ),
             ),
@@ -352,7 +358,10 @@ class _ImageViewerModalState extends State<ImageViewerModal> {
                 right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.black54,
                       borderRadius: BorderRadius.circular(20),
@@ -379,10 +388,7 @@ class _ImageViewerModalState extends State<ImageViewerModal> {
 class VideoPlayerModal extends StatefulWidget {
   final String videoUrl;
 
-  const VideoPlayerModal({
-    super.key,
-    required this.videoUrl,
-  });
+  const VideoPlayerModal({super.key, required this.videoUrl});
 
   @override
   State<VideoPlayerModal> createState() => _VideoPlayerModalState();
@@ -401,7 +407,9 @@ class _VideoPlayerModalState extends State<VideoPlayerModal> {
 
   void _initializeVideo() async {
     try {
-      _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+      _controller = VideoPlayerController.networkUrl(
+        Uri.parse(widget.videoUrl),
+      );
       await _controller.initialize();
       setState(() {
         _isInitialized = true;
@@ -450,13 +458,11 @@ class _VideoPlayerModalState extends State<VideoPlayerModal> {
                       ],
                     )
                   : _isInitialized
-                      ? AspectRatio(
-                          aspectRatio: _controller.value.aspectRatio,
-                          child: VideoPlayer(_controller),
-                        )
-                      : const CircularProgressIndicator(
-                          color: Color(0xFF8ECAE6),
-                        ),
+                  ? AspectRatio(
+                      aspectRatio: _controller.value.aspectRatio,
+                      child: VideoPlayer(_controller),
+                    )
+                  : const CircularProgressIndicator(color: Color(0xFF8ECAE6)),
             ),
             // Video Controls
             if (_isInitialized && !_hasError)
@@ -516,11 +522,7 @@ class _VideoPlayerModalState extends State<VideoPlayerModal> {
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Icon(
-                    Icons.close,
-                    color: Colors.white,
-                    size: 24,
-                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 24),
                 ),
               ),
             ),

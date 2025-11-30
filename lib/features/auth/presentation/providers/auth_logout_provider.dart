@@ -5,10 +5,10 @@ import 'package:boticart/features/auth/data/services/persistent_auth_service.dar
 
 class AuthLogoutNotifier extends StateNotifier<AsyncValue<void>> {
   AuthLogoutNotifier() : super(const AsyncValue.data(null));
-  
+
   Future<void> logout() async {
     state = const AsyncValue.loading();
-    
+
     try {
       await FirebaseAuth.instance.signOut();
       await PersistentAuthService.clearLoginState();
@@ -19,6 +19,7 @@ class AuthLogoutNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final authLogoutProvider = StateNotifierProvider<AuthLogoutNotifier, AsyncValue<void>>((ref) {
-  return AuthLogoutNotifier();
-});
+final authLogoutProvider =
+    StateNotifierProvider<AuthLogoutNotifier, AsyncValue<void>>((ref) {
+      return AuthLogoutNotifier();
+    });

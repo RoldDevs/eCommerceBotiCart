@@ -8,11 +8,13 @@ import '../../../../../core/utils/responsive_utils.dart';
 class ImHereButtonWidget extends ConsumerStatefulWidget {
   final String orderId;
   final String? pickupInstructions;
+  final String pickupStatus;
 
   const ImHereButtonWidget({
     super.key,
     required this.orderId,
     this.pickupInstructions,
+    this.pickupStatus = 'preparing',
   });
 
   @override
@@ -40,7 +42,7 @@ class _ImHereButtonWidgetState extends ConsumerState<ImHereButtonWidget> {
   }
 
   Future<void> _notifyArrival() async {
-    if (_isNotifying || _hasNotified) return;
+    if (_isNotifying || _hasNotified || widget.pickupStatus != 'ready') return;
 
     setState(() {
       _isNotifying = true;
@@ -152,14 +154,19 @@ class _ImHereButtonWidgetState extends ConsumerState<ImHereButtonWidget> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _hasNotified
+              onPressed:
+                  (_hasNotified ||
+                      _isNotifying ||
+                      widget.pickupStatus != 'ready')
                   ? null
-                  : (_isNotifying ? null : _notifyArrival),
+                  : _notifyArrival,
               style: ElevatedButton.styleFrom(
-                backgroundColor: _hasNotified
+                backgroundColor:
+                    (_hasNotified || widget.pickupStatus != 'ready')
                     ? Colors.grey.shade300
                     : const Color(0xFF8ECAE6),
-                foregroundColor: _hasNotified
+                foregroundColor:
+                    (_hasNotified || widget.pickupStatus != 'ready')
                     ? Colors.grey.shade600
                     : Colors.white,
                 padding: EdgeInsets.symmetric(
@@ -168,7 +175,9 @@ class _ImHereButtonWidgetState extends ConsumerState<ImHereButtonWidget> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
-                elevation: _hasNotified ? 0 : 2,
+                elevation: (_hasNotified || widget.pickupStatus != 'ready')
+                    ? 0
+                    : 2,
               ),
               icon: _isNotifying
                   ? SizedBox(

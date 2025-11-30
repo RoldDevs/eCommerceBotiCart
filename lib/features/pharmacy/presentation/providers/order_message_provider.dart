@@ -9,7 +9,7 @@ import 'pharmacy_providers.dart';
 final userOrderMessagesProvider = StreamProvider<List<OrderMessage>>((ref) {
   final orderMessageService = ref.watch(orderMessageServiceProvider);
   final userAsyncValue = ref.watch(currentUserProvider);
-  
+
   return userAsyncValue.when(
     data: (user) {
       if (user == null) return Stream.value([]);
@@ -21,50 +21,53 @@ final userOrderMessagesProvider = StreamProvider<List<OrderMessage>>((ref) {
 });
 
 // Provider for user's order messages filtered by selected pharmacy
-final filteredUserOrderMessagesProvider = StreamProvider.autoDispose<List<OrderMessage>>((ref) {
-  final orderMessagesAsyncValue = ref.watch(userOrderMessagesProvider);
-  final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
-  final pharmaciesAsyncValue = ref.watch(pharmaciesStreamProvider);
-  
-  return orderMessagesAsyncValue.when(
-    data: (orderMessages) {
-      if (selectedStoreId == null) return Stream.value([]);
-      
-      return pharmaciesAsyncValue.when(
-        data: (pharmacies) {
-          // Find the selected pharmacy
-          final selectedPharmacy = pharmacies.firstWhere(
-            (p) => p.storeID == selectedStoreId,
-            orElse: () => throw Exception('Pharmacy not found'),
+final filteredUserOrderMessagesProvider =
+    StreamProvider.autoDispose<List<OrderMessage>>((ref) {
+      final orderMessagesAsyncValue = ref.watch(userOrderMessagesProvider);
+      final selectedStoreId = ref.watch(selectedPharmacyStoreIdProvider);
+      final pharmaciesAsyncValue = ref.watch(pharmaciesStreamProvider);
+
+      return orderMessagesAsyncValue.when(
+        data: (orderMessages) {
+          if (selectedStoreId == null) return Stream.value([]);
+
+          return pharmaciesAsyncValue.when(
+            data: (pharmacies) {
+              // Find the selected pharmacy
+              final selectedPharmacy = pharmacies.firstWhere(
+                (p) => p.storeID == selectedStoreId,
+                orElse: () => throw Exception('Pharmacy not found'),
+              );
+
+              // Filter order messages by pharmacy ID
+              final filteredMessages = orderMessages
+                  .where((message) => message.pharmacyId == selectedPharmacy.id)
+                  .toList();
+
+              return Stream.value(filteredMessages);
+            },
+            loading: () => Stream.value([]),
+            error: (_, __) => Stream.value([]),
           );
-          
-          // Filter order messages by pharmacy ID
-          final filteredMessages = orderMessages.where((message) => 
-            message.pharmacyId == selectedPharmacy.id
-          ).toList();
-          
-          return Stream.value(filteredMessages);
         },
         loading: () => Stream.value([]),
         error: (_, __) => Stream.value([]),
       );
-    },
-    loading: () => Stream.value([]),
-    error: (_, __) => Stream.value([]),
-  );
-});
+    });
 
 // Provider for order messages of a specific order
-final orderMessagesProvider = StreamProvider.family<List<OrderMessage>, String>((ref, orderId) {
-  final orderMessageService = ref.watch(orderMessageServiceProvider);
-  return orderMessageService.getOrderMessages(orderId);
-});
+final orderMessagesProvider = StreamProvider.family<List<OrderMessage>, String>(
+  (ref, orderId) {
+    final orderMessageService = ref.watch(orderMessageServiceProvider);
+    return orderMessageService.getOrderMessages(orderId);
+  },
+);
 
 // Provider for unread message count
 final unreadOrderMessageCountProvider = StreamProvider<int>((ref) {
   final orderMessageService = ref.watch(orderMessageServiceProvider);
   final userAsyncValue = ref.watch(currentUserProvider);
-  
+
   return userAsyncValue.when(
     data: (user) {
       if (user == null) return Stream.value(0);

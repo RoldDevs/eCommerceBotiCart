@@ -22,7 +22,7 @@ class ChatBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bubbleColor = const Color(0xFF8ECAE6);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
       child: Column(
@@ -65,7 +65,10 @@ class ChatBubble extends StatelessWidget {
                 ],
               ),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -82,7 +85,7 @@ class ChatBubble extends StatelessWidget {
                           ),
                         ),
                       ),
-                    
+
                     // Message content
                     Text(
                       message,
@@ -93,9 +96,9 @@ class ChatBubble extends StatelessWidget {
                         height: 1.4,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 6),
-                    
+
                     // Timestamp
                     Row(
                       mainAxisSize: MainAxisSize.min,
@@ -106,8 +109,8 @@ class ChatBubble extends StatelessWidget {
                           style: GoogleFonts.poppins(
                             fontSize: 11,
                             fontWeight: FontWeight.w400,
-                            color: isUser 
-                                ? Colors.white.withOpacity(0.8) 
+                            color: isUser
+                                ? Colors.white.withOpacity(0.8)
                                 : Colors.grey.shade600,
                           ),
                         ),
@@ -118,18 +121,18 @@ class ChatBubble extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Display replies with improved styling
           if (replies != null && replies!.isNotEmpty)
             ...replies!.asMap().entries.map((entry) {
               final index = entry.key;
               final reply = entry.value;
-              
+
               // Extract reply data
               final replyContent = reply['content'] ?? '';
               final senderType = reply['senderType'] ?? 'admin';
               final senderName = reply['senderName'] ?? 'Support Admin';
-              
+
               // Properly handle Firestore Timestamp conversion
               DateTime replyTimestamp;
               try {
@@ -143,10 +146,11 @@ class ChatBubble extends StatelessWidget {
               } catch (e) {
                 replyTimestamp = DateTime.now();
               }
-              
+
               final isAdminReply = senderType == 'admin';
-              final isUserReply = senderType == 'customer' || senderType == 'user';
-              
+              final isUserReply =
+                  senderType == 'customer' || senderType == 'user';
+
               return Container(
                 margin: EdgeInsets.only(
                   top: index == 0 ? 8 : 4,
@@ -154,7 +158,9 @@ class ChatBubble extends StatelessWidget {
                   right: isUserReply ? 20 : 40,
                 ),
                 child: Align(
-                  alignment: isUserReply ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUserReply
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     constraints: BoxConstraints(
                       maxWidth: MediaQuery.of(context).size.width * 0.65,
@@ -170,16 +176,18 @@ class ChatBubble extends StatelessWidget {
                               end: Alignment.bottomRight,
                             )
                           : isUserReply
-                              ? LinearGradient(
-                                  colors: [
-                                    bubbleColor.withOpacity(0.1),
-                                    bubbleColor.withOpacity(0.05),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                )
-                              : null,
-                      color: (!isAdminReply && !isUserReply) ? Colors.grey.shade50 : null,
+                          ? LinearGradient(
+                              colors: [
+                                bubbleColor.withOpacity(0.1),
+                                bubbleColor.withOpacity(0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: (!isAdminReply && !isUserReply)
+                          ? Colors.grey.shade50
+                          : null,
                       borderRadius: BorderRadius.only(
                         topLeft: const Radius.circular(16),
                         topRight: const Radius.circular(16),
@@ -187,11 +195,11 @@ class ChatBubble extends StatelessWidget {
                         bottomRight: Radius.circular(isUserReply ? 4 : 16),
                       ),
                       border: Border.all(
-                        color: isAdminReply 
+                        color: isAdminReply
                             ? const Color(0xFF8ECAE6).withOpacity(0.4)
                             : isUserReply
-                                ? bubbleColor.withOpacity(0.2)
-                                : Colors.grey.shade200,
+                            ? bubbleColor.withOpacity(0.2)
+                            : Colors.grey.shade200,
                         width: 1,
                       ),
                       boxShadow: [
@@ -203,7 +211,10 @@ class ChatBubble extends StatelessWidget {
                       ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -217,7 +228,9 @@ class ChatBubble extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(2),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF8ECAE6).withOpacity(0.3),
+                                      color: const Color(
+                                        0xFF8ECAE6,
+                                      ).withOpacity(0.3),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Icon(
@@ -238,24 +251,24 @@ class ChatBubble extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          
+
                           // Reply content
                           Text(
                             replyContent,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
-                              color: isAdminReply 
+                              color: isAdminReply
                                   ? const Color(0xFF2A4B8D)
                                   : isUserReply
-                                      ? bubbleColor.withOpacity(0.9)
-                                      : Colors.grey.shade800,
+                                  ? bubbleColor.withOpacity(0.9)
+                                  : Colors.grey.shade800,
                               height: 1.3,
                             ),
                           ),
-                          
+
                           const SizedBox(height: 4),
-                          
+
                           // Reply timestamp
                           Align(
                             alignment: Alignment.bottomRight,
@@ -264,11 +277,11 @@ class ChatBubble extends StatelessWidget {
                               style: GoogleFonts.poppins(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w400,
-                                color: isAdminReply 
+                                color: isAdminReply
                                     ? const Color(0xFF8ECAE6)
                                     : isUserReply
-                                        ? bubbleColor.withOpacity(0.7)
-                                        : Colors.grey.shade500,
+                                    ? bubbleColor.withOpacity(0.7)
+                                    : Colors.grey.shade500,
                               ),
                             ),
                           ),

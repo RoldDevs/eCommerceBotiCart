@@ -14,21 +14,24 @@ class OrderStockHandler {
   OrderStockHandler(this._ref);
 
   void initializeOrderListener() {
-    _ref.listen<AsyncValue<List<OrderEntity>>>(
-      userOrdersProvider,
-      (previous, next) {
-        next.whenData((orders) {
-          if (previous != null) {
-            previous.whenData((previousOrders) {
-              _handleOrderStatusChanges(previousOrders, orders);
-            });
-          }
-        });
-      },
-    );
+    _ref.listen<AsyncValue<List<OrderEntity>>>(userOrdersProvider, (
+      previous,
+      next,
+    ) {
+      next.whenData((orders) {
+        if (previous != null) {
+          previous.whenData((previousOrders) {
+            _handleOrderStatusChanges(previousOrders, orders);
+          });
+        }
+      });
+    });
   }
 
-  void _handleOrderStatusChanges(List<OrderEntity> previousOrders, List<OrderEntity> currentOrders) {
+  void _handleOrderStatusChanges(
+    List<OrderEntity> previousOrders,
+    List<OrderEntity> currentOrders,
+  ) {
     for (final currentOrder in currentOrders) {
       final previousOrder = previousOrders.firstWhere(
         (order) => order.orderID == currentOrder.orderID,

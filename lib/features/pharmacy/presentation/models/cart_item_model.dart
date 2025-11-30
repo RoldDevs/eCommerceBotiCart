@@ -32,13 +32,13 @@ class CartItemModel {
   String get status => cartEntity.status;
   CartStatus get statusEnum => cartEntity.statusEnum;
   DateTime get createdAt => cartEntity.createdAt;
-  
+
   // Helper methods for UI
   String get formattedPrice => '₱${medicine.price.toStringAsFixed(2)}';
   String get formattedTotalPrice => '₱${totalPrice.toStringAsFixed(2)}';
   String get quantityText => 'Qty: $quantity';
   String get statusDisplayName => statusEnum.displayName;
-  
+
   // Status check methods
   bool get isToProcess => statusEnum == CartStatus.toProcess;
   bool get isToReceive => statusEnum == CartStatus.toReceive;
@@ -46,7 +46,7 @@ class CartItemModel {
   bool get isToPickup => statusEnum == CartStatus.toPickup;
   bool get isInTransit => statusEnum == CartStatus.inTransit;
   bool get isCompleted => statusEnum == CartStatus.completed;
-  
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
@@ -54,10 +54,10 @@ class CartItemModel {
         other.itemCartNo == itemCartNo &&
         other.medicineId == medicineId;
   }
-  
+
   @override
   int get hashCode => itemCartNo.hashCode ^ medicineId.hashCode;
-  
+
   @override
   String toString() {
     return 'CartItemModel(itemCartNo: $itemCartNo, medicine: ${medicine.medicineName}, quantity: $quantity, totalPrice: $totalPrice)';

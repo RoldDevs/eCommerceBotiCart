@@ -64,7 +64,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '510945752221',
     projectId: 'boticart-93a0a',
     storageBucket: 'boticart-93a0a.firebasestorage.app',
-    iosClientId: '510945752221-iu2mla4o27q1eihnl3sjqcabp33k0rti.apps.googleusercontent.com',
+    iosClientId:
+        '510945752221-iu2mla4o27q1eihnl3sjqcabp33k0rti.apps.googleusercontent.com',
     iosBundleId: 'com.ecommerce.app.boticart',
   );
 
@@ -74,7 +75,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '510945752221',
     projectId: 'boticart-93a0a',
     storageBucket: 'boticart-93a0a.firebasestorage.app',
-    iosClientId: '510945752221-iu2mla4o27q1eihnl3sjqcabp33k0rti.apps.googleusercontent.com',
+    iosClientId:
+        '510945752221-iu2mla4o27q1eihnl3sjqcabp33k0rti.apps.googleusercontent.com',
     iosBundleId: 'com.ecommerce.app.boticart',
   );
 

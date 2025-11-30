@@ -26,7 +26,7 @@ class OrderInfoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 1),
@@ -52,7 +52,7 @@ class OrderInfoCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: const Color(0xFF8ECAE6).withOpacity(0.1),
+                          color: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
                           child: const Icon(
                             Icons.medication,
                             color: Color(0xFF8ECAE6),
@@ -62,7 +62,7 @@ class OrderInfoCard extends StatelessWidget {
                       },
                     )
                   : Container(
-                      color: const Color(0xFF8ECAE6).withOpacity(0.1),
+                      color: const Color(0xFF8ECAE6).withValues(alpha: 0.1),
                       child: const Icon(
                         Icons.medication,
                         color: Color(0xFF8ECAE6),
@@ -72,7 +72,7 @@ class OrderInfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 16),
-          
+
           // Medicine details
           Expanded(
             child: Column(
@@ -95,7 +95,7 @@ class OrderInfoCard extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Price
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,

@@ -22,7 +22,7 @@ class ProfilePictureWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profilePictureAsync = ref.watch(profilePictureProvider(userId));
-    
+
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
@@ -32,10 +32,7 @@ class ProfilePictureWidget extends ConsumerWidget {
           height: 100,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF8ECAE6),
-              width: 2,
-            ),
+            border: Border.all(color: const Color(0xFF8ECAE6), width: 2),
           ),
           child: ClipOval(
             child: profilePictureAsync.when(
@@ -53,7 +50,7 @@ class ProfilePictureWidget extends ConsumerWidget {
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
                               ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
+                                    loadingProgress.expectedTotalBytes!
                               : null,
                           color: const Color(0xFF8ECAE6),
                         ),
@@ -71,7 +68,7 @@ class ProfilePictureWidget extends ConsumerWidget {
             ),
           ),
         ),
-        
+
         // Edit button
         GestureDetector(
           onTap: () => _showImagePickerOptions(context, ref),
@@ -82,20 +79,17 @@ class ProfilePictureWidget extends ConsumerWidget {
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
             ),
-            child: const Icon(
-              Icons.edit,
-              color: Colors.white,
-              size: 16,
-            ),
+            child: const Icon(Icons.edit, color: Colors.white, size: 16),
           ),
         ),
       ],
     );
   }
-  
+
   Widget _buildInitialsAvatar() {
-    final initials = '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
-    
+    final initials =
+        '${firstName.isNotEmpty ? firstName[0] : ''}${lastName.isNotEmpty ? lastName[0] : ''}';
+
     return Container(
       color: const Color(0xFF8ECAE6),
       child: Center(
@@ -110,7 +104,7 @@ class ProfilePictureWidget extends ConsumerWidget {
       ),
     );
   }
-  
+
   void _showImagePickerOptions(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
@@ -131,10 +125,7 @@ class ProfilePictureWidget extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(Icons.photo_camera),
-                title: Text(
-                  'Take a Photo',
-                  style: GoogleFonts.poppins(),
-                ),
+                title: Text('Take a Photo', style: GoogleFonts.poppins()),
                 onTap: () {
                   _pickImage(ImageSource.camera, ref);
                   Navigator.of(context).pop();
@@ -146,7 +137,7 @@ class ProfilePictureWidget extends ConsumerWidget {
       },
     );
   }
-  
+
   Future<void> _pickImage(ImageSource source, WidgetRef ref) async {
     try {
       final pickedFile = await ImagePicker().pickImage(
@@ -155,10 +146,10 @@ class ProfilePictureWidget extends ConsumerWidget {
         maxHeight: 500,
         imageQuality: 85,
       );
-      
+
       if (pickedFile != null) {
         final file = File(pickedFile.path);
-        
+
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(ref.context).showSnackBar(
           const SnackBar(
@@ -172,17 +163,19 @@ class ProfilePictureWidget extends ConsumerWidget {
             duration: Duration(seconds: 2),
           ),
         );
-        
+
         // Upload the profile picture
-        await ref.read(profilePictureUploadProvider.notifier).uploadProfilePicture(
-          userId: userId,
-          username: email.split('@').first,
-          file: file,
-        );
-        
+        await ref
+            .read(profilePictureUploadProvider.notifier)
+            .uploadProfilePicture(
+              userId: userId,
+              username: email.split('@').first,
+              file: file,
+            );
+
         // ignore: unused_result
         ref.refresh(profilePictureProvider(userId));
-        
+
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(ref.context).showSnackBar(
           const SnackBar(
@@ -194,7 +187,7 @@ class ProfilePictureWidget extends ConsumerWidget {
       }
     } catch (e) {
       debugPrint('Error picking image: $e');
-      
+
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(ref.context).showSnackBar(
         SnackBar(

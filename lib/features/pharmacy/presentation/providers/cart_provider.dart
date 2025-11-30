@@ -23,11 +23,7 @@ class CartItem {
     this.isSelected = false,
   });
 
-  CartItem copyWith({
-    Medicine? medicine,
-    int? quantity,
-    bool? isSelected,
-  }) {
+  CartItem copyWith({Medicine? medicine, int? quantity, bool? isSelected}) {
     return CartItem(
       medicine: medicine ?? this.medicine,
       quantity: quantity ?? this.quantity,
@@ -48,7 +44,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
-    
+
     if (user == null) {
       throw Exception('User not logged in');
     }
@@ -62,8 +58,10 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
       );
 
       // Update local state
-      final existingIndex = state.indexWhere((item) => item.medicine.id == medicine.id);
-      
+      final existingIndex = state.indexWhere(
+        (item) => item.medicine.id == medicine.id,
+      );
+
       if (existingIndex >= 0) {
         // Update quantity if item already exists
         final updatedItems = [...state];
@@ -86,7 +84,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
     // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
-    
+
     if (user == null) {
       throw Exception('User not logged in');
     }
@@ -113,19 +111,21 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
       throw Exception('Failed to remove item from cart: $e');
     }
   }
-  
+
   Future<void> removeSelectedItems() async {
     // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
-    
+
     if (user == null) {
       throw Exception('User not logged in');
     }
 
     try {
       final selectedItems = state.where((item) => item.isSelected).toList();
-      final selectedMedicineIds = selectedItems.map((item) => item.medicine.id).toList();
+      final selectedMedicineIds = selectedItems
+          .map((item) => item.medicine.id)
+          .toList();
 
       // Get all cart items for selected medicines
       for (final medicineId in selectedMedicineIds) {
@@ -155,9 +155,13 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
 
   void toggleItemSelection(String medicineId) {
     final updatedItems = [...state];
-    final index = updatedItems.indexWhere((item) => item.medicine.id == medicineId);
+    final index = updatedItems.indexWhere(
+      (item) => item.medicine.id == medicineId,
+    );
     if (index >= 0) {
-      updatedItems[index] = updatedItems[index].copyWith(isSelected: !updatedItems[index].isSelected);
+      updatedItems[index] = updatedItems[index].copyWith(
+        isSelected: !updatedItems[index].isSelected,
+      );
       state = updatedItems;
     }
   }
@@ -165,7 +169,7 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
   void selectAll(bool select) {
     state = state.map((item) => item.copyWith(isSelected: select)).toList();
   }
-  
+
   void clearAllSelections() {
     selectAll(false);
   }
@@ -173,26 +177,28 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
   double get totalAmount {
     return state.fold(0, (total, item) => total + item.totalPrice);
   }
-  
+
   double get selectedItemsTotal {
-    return state.where((item) => item.isSelected).fold(0, (total, item) => total + item.totalPrice);
+    return state
+        .where((item) => item.isSelected)
+        .fold(0, (total, item) => total + item.totalPrice);
   }
-  
+
   int get selectedItemsCount {
     return state.where((item) => item.isSelected).length;
   }
-  
+
   bool get hasSelectedItems {
     return state.any((item) => item.isSelected);
   }
 
   Future<void> updateItemQuantity(String medicineId, int newQuantity) async {
-    if (newQuantity < 1) return; 
-    
+    if (newQuantity < 1) return;
+
     // Get current user
     final userAsyncValue = _ref.read(currentUserProvider);
     final user = userAsyncValue.value;
-    
+
     if (user == null) {
       throw Exception('User not logged in');
     }
@@ -208,17 +214,20 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
 
       // Update quantity in Firestore
       for (final doc in cartItems.docs) {
-        await FirebaseFirestore.instance
-            .collection('cart')
-            .doc(doc.id)
-            .update({'quantity': newQuantity});
+        await FirebaseFirestore.instance.collection('cart').doc(doc.id).update({
+          'quantity': newQuantity,
+        });
       }
 
       // Update local state
       final updatedItems = [...state];
-      final index = updatedItems.indexWhere((item) => item.medicine.id == medicineId);
+      final index = updatedItems.indexWhere(
+        (item) => item.medicine.id == medicineId,
+      );
       if (index >= 0) {
-        updatedItems[index] = updatedItems[index].copyWith(quantity: newQuantity);
+        updatedItems[index] = updatedItems[index].copyWith(
+          quantity: newQuantity,
+        );
         state = updatedItems;
       }
     } catch (e) {
@@ -237,26 +246,30 @@ class CartNotifier extends StateNotifier<List<CartItem>> {
       await updateItemQuantity(medicineId, item.quantity - 1);
     }
   }
-  
+
   Future<void> updateCartStatus(String medicineId, CartStatus newStatus) async {
     try {
       // Get the user to find the cart document
       final userAsyncValue = _ref.read(currentUserProvider);
       final user = userAsyncValue.value;
-      
+
       if (user == null) {
         throw Exception('User not logged in');
       }
 
       // Find the cart document in Firestore
-      final cartQuery = await FirebaseFirestore.instance.collection('cart')
+      final cartQuery = await FirebaseFirestore.instance
+          .collection('cart')
           .where('userUID', isEqualTo: user.id)
           .where('medicineID', isEqualTo: medicineId)
           .get();
 
       if (cartQuery.docs.isNotEmpty) {
         final cartDoc = cartQuery.docs.first;
-        await _cartRepository.updateCartStatus(cartDoc.id, newStatus.displayName);
+        await _cartRepository.updateCartStatus(
+          cartDoc.id,
+          newStatus.displayName,
+        );
       }
 
       // Note: Local state doesn't need to be updated since CartItem doesn't store status
@@ -286,28 +299,28 @@ final filteredCartProvider = Provider<List<CartItem>>((ref) {
   final cartItems = ref.watch(cartProvider);
   final searchQuery = ref.watch(cartSearchProvider);
   final favorites = ref.watch(favoriteMedicinesProvider);
-  
+
   List<CartItem> filteredItems;
-  
+
   if (searchQuery.isEmpty) {
     filteredItems = cartItems;
   } else {
     filteredItems = cartItems.where((item) {
-      return item.medicine.medicineName
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase());
+      return item.medicine.medicineName.toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
     }).toList();
   }
-  
+
   // Sort items: favorites first, then non-favorites
   filteredItems.sort((a, b) {
     final aIsFavorite = favorites.contains(a.medicine.id);
     final bIsFavorite = favorites.contains(b.medicine.id);
-    
+
     if (aIsFavorite && !bIsFavorite) return -1;
     if (!aIsFavorite && bIsFavorite) return 1;
     return 0; // Keep original order for items with same favorite status
   });
-  
+
   return filteredItems;
 });

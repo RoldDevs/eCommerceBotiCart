@@ -17,7 +17,10 @@ class HelpChatConversation {
     this.unreadCount = 0,
   });
 
-  factory HelpChatConversation.fromFirestore(Map<String, dynamic> data, String id) {
+  factory HelpChatConversation.fromFirestore(
+    Map<String, dynamic> data,
+    String id,
+  ) {
     return HelpChatConversation(
       id: id,
       userId: data['userId'] ?? data['senderUID'] ?? '',

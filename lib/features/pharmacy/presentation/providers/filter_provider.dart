@@ -4,17 +4,26 @@ import '../../domain/entities/medicine.dart';
 import 'medicine_provider.dart';
 
 // Provider for selected product types
-final selectedProductTypesProvider = StateNotifierProvider<SelectedProductTypesNotifier, Set<MedicineProductType>>((ref) {
-  return SelectedProductTypesNotifier();
-});
+final selectedProductTypesProvider =
+    StateNotifierProvider<
+      SelectedProductTypesNotifier,
+      Set<MedicineProductType>
+    >((ref) {
+      return SelectedProductTypesNotifier();
+    });
 
 // Provider for selected condition types
-final selectedConditionTypesProvider = StateNotifierProvider<SelectedConditionTypesNotifier, Set<MedicineConditionType>>((ref) {
-  return SelectedConditionTypesNotifier();
-});
+final selectedConditionTypesProvider =
+    StateNotifierProvider<
+      SelectedConditionTypesNotifier,
+      Set<MedicineConditionType>
+    >((ref) {
+      return SelectedConditionTypesNotifier();
+    });
 
 // Notifier for managing selected product types
-class SelectedProductTypesNotifier extends StateNotifier<Set<MedicineProductType>> {
+class SelectedProductTypesNotifier
+    extends StateNotifier<Set<MedicineProductType>> {
   SelectedProductTypesNotifier() : super(<MedicineProductType>{});
 
   void toggle(MedicineProductType type) {
@@ -40,7 +49,8 @@ class SelectedProductTypesNotifier extends StateNotifier<Set<MedicineProductType
 }
 
 // Notifier for managing selected condition types
-class SelectedConditionTypesNotifier extends StateNotifier<Set<MedicineConditionType>> {
+class SelectedConditionTypesNotifier
+    extends StateNotifier<Set<MedicineConditionType>> {
   SelectedConditionTypesNotifier() : super(<MedicineConditionType>{});
 
   void toggle(MedicineConditionType type) {
@@ -71,29 +81,27 @@ final filteredMedicinesByFiltersProvider = Provider<List<Medicine>>((ref) {
   final selectedProductTypes = ref.watch(selectedProductTypesProvider);
   final selectedConditionTypes = ref.watch(selectedConditionTypesProvider);
   final favorites = ref.watch(favoriteMedicinesProvider);
-  
+
   return allMedicinesAsyncValue.when(
     data: (medicines) {
       List<Medicine> filteredList = medicines.map((medicine) {
-        return medicine.copyWith(
-          isFavorite: favorites.contains(medicine.id)
-        );
+        return medicine.copyWith(isFavorite: favorites.contains(medicine.id));
       }).toList();
-      
+
       // Apply product type filter
       if (selectedProductTypes.isNotEmpty) {
         filteredList = filteredList.where((medicine) {
           return selectedProductTypes.contains(medicine.productType);
         }).toList();
       }
-      
+
       // Apply condition type filter
       if (selectedConditionTypes.isNotEmpty) {
         filteredList = filteredList.where((medicine) {
           return selectedConditionTypes.contains(medicine.conditionType);
         }).toList();
       }
-      
+
       return filteredList;
     },
     loading: () => [],

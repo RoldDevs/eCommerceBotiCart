@@ -6,7 +6,7 @@ class BuyNowModal extends StatefulWidget {
   final Medicine medicine;
   final Function(int) onQuantityChanged;
   final VoidCallback onBuyNow;
-  final String buttonText; 
+  final String buttonText;
 
   const BuyNowModal({
     super.key,
@@ -26,9 +26,7 @@ class _BuyNowModalState extends State<BuyNowModal> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         padding: const EdgeInsets.all(16),
         width: double.infinity,
@@ -54,7 +52,10 @@ class _BuyNowModalState extends State<BuyNowModal> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return const Center(
-                          child: Icon(Icons.image_not_supported, color: Colors.grey),
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey,
+                          ),
                         );
                       },
                     ),
@@ -78,7 +79,10 @@ class _BuyNowModalState extends State<BuyNowModal> {
                       const SizedBox(height: 4),
                       // Major Type
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF8ECAE6).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(8),
@@ -182,9 +186,11 @@ class _BuyNowModalState extends State<BuyNowModal> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Icon(
-                          Icons.add, 
+                          Icons.add,
                           size: 16,
-                          color: quantity >= widget.medicine.stock ? Colors.grey : Colors.black,
+                          color: quantity >= widget.medicine.stock
+                              ? Colors.grey
+                              : Colors.black,
                         ),
                       ),
                     ),

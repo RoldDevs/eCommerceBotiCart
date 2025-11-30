@@ -5,11 +5,7 @@ class UpdateUserVerificationStatusUseCase {
 
   UpdateUserVerificationStatusUseCase(this.repository);
 
-  Future<void> call({
-    required String userId,
-  }) {
-    return repository.updateUserVerificationStatus(
-      userId: userId,
-    );
+  Future<void> call({required String userId}) {
+    return repository.updateUserVerificationStatus(userId: userId);
   }
 }

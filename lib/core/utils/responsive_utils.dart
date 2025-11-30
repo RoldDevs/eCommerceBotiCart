@@ -23,7 +23,9 @@ class ResponsiveUtils {
   /// Get responsive font size
   static double getResponsiveFontSize(BuildContext context, double baseSize) {
     final width = MediaQuery.of(context).size.width;
-    final scaleFactor = width < 360 ? 0.85 : (width < 480 ? 0.9 : (width < 720 ? 1.0 : 1.1));
+    final scaleFactor = width < 360
+        ? 0.85
+        : (width < 480 ? 0.9 : (width < 720 ? 1.0 : 1.1));
     return baseSize * scaleFactor;
   }
 
@@ -54,7 +56,10 @@ class ResponsiveUtils {
   }
 
   /// Get responsive grid cross axis count
-  static int getGridCrossAxisCount(BuildContext context, {int defaultCount = 2}) {
+  static int getGridCrossAxisCount(
+    BuildContext context, {
+    int defaultCount = 2,
+  }) {
     final width = MediaQuery.of(context).size.width;
     if (width < 360) return 1;
     if (width < 480) return 2;
@@ -62,4 +67,3 @@ class ResponsiveUtils {
     return 3;
   }
 }
-

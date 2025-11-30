@@ -32,19 +32,19 @@ class CustomTextField extends StatelessWidget {
         fillColor: const Color(0xFFE6F2FF),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: hasError 
+          borderSide: hasError
               ? const BorderSide(color: Colors.red, width: 1.0)
               : BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: hasError 
+          borderSide: hasError
               ? const BorderSide(color: Colors.red, width: 1.0)
               : BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: hasError 
+          borderSide: hasError
               ? const BorderSide(color: Colors.red, width: 1.0)
               : BorderSide.none,
         ),
@@ -54,9 +54,7 @@ class CustomTextField extends StatelessWidget {
         ),
         suffixIcon: suffixIcon,
       ),
-      style: TextStyle(
-        fontFamily: GoogleFonts.poppins().fontFamily,
-      ),
+      style: TextStyle(fontFamily: GoogleFonts.poppins().fontFamily),
     );
   }
 }

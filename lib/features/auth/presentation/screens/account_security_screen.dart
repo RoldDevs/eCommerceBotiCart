@@ -13,7 +13,7 @@ class AccountSecurityScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsyncValue = ref.watch(currentUserProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -38,13 +38,16 @@ class AccountSecurityScreen extends ConsumerWidget {
           if (user == null) {
             return const Center(child: Text('User not found'));
           }
-          
+
           return SingleChildScrollView(
             child: Column(
               children: [
                 const SizedBox(height: 16),
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -90,7 +93,10 @@ class AccountSecurityScreen extends ConsumerWidget {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              const Icon(Icons.chevron_right, color: Color(0xFF8ECAE6)),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: Color(0xFF8ECAE6),
+                              ),
                             ],
                           ),
                         ),
@@ -124,7 +130,8 @@ class AccountSecurityScreen extends ConsumerWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ChangePasswordScreen(),
+                              builder: (context) =>
+                                  const ChangePasswordScreen(),
                             ),
                           );
                         },

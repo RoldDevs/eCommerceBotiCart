@@ -30,8 +30,10 @@ class ResponsiveImageWidget extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        placeholder: (context, url) => placeholder ?? _buildDefaultPlaceholder(),
-        errorWidget: (context, url, error) => errorWidget ?? _buildDefaultErrorWidget(),
+        placeholder: (context, url) =>
+            placeholder ?? _buildDefaultPlaceholder(),
+        errorWidget: (context, url, error) =>
+            errorWidget ?? _buildDefaultErrorWidget(),
       ),
     );
   }
@@ -58,18 +60,11 @@ class ResponsiveImageWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 32,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.error_outline, size: 32, color: Colors.grey[400]),
           const SizedBox(height: 8),
           Text(
             'Failed to load image',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
         ],

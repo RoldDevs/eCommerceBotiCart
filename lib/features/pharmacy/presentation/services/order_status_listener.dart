@@ -42,9 +42,8 @@ class OrderStatusListener {
       if (order.isCompletelyVerified && order.isPaid) {
         await _createInTransitMessage(order);
       }
-    // ignore: empty_catches
-    } catch (e) {
-    }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   // Track verification field changes and create status change records
@@ -121,9 +120,8 @@ class OrderStatusListener {
           );
         }
       }
-    // ignore: empty_catches
-    } catch (e) {
-      }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   // Track pickup status changes and create status change records
@@ -177,9 +175,8 @@ class OrderStatusListener {
           );
         }
       }
-    // ignore: empty_catches
-    } catch (e) {
-    }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 
   // Create in-transit message when order is completely verified
@@ -253,8 +250,7 @@ class OrderStatusListener {
           pharmacy: pharmacy,
         );
       }
-    // ignore: empty_catches
-    } catch (e) {
-    }
+      // ignore: empty_catches
+    } catch (e) {}
   }
 }

@@ -7,13 +7,16 @@ class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isLoading = false;
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
@@ -43,15 +46,13 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     setState(() {
       _hasError = false;
       _errorMessage = '';
-      _fieldErrors = {
-        'current': false,
-        'new': false,
-        'confirm': false,
-      };
+      _fieldErrors = {'current': false, 'new': false, 'confirm': false};
     });
 
     // Validate inputs
-    if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+    if (currentPassword.isEmpty ||
+        newPassword.isEmpty ||
+        confirmPassword.isEmpty) {
       setState(() {
         _hasError = true;
         _errorMessage = 'Please fill in all fields';
@@ -68,11 +69,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       setState(() {
         _hasError = true;
         _errorMessage = 'New passwords do not match';
-        _fieldErrors = {
-          'current': false,
-          'new': true,
-          'confirm': true,
-        };
+        _fieldErrors = {'current': false, 'new': true, 'confirm': true};
       });
       return;
     }
@@ -89,12 +86,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     // Check if password contains required characters
     final hasUppercase = newPassword.contains(RegExp(r'[A-Z]'));
     final hasDigit = newPassword.contains(RegExp(r'[0-9]'));
-    final hasSpecialChar = newPassword.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
-    
+    final hasSpecialChar = newPassword.contains(
+      RegExp(r'[!@#$%^&*(),.?":{}|<>]'),
+    );
+
     if (!hasUppercase || !hasDigit || !hasSpecialChar) {
       setState(() {
         _hasError = true;
-        _errorMessage = 'Password must include uppercase, number, and special character';
+        _errorMessage =
+            'Password must include uppercase, number, and special character';
         _fieldErrors['new'] = true;
       });
       return;
@@ -149,7 +149,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           _fieldErrors['new'] = true;
         });
       }
-      
+
       setState(() {
         _hasError = true;
         _errorMessage = errorMessage;
@@ -244,16 +244,16 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     ),
                   ),
                 ),
-                Center(
-                  child: Text(
-                    'Your password must be at least 8 characters and should include a combination of numbers, letters, and special characters (!@#\$%).',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: const Color(0xFF5A9FBF), 
-                    ),
+              Center(
+                child: Text(
+                  'Your password must be at least 8 characters and should include a combination of numbers, letters, and special characters (!@#\$%).',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: const Color(0xFF5A9FBF),
                   ),
                 ),
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
@@ -265,7 +265,9 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    disabledBackgroundColor: const Color(0xFF8ECAE6).withValues(alpha: 0.5),
+                    disabledBackgroundColor: const Color(
+                      0xFF8ECAE6,
+                    ).withValues(alpha: 0.5),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -326,7 +328,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           ),
           onPressed: toggleObscure,
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
       style: GoogleFonts.poppins(),
     );

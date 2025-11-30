@@ -12,48 +12,55 @@ class MainScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final searchQuery = ref.watch(pharmacySearchQueryProvider);
-    final pharmaciesAsyncValue = searchQuery.isEmpty 
+    final pharmaciesAsyncValue = searchQuery.isEmpty
         ? ref.watch(pharmaciesStreamProvider)
         : ref.watch(pharmacySearchResultsProvider);
     final favorites = ref.watch(favoritesProvider);
     final showOnlyFavorites = ref.watch(showOnlyFavoritesProvider);
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             _buildTopBar(context, ref, showOnlyFavorites),
-            
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey[200],
+
+            Divider(height: 1, thickness: 1, color: Colors.grey[200]),
+
+            _buildPharmacyList(
+              pharmaciesAsyncValue,
+              favorites,
+              showOnlyFavorites,
             ),
-            
-            _buildPharmacyList(pharmaciesAsyncValue, favorites, showOnlyFavorites),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTopBar(BuildContext context, WidgetRef ref, bool showOnlyFavorites) {
+  Widget _buildTopBar(
+    BuildContext context,
+    WidgetRef ref,
+    bool showOnlyFavorites,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
         children: [
           // Store/Favorites toggle button
           _buildToggleButton(ref, showOnlyFavorites),
-          
+
           // Search bar
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 23),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12.0,
+                vertical: 23,
+              ),
               child: _buildSearchBar(ref),
             ),
           ),
-          
+
           // Support icon
           _buildSupportButton(context),
         ],
@@ -82,8 +89,8 @@ class MainScreen extends ConsumerWidget {
         ),
         child: Icon(
           showOnlyFavorites ? Icons.favorite : Icons.store,
-          color: showOnlyFavorites 
-              ? Colors.white 
+          color: showOnlyFavorites
+              ? Colors.white
               : const Color(0xFF8ECAE6).withAlpha(250),
           size: 28,
         ),
@@ -92,12 +99,14 @@ class MainScreen extends ConsumerWidget {
   }
 
   Widget _buildSearchBar(WidgetRef ref) {
-    final searchController = TextEditingController(text: ref.watch(pharmacySearchQueryProvider));
-    
+    final searchController = TextEditingController(
+      text: ref.watch(pharmacySearchQueryProvider),
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF8ECAE6).withAlpha(50), 
+        color: const Color(0xFF8ECAE6).withAlpha(50),
         borderRadius: BorderRadius.circular(50),
       ),
       child: Row(
@@ -142,11 +151,9 @@ class MainScreen extends ConsumerWidget {
   Widget _buildSupportButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const HelpChatScreen(),
-          ),
-        );
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (context) => const HelpChatScreen()));
       },
       child: Container(
         padding: const EdgeInsets.all(8.0),
@@ -180,19 +187,21 @@ class MainScreen extends ConsumerWidget {
       child: pharmaciesAsyncValue.when(
         data: (pharmacies) {
           final displayedPharmacies = showOnlyFavorites
-              ? pharmacies.where((pharmacy) => favorites.contains(pharmacy.id)).toList()
+              ? pharmacies
+                    .where((pharmacy) => favorites.contains(pharmacy.id))
+                    .toList()
               : pharmacies;
-          
+
           if (showOnlyFavorites && displayedPharmacies.isEmpty) {
             return _buildEmptyFavoritesView();
           }
-          
+
           return Padding(
             padding: const EdgeInsets.all(8.0),
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, 
-                childAspectRatio: 0.8, 
+                crossAxisCount: 2,
+                childAspectRatio: 0.8,
                 crossAxisSpacing: 8.0,
                 mainAxisSpacing: 8.0,
               ),
@@ -203,7 +212,9 @@ class MainScreen extends ConsumerWidget {
             ),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator(color: Color(0xFF8ECAE6))),
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: Color(0xFF8ECAE6)),
+        ),
         error: (error, stack) => _buildErrorView(error),
       ),
     );
@@ -214,11 +225,7 @@ class MainScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.favorite_border,
-            size: 64,
-            color: Color(0xFF8ECAE6),
-          ),
+          const Icon(Icons.favorite_border, size: 64, color: Color(0xFF8ECAE6)),
           const SizedBox(height: 16),
           Text(
             'No favorite pharmacies yet',

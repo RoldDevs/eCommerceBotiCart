@@ -7,10 +7,7 @@ import 'dart:async';
 class SearchLocationScreen extends StatefulWidget {
   final Function(String address, LatLng location) onLocationSelected;
 
-  const SearchLocationScreen({
-    super.key,
-    required this.onLocationSelected,
-  });
+  const SearchLocationScreen({super.key, required this.onLocationSelected});
 
   @override
   State<SearchLocationScreen> createState() => _SearchLocationScreenState();
@@ -21,7 +18,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
   GoogleMapController? _mapController;
-  final LatLng _initialPosition = const LatLng(14.5995, 120.9842); 
+  final LatLng _initialPosition = const LatLng(14.5995, 120.9842);
   Set<Marker> _markers = {};
   Timer? _debounce;
 
@@ -64,65 +61,86 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
         for (String searchQuery in searchQueries) {
           try {
             List<Location> locations = await locationFromAddress(searchQuery);
-            
+
             for (var location in locations) {
               try {
                 List<Placemark> placemarks = await placemarkFromCoordinates(
                   location.latitude,
                   location.longitude,
                 );
-                
+
                 if (placemarks.isNotEmpty) {
                   for (var placemark in placemarks) {
                     // Create a more descriptive main address
                     String mainAddress = '';
-                    
+
                     // Try to use the most specific part first
-                    if (placemark.name != null && placemark.name!.isNotEmpty && placemark.name != placemark.street) {
+                    if (placemark.name != null &&
+                        placemark.name!.isNotEmpty &&
+                        placemark.name != placemark.street) {
                       mainAddress = placemark.name!;
-                    } else if (placemark.street != null && placemark.street!.isNotEmpty) {
+                    } else if (placemark.street != null &&
+                        placemark.street!.isNotEmpty) {
                       mainAddress = placemark.street!;
-                    } else if (placemark.subLocality != null && placemark.subLocality!.isNotEmpty) {
+                    } else if (placemark.subLocality != null &&
+                        placemark.subLocality!.isNotEmpty) {
                       mainAddress = placemark.subLocality!;
-                    } else if (placemark.locality != null && placemark.locality!.isNotEmpty) {
+                    } else if (placemark.locality != null &&
+                        placemark.locality!.isNotEmpty) {
                       mainAddress = placemark.locality!;
                     } else {
                       mainAddress = query;
                     }
-                    
+
                     // Create a more descriptive sub address
                     List<String> subAddressParts = [];
-                    if (placemark.subLocality != null && placemark.subLocality!.isNotEmpty && placemark.subLocality != mainAddress) {
+                    if (placemark.subLocality != null &&
+                        placemark.subLocality!.isNotEmpty &&
+                        placemark.subLocality != mainAddress) {
                       subAddressParts.add(placemark.subLocality!);
                     }
-                    if (placemark.locality != null && placemark.locality!.isNotEmpty && placemark.locality != mainAddress) {
+                    if (placemark.locality != null &&
+                        placemark.locality!.isNotEmpty &&
+                        placemark.locality != mainAddress) {
                       subAddressParts.add(placemark.locality!);
                     }
-                    if (placemark.administrativeArea != null && placemark.administrativeArea!.isNotEmpty) {
+                    if (placemark.administrativeArea != null &&
+                        placemark.administrativeArea!.isNotEmpty) {
                       subAddressParts.add(placemark.administrativeArea!);
                     }
-                    
+
                     String subAddress = subAddressParts.join(', ');
-                    
+
                     // Create full address
-                    String fullAddress = [mainAddress, subAddress].where((e) => e.isNotEmpty).join(', ');
-                    
+                    String fullAddress = [
+                      mainAddress,
+                      subAddress,
+                    ].where((e) => e.isNotEmpty).join(', ');
+
                     // Check if this result is already in our list (avoid duplicates)
-                    bool isDuplicate = allResults.any((result) => 
-                      result['fullAddress'] == fullAddress && 
-                      result['location'].latitude == location.latitude && 
-                      result['location'].longitude == location.longitude
+                    bool isDuplicate = allResults.any(
+                      (result) =>
+                          result['fullAddress'] == fullAddress &&
+                          result['location'].latitude == location.latitude &&
+                          result['location'].longitude == location.longitude,
                     );
-                    
+
                     // Only add if we have a meaningful address and it's not a duplicate
                     if (mainAddress.isNotEmpty && !isDuplicate) {
                       allResults.add({
                         'mainAddress': mainAddress,
                         'subAddress': subAddress,
                         'fullAddress': fullAddress,
-                        'location': LatLng(location.latitude, location.longitude),
+                        'location': LatLng(
+                          location.latitude,
+                          location.longitude,
+                        ),
                         // Add relevance score based on how closely it matches the original query
-                        'relevance': _calculateRelevance(query, mainAddress, subAddress),
+                        'relevance': _calculateRelevance(
+                          query,
+                          mainAddress,
+                          subAddress,
+                        ),
                       });
                     }
                   }
@@ -137,15 +155,18 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
             continue;
           }
         }
-        
+
         // Sort results by relevance
-        allResults.sort((a, b) => (b['relevance'] as double).compareTo(a['relevance'] as double));
-        
+        allResults.sort(
+          (a, b) =>
+              (b['relevance'] as double).compareTo(a['relevance'] as double),
+        );
+
         // Limit to top 10 results
         if (allResults.length > 10) {
           allResults = allResults.sublist(0, 10);
         }
-        
+
         setState(() {
           _searchResults = allResults;
           _isLoading = false;
@@ -154,7 +175,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
         setState(() {
           _isLoading = false;
         });
-        
+
         // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -170,14 +191,18 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
   }
 
   // Calculate relevance score based on how closely the result matches the query
-  double _calculateRelevance(String query, String mainAddress, String subAddress) {
+  double _calculateRelevance(
+    String query,
+    String mainAddress,
+    String subAddress,
+  ) {
     double score = 0.0;
-    
+
     // Normalize strings for comparison
     String normalizedQuery = query.toLowerCase();
     String normalizedMain = mainAddress.toLowerCase();
     String normalizedSub = subAddress.toLowerCase();
-    
+
     // Exact match in main address gets highest score
     if (normalizedMain == normalizedQuery) {
       score += 100.0;
@@ -190,16 +215,16 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
     else if (normalizedQuery.contains(normalizedMain)) {
       score += 40.0;
     }
-    
+
     // Sub address contains query
     if (normalizedSub.contains(normalizedQuery)) {
       score += 30.0;
     }
-    
+
     // Check for word matches
     List<String> queryWords = normalizedQuery.split(' ');
     for (String word in queryWords) {
-      if (word.length > 2) { 
+      if (word.length > 2) {
         if (normalizedMain.contains(word)) {
           score += 10.0;
         }
@@ -208,13 +233,13 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
         }
       }
     }
-    
+
     return score;
   }
 
   void _selectLocation(Map<String, dynamic> result) {
     final LatLng location = result['location'];
-    
+
     setState(() {
       _markers = {
         Marker(
@@ -223,13 +248,10 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
         ),
       };
     });
-    
+
     _mapController?.animateCamera(
       CameraUpdate.newCameraPosition(
-        CameraPosition(
-          target: location,
-          zoom: 15,
-        ),
+        CameraPosition(target: location, zoom: 15),
       ),
     );
   }
@@ -257,7 +279,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
               zoomControlsEnabled: false,
             ),
           ),
-          
+
           // Search panel at the bottom
           Positioned(
             left: 0,
@@ -293,7 +315,10 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                     child: Row(
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Color(0xFF8ECAE6)),
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Color(0xFF8ECAE6),
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                         Expanded(
@@ -307,7 +332,9 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                                 fontSize: 14,
                               ),
                               border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                              ),
                             ),
                             onChanged: (value) {
                               if (value.length > 2) {
@@ -333,7 +360,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Search results
                   Expanded(
                     child: _isLoading
@@ -342,75 +369,77 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                               color: Color(0xFF8ECAE6),
                             ),
                           )
-                        : _searchResults.isEmpty && _searchController.text.isNotEmpty && _searchController.text.length > 2
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(
-                                      Icons.location_off,
-                                      size: 48,
-                                      color: Colors.grey,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No results found',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Try a different search term',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
+                        : _searchResults.isEmpty &&
+                              _searchController.text.isNotEmpty &&
+                              _searchController.text.length > 2
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.location_off,
+                                  size: 48,
+                                  color: Colors.grey,
                                 ),
-                              )
-                            : ListView.builder(
-                                itemCount: _searchResults.length,
-                                itemBuilder: (context, index) {
-                                  final result = _searchResults[index];
-                                  return ListTile(
-                                    leading: const Icon(
-                                      Icons.location_on_outlined,
-                                      color: Color(0xFF8ECAE6),
-                                    ),
-                                    title: Text(
-                                      result['mainAddress'],
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      result['subAddress'],
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    onTap: () {
-                                      _selectLocation(result);
-                                      widget.onLocationSelected(
-                                        result['fullAddress'],
-                                        result['location'],
-                                      );
-                                      Navigator.pop(context);
-                                    },
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No results found',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Try a different search term',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _searchResults.length,
+                            itemBuilder: (context, index) {
+                              final result = _searchResults[index];
+                              return ListTile(
+                                leading: const Icon(
+                                  Icons.location_on_outlined,
+                                  color: Color(0xFF8ECAE6),
+                                ),
+                                title: Text(
+                                  result['mainAddress'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  result['subAddress'],
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                onTap: () {
+                                  _selectLocation(result);
+                                  widget.onLocationSelected(
+                                    result['fullAddress'],
+                                    result['location'],
                                   );
+                                  Navigator.pop(context);
                                 },
-                              ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),
             ),
           ),
-          
+
           // Back button at the top
           Positioned(
             top: MediaQuery.of(context).padding.top,

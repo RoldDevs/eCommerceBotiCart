@@ -485,18 +485,25 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             (offering) => Padding(
                               padding: const EdgeInsets.only(bottom: 4.0),
                               child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
-                                    Icons.circle,
-                                    size: 6,
-                                    color: Colors.black54,
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 6),
+                                    child: Icon(
+                                      Icons.circle,
+                                      size: 6,
+                                      color: Colors.black54,
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text(
-                                    offering,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: Colors.black54,
+                                  Expanded(
+                                    child: Text(
+                                      offering,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: Colors.black54,
+                                      ),
+                                      softWrap: true,
                                     ),
                                   ),
                                 ],
@@ -1011,7 +1018,7 @@ class _MedicineDetailScreenState extends ConsumerState<MedicineDetailScreen> {
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  childAspectRatio: 0.75,
+                                  childAspectRatio: 0.72,
                                   crossAxisSpacing: 16,
                                   mainAxisSpacing: 16,
                                 ),

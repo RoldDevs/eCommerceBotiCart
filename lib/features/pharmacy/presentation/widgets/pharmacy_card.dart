@@ -8,10 +8,7 @@ import '../screens/pharmacy_detail_screen.dart';
 class PharmacyCard extends ConsumerWidget {
   final Pharmacy pharmacy;
 
-  const PharmacyCard({
-    super.key,
-    required this.pharmacy,
-  });
+  const PharmacyCard({super.key, required this.pharmacy});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -20,9 +17,12 @@ class PharmacyCard extends ConsumerWidget {
 
     return GestureDetector(
       onTap: () {
-        debugPrint('DEBUG: PharmacyCard tapped - Setting selectedPharmacyStoreIdProvider to: ${pharmacy.storeID}');
-        ref.read(selectedPharmacyStoreIdProvider.notifier).state = pharmacy.storeID;
-        
+        debugPrint(
+          'DEBUG: PharmacyCard tapped - Setting selectedPharmacyStoreIdProvider to: ${pharmacy.storeID}',
+        );
+        ref.read(selectedPharmacyStoreIdProvider.notifier).state =
+            pharmacy.storeID;
+
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => PharmacyDetailScreen(pharmacy: pharmacy),
@@ -56,13 +56,13 @@ class PharmacyCard extends ConsumerWidget {
                       image: pharmacy.backgroundImgUrl.isNotEmpty
                           ? DecorationImage(
                               image: NetworkImage(pharmacy.backgroundImgUrl),
-                              fit: BoxFit.cover, 
+                              fit: BoxFit.cover,
                             )
                           : null,
                     ),
                   ),
                 ),
-                
+
                 // Pharmacy logo circle
                 Transform.translate(
                   offset: const Offset(0, 20),
@@ -105,7 +105,12 @@ class PharmacyCard extends ConsumerWidget {
             // Pharmacy name and location
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12.0, 28.0, 12.0, 0.0), // Reduced top padding from 30 to 28
+                padding: const EdgeInsets.fromLTRB(
+                  12.0,
+                  28.0,
+                  12.0,
+                  0.0,
+                ), // Reduced top padding from 30 to 28
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -125,7 +130,9 @@ class PharmacyCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Padding(
-                          padding: EdgeInsets.only(top: 1.5), // Reduced from 2.0 to 1.5
+                          padding: EdgeInsets.only(
+                            top: 1.5,
+                          ), // Reduced from 2.0 to 1.5
                           child: Icon(
                             Icons.location_on_outlined,
                             size: 16, // Reduced from 18 to 16
@@ -155,10 +162,19 @@ class PharmacyCard extends ConsumerWidget {
 
             // Rating + Favorite button
             Padding(
-              padding: const EdgeInsets.fromLTRB(12.0, 2.0, 12.0, 6.0), // Reduced padding: top from 4 to 2, bottom from 8 to 6
+              padding: const EdgeInsets.fromLTRB(
+                12.0,
+                2.0,
+                12.0,
+                6.0,
+              ), // Reduced padding: top from 4 to 2, bottom from 8 to 6
               child: Row(
                 children: [
-                  const Icon(Icons.star, color: Colors.amber, size: 12), // Reduced from 14 to 12
+                  const Icon(
+                    Icons.star,
+                    color: Colors.amber,
+                    size: 12,
+                  ), // Reduced from 14 to 12
                   const SizedBox(width: 2),
                   Expanded(
                     child: Text(
@@ -174,14 +190,21 @@ class PharmacyCard extends ConsumerWidget {
                   ),
                   IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32), // Reduced from 36x36 to 32x32
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ), // Reduced from 36x36 to 32x32
                     icon: Icon(
                       isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? const Color(0xFF8ECAE6) : const Color(0xFF8ECAE6),
+                      color: isFavorite
+                          ? const Color(0xFF8ECAE6)
+                          : const Color(0xFF8ECAE6),
                       size: 40, // Reduced from 24 to 20
                     ),
                     onPressed: () {
-                      final favoritesNotifier = ref.read(favoritesProvider.notifier);
+                      final favoritesNotifier = ref.read(
+                        favoritesProvider.notifier,
+                      );
                       favoritesNotifier.state = isFavorite
                           ? favorites.where((id) => id != pharmacy.id).toList()
                           : [...favorites, pharmacy.id];

@@ -16,23 +16,14 @@ class LocationResultItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: const Icon(
-        Icons.location_on_outlined,
-        color: Color(0xFF8ECAE6),
-      ),
+      leading: const Icon(Icons.location_on_outlined, color: Color(0xFF8ECAE6)),
       title: Text(
         mainAddress,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
         subAddress,
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
+        style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey),
       ),
       onTap: onTap,
     );

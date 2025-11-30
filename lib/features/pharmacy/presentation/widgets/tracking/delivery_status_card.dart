@@ -4,10 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class DeliveryStatusCard extends StatelessWidget {
   final String status;
 
-  const DeliveryStatusCard({
-    super.key,
-    required this.status,
-  });
+  const DeliveryStatusCard({super.key, required this.status});
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +16,7 @@ class DeliveryStatusCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 4,
             offset: const Offset(0, 1),
@@ -31,14 +28,10 @@ class DeliveryStatusCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: _getStatusColor().withOpacity(0.1),
+              color: _getStatusColor().withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              _getStatusIcon(),
-              color: _getStatusColor(),
-              size: 24,
-            ),
+            child: Icon(_getStatusIcon(), color: _getStatusColor(), size: 24),
           ),
           const SizedBox(width: 16),
           Column(

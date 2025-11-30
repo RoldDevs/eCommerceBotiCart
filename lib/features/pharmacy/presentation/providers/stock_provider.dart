@@ -7,15 +7,20 @@ final stockServiceProvider = Provider<StockService>((ref) {
   return StockService();
 });
 
-final stockProvider = StateNotifierProvider.family<StockNotifier, AsyncValue<int>, String>((ref, medicineId) {
-  return StockNotifier(ref.read(stockServiceProvider), medicineId);
-});
+final stockProvider =
+    StateNotifierProvider.family<StockNotifier, AsyncValue<int>, String>((
+      ref,
+      medicineId,
+    ) {
+      return StockNotifier(ref.read(stockServiceProvider), medicineId);
+    });
 
 class StockNotifier extends StateNotifier<AsyncValue<int>> {
   final StockService _stockService;
   final String _medicineId;
 
-  StockNotifier(this._stockService, this._medicineId) : super(const AsyncValue.loading()) {
+  StockNotifier(this._stockService, this._medicineId)
+    : super(const AsyncValue.loading()) {
     _loadStock();
   }
 
@@ -48,7 +53,10 @@ class StockNotifier extends StateNotifier<AsyncValue<int>> {
 
   Future<bool> checkSufficientStock(int requestedQuantity) async {
     try {
-      return !await _stockService.hasInsufficientStock(_medicineId, requestedQuantity);
+      return !await _stockService.hasInsufficientStock(
+        _medicineId,
+        requestedQuantity,
+      );
     } catch (e) {
       return false;
     }
@@ -56,7 +64,10 @@ class StockNotifier extends StateNotifier<AsyncValue<int>> {
 }
 
 // Provider for watching stock changes in real-time
-final stockStreamProvider = StreamProvider.family<int, String>((ref, medicineId) {
+final stockStreamProvider = StreamProvider.family<int, String>((
+  ref,
+  medicineId,
+) {
   final stockService = ref.read(stockServiceProvider);
   return stockService.watchMedicineStock(medicineId);
 });

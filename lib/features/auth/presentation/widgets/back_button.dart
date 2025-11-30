@@ -12,17 +12,10 @@ class AuthBackButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(
-            color: Colors.grey.shade300,
-            width: 1,
-          ),
+          border: Border.all(color: Colors.grey.shade300, width: 1),
         ),
         child: const Center(
-          child: Icon(
-            Icons.arrow_back_ios_new,
-            size: 16,
-            color: Colors.grey,
-          ),
+          child: Icon(Icons.arrow_back_ios_new, size: 16, color: Colors.grey),
         ),
       ),
     );

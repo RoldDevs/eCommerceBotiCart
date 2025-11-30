@@ -23,9 +23,11 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .collection('reviews')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Review.fromFirestore(doc.data(), doc.id))
-            .toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Review.fromFirestore(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   @override
@@ -35,7 +37,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .doc(review.pharmacyId)
         .collection('reviews')
         .add(review.toFirestore());
-    
+
     // Update pharmacy rating after adding review
     await updatePharmacyRatingAfterReviewChange(review.pharmacyId);
   }
@@ -48,7 +50,7 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .collection('reviews')
         .doc(review.id)
         .update(review.toFirestore());
-    
+
     // Update pharmacy rating after updating review
     await updatePharmacyRatingAfterReviewChange(review.pharmacyId);
   }
@@ -61,22 +63,30 @@ class ReviewRepositoryImpl implements ReviewRepository {
         .collection('reviews')
         .doc(reviewId)
         .delete();
-    
+
     // Update pharmacy rating after deleting review
     await updatePharmacyRatingAfterReviewChange(pharmacyId);
   }
 
   @override
-  Future<String> uploadReviewMedia(String filePath, String userId, String reviewId, bool isVideo) async {
+  Future<String> uploadReviewMedia(
+    String filePath,
+    String userId,
+    String reviewId,
+    bool isVideo,
+  ) async {
     final file = File(filePath);
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
+    final fileName =
+        '${DateTime.now().millisecondsSinceEpoch}_${file.path.split('/').last}';
     final mediaType = isVideo ? 'videos' : 'images';
-    
-    final ref = _storage.ref().child('reviews/$userId/$reviewId/$mediaType/$fileName');
-    
+
+    final ref = _storage.ref().child(
+      'reviews/$userId/$reviewId/$mediaType/$fileName',
+    );
+
     final uploadTask = ref.putFile(file);
     final snapshot = await uploadTask;
-    
+
     return await snapshot.ref.getDownloadURL();
   }
 
@@ -99,14 +109,21 @@ class ReviewRepositoryImpl implements ReviewRepository {
       double averageRating = 0.0;
 
       if (reviewCount > 0) {
-        final totalRating = reviews.fold<double>(0.0, (sum, review) => sum + review.rating);
+        final totalRating = reviews.fold<double>(
+          0.0,
+          (sum, review) => sum + review.rating,
+        );
         averageRating = totalRating / reviewCount;
         // Round to 1 decimal place
         averageRating = double.parse(averageRating.toStringAsFixed(1));
       }
 
       // Update pharmacy document with new rating and review count
-      await _pharmacyRepository.updatePharmacyRating(pharmacyId, averageRating, reviewCount);
+      await _pharmacyRepository.updatePharmacyRating(
+        pharmacyId,
+        averageRating,
+        reviewCount,
+      );
     } catch (e) {
       // Don't throw error to avoid breaking review operations
     }
