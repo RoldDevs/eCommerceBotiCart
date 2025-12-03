@@ -19,6 +19,33 @@ class Pharmacy {
   final DateTime? billingStart;
   final DateTime? billingEnd;
 
+  // Owner information
+  final String? ownerFirstName;
+  final String? ownerLastName;
+
+  // Business address details
+  final String? region;
+  final String? province;
+  final String? cityMunicipality;
+  final String? barangay;
+  final String? street;
+
+  // Operating hours
+  final String? operatingHours;
+
+  // Regulatory compliance documents
+  final String? fdaLicenseUrl;
+  final String? businessPermitUrl;
+  final String? ownerGovernmentIdFrontUrl;
+  final String? drugstorePictureUrl;
+  final String? paymentQrCodeUrl;
+
+  // Theme information
+  final String?
+  currentThemeId; // The theme ID currently active for this pharmacy
+  final List<String>
+  purchasedThemes; // List of theme IDs the pharmacy has purchased
+
   Pharmacy({
     required this.id,
     required this.name,
@@ -39,11 +66,46 @@ class Pharmacy {
     this.receiptImageURL,
     this.billingStart,
     this.billingEnd,
+    this.ownerFirstName,
+    this.ownerLastName,
+    this.region,
+    this.province,
+    this.cityMunicipality,
+    this.barangay,
+    this.street,
+    this.operatingHours,
+    this.fdaLicenseUrl,
+    this.businessPermitUrl,
+    this.ownerGovernmentIdFrontUrl,
+    this.drugstorePictureUrl,
+    this.paymentQrCodeUrl,
+    this.currentThemeId,
+    this.purchasedThemes = const [],
   });
 
   factory Pharmacy.fromFirestore(Map<String, dynamic> data, String id) {
     int storeID =
         data['storeID'] ?? int.parse(id.substring(0, 8), radix: 16) % 100000;
+
+    // Helper function to safely extract String from Firestore data
+    String? _safeString(dynamic value) {
+      if (value == null) return null;
+      if (value is String) return value;
+      if (value is Map) return null; // Skip Map values, return null instead
+      return value.toString();
+    }
+
+    // Helper function to safely extract List<String> from Firestore data
+    List<String> _safeStringList(dynamic value) {
+      if (value == null) return [];
+      if (value is List) {
+        return value
+            .where((item) => item is String)
+            .map((item) => item as String)
+            .toList();
+      }
+      return [];
+    }
 
     return Pharmacy(
       id: id,
@@ -56,18 +118,33 @@ class Pharmacy {
       imageUrl: data['imageURL'] ?? '',
       description: data['description'] ?? '',
       storeID: storeID,
-      gcashQrCodeUrl: data['gcashQrCodeUrl'],
+      gcashQrCodeUrl: _safeString(data['gcashQrCodeUrl']),
       amount: data['amount']?.toDouble(),
-      status: data['status'],
-      invoiceId: data['invoiceId'],
-      remittanceId: data['remittanceId'],
-      receiptImageURL: data['receiptImageURL'],
+      status: _safeString(data['status']),
+      invoiceId: _safeString(data['invoiceId']),
+      remittanceId: _safeString(data['remittanceId']),
+      receiptImageURL: _safeString(data['receiptImageURL']),
       billingStart: data['billingStart'] != null
           ? DateTime.fromMillisecondsSinceEpoch(data['billingStart'])
           : null,
       billingEnd: data['billingEnd'] != null
           ? DateTime.fromMillisecondsSinceEpoch(data['billingEnd'])
           : null,
+      ownerFirstName: _safeString(data['ownerFirstName']),
+      ownerLastName: _safeString(data['ownerLastName']),
+      region: _safeString(data['region']),
+      province: _safeString(data['province']),
+      cityMunicipality: _safeString(data['cityMunicipality']),
+      barangay: _safeString(data['barangay']),
+      street: _safeString(data['street']),
+      operatingHours: _safeString(data['operatingHours']),
+      fdaLicenseUrl: _safeString(data['fdaLicenseUrl']),
+      businessPermitUrl: _safeString(data['businessPermitUrl']),
+      ownerGovernmentIdFrontUrl: _safeString(data['ownerGovernmentIdFrontUrl']),
+      drugstorePictureUrl: _safeString(data['drugstorePictureUrl']),
+      paymentQrCodeUrl: _safeString(data['paymentQrCodeUrl']),
+      currentThemeId: _safeString(data['currentThemeId']),
+      purchasedThemes: _safeStringList(data['purchasedThemes']),
     );
   }
 
@@ -90,6 +167,21 @@ class Pharmacy {
       'receiptImageURL': receiptImageURL,
       'billingStart': billingStart?.millisecondsSinceEpoch,
       'billingEnd': billingEnd?.millisecondsSinceEpoch,
+      'ownerFirstName': ownerFirstName,
+      'ownerLastName': ownerLastName,
+      'region': region,
+      'province': province,
+      'cityMunicipality': cityMunicipality,
+      'barangay': barangay,
+      'street': street,
+      'operatingHours': operatingHours,
+      'fdaLicenseUrl': fdaLicenseUrl,
+      'businessPermitUrl': businessPermitUrl,
+      'ownerGovernmentIdFrontUrl': ownerGovernmentIdFrontUrl,
+      'drugstorePictureUrl': drugstorePictureUrl,
+      'paymentQrCodeUrl': paymentQrCodeUrl,
+      'currentThemeId': currentThemeId,
+      'purchasedThemes': purchasedThemes,
     };
   }
 
@@ -113,6 +205,21 @@ class Pharmacy {
     String? receiptImageURL,
     DateTime? billingStart,
     DateTime? billingEnd,
+    String? ownerFirstName,
+    String? ownerLastName,
+    String? region,
+    String? province,
+    String? cityMunicipality,
+    String? barangay,
+    String? street,
+    String? operatingHours,
+    String? fdaLicenseUrl,
+    String? businessPermitUrl,
+    String? ownerGovernmentIdFrontUrl,
+    String? drugstorePictureUrl,
+    String? paymentQrCodeUrl,
+    String? currentThemeId,
+    List<String>? purchasedThemes,
   }) {
     return Pharmacy(
       id: id ?? this.id,
@@ -134,6 +241,22 @@ class Pharmacy {
       receiptImageURL: receiptImageURL ?? this.receiptImageURL,
       billingStart: billingStart ?? this.billingStart,
       billingEnd: billingEnd ?? this.billingEnd,
+      ownerFirstName: ownerFirstName ?? this.ownerFirstName,
+      ownerLastName: ownerLastName ?? this.ownerLastName,
+      region: region ?? this.region,
+      province: province ?? this.province,
+      cityMunicipality: cityMunicipality ?? this.cityMunicipality,
+      barangay: barangay ?? this.barangay,
+      street: street ?? this.street,
+      operatingHours: operatingHours ?? this.operatingHours,
+      fdaLicenseUrl: fdaLicenseUrl ?? this.fdaLicenseUrl,
+      businessPermitUrl: businessPermitUrl ?? this.businessPermitUrl,
+      ownerGovernmentIdFrontUrl:
+          ownerGovernmentIdFrontUrl ?? this.ownerGovernmentIdFrontUrl,
+      drugstorePictureUrl: drugstorePictureUrl ?? this.drugstorePictureUrl,
+      paymentQrCodeUrl: paymentQrCodeUrl ?? this.paymentQrCodeUrl,
+      currentThemeId: currentThemeId ?? this.currentThemeId,
+      purchasedThemes: purchasedThemes ?? this.purchasedThemes,
     );
   }
 }

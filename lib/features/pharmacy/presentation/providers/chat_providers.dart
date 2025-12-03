@@ -12,7 +12,7 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
   return ChatRepository(firestore: FirebaseFirestore.instance);
 });
 
-final userConversationsProvider = StreamProvider<List<ChatConversation>>((ref) {
+final userConversationsProvider = StreamProvider.autoDispose<List<ChatConversation>>((ref) {
   final userAsyncValue = ref.watch(currentUserProvider);
   final repository = ref.watch(chatRepositoryProvider);
 
@@ -72,7 +72,7 @@ final selectedConversationIdProvider = StateProvider<String?>((ref) => null);
 final selectedPharmacyForChatProvider = StateProvider<Pharmacy?>((ref) => null);
 
 // Provider for unread chat conversation count
-final unreadChatConversationCountProvider = StreamProvider<int>((ref) {
+final unreadChatConversationCountProvider = StreamProvider.autoDispose<int>((ref) {
   final conversationsAsyncValue = ref.watch(userConversationsProvider);
 
   return conversationsAsyncValue.when(

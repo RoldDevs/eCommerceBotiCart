@@ -9,4 +9,6 @@ abstract class PharmacyRepository {
     double newRating,
     int newReviewCount,
   );
+  Future<void> updatePharmacyTheme(String pharmacyId, String themeId);
+  Future<void> purchaseTheme(String pharmacyId, String themeId);
 }
