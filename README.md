@@ -16,7 +16,7 @@ Our application implements a **Dijkstra-like route optimization algorithm** that
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Route Optimization Flow                    │
+│               Route Optimization Flow                │
 └─────────────────────────────────────────────────────────────┘
 
 1. Request Multiple Routes
