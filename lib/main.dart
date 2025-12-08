@@ -10,6 +10,9 @@ import 'package:boticart/features/helpchat/data/repositories/help_chat_repositor
 import 'package:boticart/features/auth/data/services/persistent_auth_service.dart';
 import 'package:boticart/features/pharmacy/presentation/screens/orders_screen.dart';
 import 'package:boticart/features/pharmacy/presentation/providers/order_status_provider.dart';
+import 'package:boticart/core/services/notification_service.dart';
+import 'package:boticart/core/services/notification_navigation_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +36,13 @@ void main() async {
   if (isLoggedIn && FirebaseAuth.instance.currentUser == null) {
     await PersistentAuthService.clearLoginState();
   }
+
+  // Initialize notification service
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
+  // Handle initial notification if app was opened from notification
+  final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
 
   WidgetsBinding.instance.addObserver(AppLifecycleObserver());
 
@@ -73,6 +83,7 @@ class MyApp extends ConsumerWidget {
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: MaterialApp(
+        navigatorKey: NotificationNavigationService.navigatorKey,
         title: 'BotiCart',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme.copyWith(

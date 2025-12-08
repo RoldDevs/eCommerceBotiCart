@@ -231,33 +231,16 @@ class QuickActionsSection extends ConsumerWidget {
                 title: 'About Us',
                 icon: Icons.info_outline,
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text(
-                        'About Us',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8ECAE6),
+                  if (pharmacy != null) {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => PharmacyReviewsScreen(
+                          pharmacy: pharmacy!,
+                          initialTabIndex: 0, // Navigate to About tab
                         ),
-                      ),
-                      content: Text(
-                        'Coming Soon',
-                        style: GoogleFonts.poppins(),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: Text(
-                            'OK',
-                            style: GoogleFonts.poppins(
-                              color: const Color(0xFF8ECAE6),
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   );
+                  }
                 },
               ),
               QuickActionCard(

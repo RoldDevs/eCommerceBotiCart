@@ -88,7 +88,7 @@ class Pharmacy {
         data['storeID'] ?? int.parse(id.substring(0, 8), radix: 16) % 100000;
 
     // Helper function to safely extract String from Firestore data
-    String? _safeString(dynamic value) {
+    String? safeString(dynamic value) {
       if (value == null) return null;
       if (value is String) return value;
       if (value is Map) return null; // Skip Map values, return null instead
@@ -96,13 +96,10 @@ class Pharmacy {
     }
 
     // Helper function to safely extract List<String> from Firestore data
-    List<String> _safeStringList(dynamic value) {
+    List<String> safeStringList(dynamic value) {
       if (value == null) return [];
       if (value is List) {
-        return value
-            .where((item) => item is String)
-            .map((item) => item as String)
-            .toList();
+        return value.whereType<String>().map((item) => item as String).toList();
       }
       return [];
     }
@@ -118,33 +115,33 @@ class Pharmacy {
       imageUrl: data['imageURL'] ?? '',
       description: data['description'] ?? '',
       storeID: storeID,
-      gcashQrCodeUrl: _safeString(data['gcashQrCodeUrl']),
+      gcashQrCodeUrl: safeString(data['gcashQrCodeUrl']),
       amount: data['amount']?.toDouble(),
-      status: _safeString(data['status']),
-      invoiceId: _safeString(data['invoiceId']),
-      remittanceId: _safeString(data['remittanceId']),
-      receiptImageURL: _safeString(data['receiptImageURL']),
+      status: safeString(data['status']),
+      invoiceId: safeString(data['invoiceId']),
+      remittanceId: safeString(data['remittanceId']),
+      receiptImageURL: safeString(data['receiptImageURL']),
       billingStart: data['billingStart'] != null
           ? DateTime.fromMillisecondsSinceEpoch(data['billingStart'])
           : null,
       billingEnd: data['billingEnd'] != null
           ? DateTime.fromMillisecondsSinceEpoch(data['billingEnd'])
           : null,
-      ownerFirstName: _safeString(data['ownerFirstName']),
-      ownerLastName: _safeString(data['ownerLastName']),
-      region: _safeString(data['region']),
-      province: _safeString(data['province']),
-      cityMunicipality: _safeString(data['cityMunicipality']),
-      barangay: _safeString(data['barangay']),
-      street: _safeString(data['street']),
-      operatingHours: _safeString(data['operatingHours']),
-      fdaLicenseUrl: _safeString(data['fdaLicenseUrl']),
-      businessPermitUrl: _safeString(data['businessPermitUrl']),
-      ownerGovernmentIdFrontUrl: _safeString(data['ownerGovernmentIdFrontUrl']),
-      drugstorePictureUrl: _safeString(data['drugstorePictureUrl']),
-      paymentQrCodeUrl: _safeString(data['paymentQrCodeUrl']),
-      currentThemeId: _safeString(data['currentThemeId']),
-      purchasedThemes: _safeStringList(data['purchasedThemes']),
+      ownerFirstName: safeString(data['ownerFirstName']),
+      ownerLastName: safeString(data['ownerLastName']),
+      region: safeString(data['region']),
+      province: safeString(data['province']),
+      cityMunicipality: safeString(data['cityMunicipality']),
+      barangay: safeString(data['barangay']),
+      street: safeString(data['street']),
+      operatingHours: safeString(data['operatingHours']),
+      fdaLicenseUrl: safeString(data['fdaLicenseUrl']),
+      businessPermitUrl: safeString(data['businessPermitUrl']),
+      ownerGovernmentIdFrontUrl: safeString(data['ownerGovernmentIdFrontUrl']),
+      drugstorePictureUrl: safeString(data['drugstorePictureUrl']),
+      paymentQrCodeUrl: safeString(data['paymentQrCodeUrl']),
+      currentThemeId: safeString(data['currentThemeId']),
+      purchasedThemes: safeStringList(data['purchasedThemes']),
     );
   }
 

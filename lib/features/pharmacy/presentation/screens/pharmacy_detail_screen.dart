@@ -168,25 +168,25 @@ class PharmacyDetailScreen extends ConsumerWidget {
                                       return Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            'Welcome to ${pharmacy.name} -',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w700,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Welcome to ${pharmacy.name} -',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
                                               color: accentColor,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'Your health, our\npriority.',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Your health, our\npriority.',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
                                               color: accentColor,
-                                              height: 1.2,
-                                            ),
+                                      height: 1.2,
+                                    ),
                                           ),
                                         ],
                                       );
@@ -490,16 +490,6 @@ class PharmacyDetailScreen extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-
-          // Notification icon
-          Container(
-            padding: const EdgeInsets.fromLTRB(0, 10, 20, 0),
-            child: Icon(
-              Icons.mark_email_unread,
-              color: getColor('accent'),
-              size: 45,
-            ),
           ),
         ],
       ),

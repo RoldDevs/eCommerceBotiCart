@@ -5,6 +5,7 @@ import '../../domain/entities/order_message.dart';
 import '../../domain/entities/order.dart';
 import '../../domain/entities/medicine.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 
 final orderMessageRepositoryProvider = Provider<OrderMessageRepository>((ref) {
   return OrderMessageRepository(firestore: FirebaseFirestore.instance);
@@ -19,6 +20,7 @@ class OrderMessageService {
   final OrderMessageRepository _repository;
   // ignore: unused_field
   final Ref _ref;
+  final FCMNotificationService _notificationService = FCMNotificationService();
 
   OrderMessageService(this._repository, this._ref);
 
@@ -66,6 +68,20 @@ Thank you for choosing ${pharmacy.name}!
     );
 
     await _repository.createOrderMessage(orderMessage);
+
+    // Send notification
+    try {
+      await _notificationService.sendOrderNotification(
+        userId: order.userUID,
+        orderId: order.orderID,
+        title: title,
+        message: message,
+        pharmacyId: pharmacy.id,
+        messageType: 'orderConfirmation',
+      );
+    } catch (e) {
+      print('Error sending order notification: $e');
+    }
   }
 
   // Create order confirmation message for multiple items
@@ -118,6 +134,20 @@ Thank you for choosing ${pharmacy.name}!
     );
 
     await _repository.createOrderMessage(orderMessage);
+
+    // Send notification
+    try {
+      await _notificationService.sendOrderNotification(
+        userId: order.userUID,
+        orderId: order.orderID,
+        title: title,
+        message: message,
+        pharmacyId: pharmacy.id,
+        messageType: 'orderConfirmation',
+      );
+    } catch (e) {
+      print('Error sending order notification: $e');
+    }
   }
 
   // Create in-transit message
@@ -176,6 +206,20 @@ Thank you for your patience!
     );
 
     await _repository.createOrderMessage(orderMessage);
+
+    // Send notification
+    try {
+      await _notificationService.sendOrderNotification(
+        userId: order.userUID,
+        orderId: order.orderID,
+        title: title,
+        message: message,
+        pharmacyId: pharmacy.id,
+        messageType: 'orderConfirmation',
+      );
+    } catch (e) {
+      print('Error sending order notification: $e');
+    }
   }
 
   // Create in-transit message for multiple items
@@ -241,6 +285,20 @@ Thank you for your patience!
     );
 
     await _repository.createOrderMessage(orderMessage);
+
+    // Send notification
+    try {
+      await _notificationService.sendOrderNotification(
+        userId: order.userUID,
+        orderId: order.orderID,
+        title: title,
+        message: message,
+        pharmacyId: pharmacy.id,
+        messageType: 'inTransit',
+      );
+    } catch (e) {
+      print('Error sending order notification: $e');
+    }
   }
 
   // Create payment received message
@@ -283,6 +341,20 @@ Thank you for your payment!
     );
 
     await _repository.createOrderMessage(orderMessage);
+
+    // Send notification
+    try {
+      await _notificationService.sendOrderNotification(
+        userId: order.userUID,
+        orderId: order.orderID,
+        title: title,
+        message: message,
+        pharmacyId: pharmacy.id,
+        messageType: 'orderConfirmation',
+      );
+    } catch (e) {
+      print('Error sending order notification: $e');
+    }
   }
 
   // Get user order messages

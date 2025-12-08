@@ -11,8 +11,13 @@ import 'add_review_screen.dart';
 
 class PharmacyReviewsScreen extends ConsumerStatefulWidget {
   final Pharmacy pharmacy;
+  final int? initialTabIndex;
 
-  const PharmacyReviewsScreen({super.key, required this.pharmacy});
+  const PharmacyReviewsScreen({
+    super.key,
+    required this.pharmacy,
+    this.initialTabIndex,
+  });
 
   @override
   ConsumerState<PharmacyReviewsScreen> createState() =>
@@ -29,7 +34,11 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this, initialIndex: 2);
+    _tabController = TabController(
+      length: 3,
+      vsync: this,
+      initialIndex: widget.initialTabIndex ?? 2,
+    );
     _tabController.addListener(() {
       setState(() {});
     });
@@ -171,9 +180,9 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Top row with back button and action buttons
+                // Top row with back button only
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
@@ -182,30 +191,6 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
                         color: Colors.white,
                         size: 24,
                       ),
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            // Share functionality
-                          },
-                          icon: const Icon(
-                            Icons.share,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            // Bookmark functionality
-                          },
-                          icon: const Icon(
-                            Icons.bookmark_border,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -413,18 +398,43 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildVisualItem('Storefront', Icons.arrow_forward_ios),
+          _buildVisualItem(
+            'Storefront',
+            Icons.arrow_forward_ios,
+            widget.pharmacy.drugstorePictureUrl,
+          ),
           const SizedBox(height: 16),
-          _buildVisualItem('FDA License', Icons.arrow_forward_ios),
+          _buildVisualItem(
+            'FDA License',
+            Icons.arrow_forward_ios,
+            widget.pharmacy.fdaLicenseUrl,
+          ),
           const SizedBox(height: 16),
-          _buildVisualItem('Business Permit', Icons.arrow_forward_ios),
+          _buildVisualItem(
+            'Business Permit',
+            Icons.arrow_forward_ios,
+            widget.pharmacy.businessPermitUrl,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildVisualItem(String title, IconData icon) {
-    return Container(
+  Widget _buildVisualItem(String title, IconData icon, String? imageUrl) {
+    return GestureDetector(
+      onTap: () {
+        if (imageUrl != null && imageUrl.isNotEmpty) {
+          _showImageDialog(context, title, imageUrl);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$title image is not available'),
+              backgroundColor: Colors.grey[600],
+            ),
+          );
+        }
+      },
+      child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -444,6 +454,107 @@ class _PharmacyReviewsScreenState extends ConsumerState<PharmacyReviewsScreen>
           ),
           Icon(icon, color: Colors.grey[600], size: 16),
         ],
+        ),
+      ),
+    );
+  }
+
+  void _showImageDialog(BuildContext context, String title, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF8ECAE6),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(Icons.close),
+                          color: Colors.grey[600],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: Container(
+                      constraints: const BoxConstraints(maxHeight: 500),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          imageUrl,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      size: 48,
+                                      color: Colors.grey[400],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Failed to load image',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  value:
+                                      loadingProgress.expectedTotalBytes != null
+                                      ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                      : null,
+                                  color: const Color(0xFF8ECAE6),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

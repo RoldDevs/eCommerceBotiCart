@@ -1,0 +1,57 @@
+# Flutter CI/CD Workflow
+# This workflow runs analysis, formatting checks, and tests for Flutter projects
+
+name: Flutter CI
+
+on:
+  push:
+    branches: 
+      - "main"
+      - "development"
+      - "test-feature"
+      - "test-pickuponly"
+      - "test-prod"
+      - "test-recons"
+  pull_request:
+    branches: 
+      - "main"
+      - "development"
+      - "test-feature"
+      - "test-pickuponly"
+      - "test-prod"
+      - "test-recons"
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter installation
+        run: flutter --version
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Verify formatting
+        run: dart format --output=none --set-exit-if-changed .
+
+      - name: Analyze project source
+        run: flutter analyze
+        continue-on-error: false
+
+      - name: Run tests
+        run: flutter test
+        continue-on-error: false
+
+      - name: Check Android build setup
+        run: flutter doctor -v

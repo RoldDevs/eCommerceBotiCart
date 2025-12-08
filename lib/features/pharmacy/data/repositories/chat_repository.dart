@@ -2,9 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_conversation.dart';
 import '../../domain/entities/pharmacy.dart';
+import '../../../../core/services/fcm_notification_service.dart';
 
 class ChatRepository {
   final FirebaseFirestore _firestore;
+  final FCMNotificationService _notificationService = FCMNotificationService();
 
   ChatRepository({required FirebaseFirestore firestore})
     : _firestore = firestore;
@@ -110,6 +112,35 @@ class ChatRepository {
           .collection('conversations')
           .doc(conversationId)
           .update(updateData);
+
+      // Send notification if message is from pharmacy/admin
+      if (message.senderType != 'customer') {
+        try {
+          // Get conversation to find userId
+          final conversationDoc = await _firestore
+              .collection('conversations')
+              .doc(conversationId)
+              .get();
+          
+          if (conversationDoc.exists) {
+            final conversationData = conversationDoc.data()!;
+            final userId = conversationData['userId'] as String;
+            final pharmacyName = conversationData['pharmacyName'] as String? ?? 'Pharmacy';
+            final pharmacyId = conversationData['pharmacyId'] as String? ?? '';
+
+            await _notificationService.sendChatNotification(
+              userId: userId,
+              conversationId: conversationId,
+              pharmacyName: pharmacyName,
+              message: message.content,
+              pharmacyId: pharmacyId,
+            );
+          }
+        } catch (e) {
+          // Don't fail message sending if notification fails
+          print('Error sending notification: $e');
+        }
+      }
     } catch (e) {
       throw Exception('Failed to send message: $e');
     }
@@ -199,6 +230,33 @@ class ChatRepository {
         'hasUnreadMessages': true,
         'unreadCount': FieldValue.increment(1),
       });
+
+      // Send notification if reply is from pharmacy/admin
+      if (replySenderType != 'customer') {
+        try {
+          final conversationDoc = await _firestore
+              .collection('conversations')
+              .doc(conversationId)
+              .get();
+          
+          if (conversationDoc.exists) {
+            final conversationData = conversationDoc.data()!;
+            final userId = conversationData['userId'] as String;
+            final pharmacyName = conversationData['pharmacyName'] as String? ?? 'Pharmacy';
+            final pharmacyId = conversationData['pharmacyId'] as String? ?? '';
+
+            await _notificationService.sendChatNotification(
+              userId: userId,
+              conversationId: conversationId,
+              pharmacyName: pharmacyName,
+              message: replyContent,
+              pharmacyId: pharmacyId,
+            );
+          }
+        } catch (e) {
+          print('Error sending notification: $e');
+        }
+      }
     } catch (e) {
       throw Exception('Failed to add reply: $e');
     }
